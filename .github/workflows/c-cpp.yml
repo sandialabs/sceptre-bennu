@@ -18,25 +18,28 @@ jobs:
       run: |
         sudo apt-get install --no-install-recommends -y build-essential cmake g++ gcc libasio-dev libboost-date-time-dev libboost-filesystem-dev libboost-program-options-dev libboost-system-dev libboost-thread-dev libfreetype6-dev libssl-dev libzmq5-dev
         mkdir build
-        cd build
+        cd build/
         cmake ../
     - name: build bennu
       run: |
-        cd build
+        cd build/
         make -j$(nproc)
-#    - name: make
-#      run: make
-#    - name: make check
-#      run: make check
-#    - name: make distcheck
-#      run: make distcheck
+    - name: test bennu
+      run: cd build/
+    - name: package bennu
+      run: |
+        cd build/
+        make package
+    - name: package pybennu
+      run: |
+        cd ../src/pybennu
+        make deb
+        make dist
     - name: archive artifacts
       uses: actions/upload-artifact@v3
       with:
         name: bennu artifacts
         path: |
-          build
-          ./*.log
           build/*.deb
           src/pybennu/dist/*
 
