@@ -36,4 +36,4 @@ cmake ../
 make -j$(nproc)
 sudo make install
 ```
->> Note if building behind a proxy server, edit `src/pybennu/Makefile`, uncomment lines 124-126, and add appropriate proxy information. 
+> Note if building behind a proxy server, edit `src/pybennu/Makefile`, uncomment lines 124-126, and add appropriate proxy information. 
