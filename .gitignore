@@ -1,0 +1,103 @@
+# Editors
+.vscode
+.idea
+
+build
+*.autosave
+#*.pyc
+log.txt
+#*.pyo
+.DS_Store
+build*/
+.vagrant
+.umbrapath.rc
+*.*~
+*.user
+*.user.*
+*.swp
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+#*.py[cod]
+
+# Distribution / packaging
+.Python
+env/
+bin/
+build/
+develop-eggs/
+dist/
+eggs/
+lib64/
+parts/
+sdist/
+var/
+src/pybennu/pybennu.egg-info
+#*.egg-info/
+.installed.cfg
+*.egg
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+
+# Translations
+*.mo
+
+# Mr Developer
+.mr.developer.cfg
+.project
+.pydevproject
+
+# Rope
+.ropeproject
+
+# Django stuff:
+*.log
+*.pot
+
+# Sphinx documentation
+docs/_build/
+
+# Simulink extra files
+*.mat
+*.slxc
+**/slprj/
+**/*_grt_rtw/
+
+# test files
+test*.py
+
+# Compiled Object files, Static and Dynamic libs (Shared Objects)
+*.o
+
+# Folders
+_obj
+_test
+
+*.cgo1.go
+*.cgo2.c
+_cgo_defun.c
+_cgo_gotypes.go
+_cgo_export.*
+
+_testmain.go
+
+*.exe
+*.test
+
+html
+
+# pyenv
+.python-version
+
+# pybennu version.py
+RELEASE-VERSION
