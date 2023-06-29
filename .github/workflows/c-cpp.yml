@@ -14,12 +14,12 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: configure
-      run: >
+      run: |
         mkdir build
         cd build
         cmake ../
     - name: build
-      run: >
+      run: |
         cd build
         make -j$(nproc)
     - name: make
