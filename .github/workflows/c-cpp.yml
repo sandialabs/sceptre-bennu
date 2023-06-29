@@ -20,10 +20,10 @@ jobs:
         mkdir build
         cd build
         cmake ../
-#    - name: build bennu
-#      run: |
+    - name: build bennu
+      run: |
 #        cd build
-#        make -j$(nproc)
+        make -j$(nproc)
 #    - name: make
 #      run: make
 #    - name: make check
