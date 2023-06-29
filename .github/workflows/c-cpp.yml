@@ -35,13 +35,20 @@ jobs:
         sudo apt-get install --no-install-recommends -y python3-pip python3-wheel
         sudo gem install fpm
         cd src/pybennu
-        make deb
-        sudo -E make dist
+        make deb > deb.log 2>&1
+        make dist > dist.log 2>&1
     - name: archive artifacts
       uses: actions/upload-artifact@v3
       with:
         name: bennu artifacts
         path: |
+          *.log
           build/*.deb
           src/pybennu/dist/*
+    - name: release bennu and pybennu
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          build/*.deb
+          src/pybennu/dist/*.deb
 
