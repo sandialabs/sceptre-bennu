@@ -32,7 +32,7 @@ jobs:
         make package
     - name: package pybennu
       run: |
-        cd ../src/pybennu
+        cd src/pybennu
         make deb
         make dist
     - name: archive artifacts
