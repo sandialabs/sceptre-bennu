@@ -32,6 +32,7 @@ jobs:
         make package
     - name: package pybennu
       run: |
+        sudo apt-get install --no-install-recommends -y python3-pip python3-wheel
         cd src/pybennu
         make deb
         make dist
