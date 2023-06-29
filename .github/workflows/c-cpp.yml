@@ -22,7 +22,7 @@ jobs:
         cmake ../
     - name: build bennu
       run: |
-#        cd build
+        cd build
         make -j$(nproc)
 #    - name: make
 #      run: make
