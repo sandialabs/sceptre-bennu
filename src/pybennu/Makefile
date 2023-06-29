@@ -60,8 +60,6 @@ PACKAGE_LICENSE = Proprietary
 PACKAGE_URL = https://github.com/sandialabs/sceptre-bennu.git
 PACKAGE_ARCHITECTURE = amd64
 
-echo $PACKAGE_FULL_VERSION
-
 ##
 # Utility functions
 ##
@@ -121,7 +119,8 @@ coverage: install-extras
 		@$(BROWSER) htmlcov/index.html
 
 deb: packagetools
-		@mkdir -p dist/
+		@echo $PACKAGE_FULL_VERSION
+                @mkdir -p dist/
 		@echo 'printf "\n--- RUNNING PYBENNU AFTER INSTALL SCRIPT ---\n\n"' > $(POST)
 		#@echo 'export http_proxy=host:port' >> $(POST)
 		#@echo 'export https_proxy=host:port' >> $(POST)
