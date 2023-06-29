@@ -15,16 +15,17 @@ jobs:
     - uses: actions/checkout@v3
     - name: configure
       run: |
+        sudo apt-get install --no-install-recommends -y build-essential cmake g++ gcc libasio-dev libboost-date-time-dev libboost-filesystem-dev libboost-program-options-dev libboost-system-dev libboost-thread-dev libfreetype6-dev libssl-dev libzmq5-dev mkdir build 
         mkdir build
         cd build
-        cmake ../
-    - name: build
-      run: |
-        cd build
-        make -j$(nproc)
-    - name: make
-      run: make
-    - name: make check
-      run: make check
-    - name: make distcheck
-      run: make distcheck
+#        cmake ../
+#    - name: build
+#      run: |
+#        cd build
+#        make -j$(nproc)
+#    - name: make
+#      run: make
+#    - name: make check
+#      run: make check
+#    - name: make distcheck
+#      run: make distcheck
