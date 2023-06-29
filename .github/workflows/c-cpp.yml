@@ -19,7 +19,6 @@ jobs:
         sudo apt-get install --no-install-recommends -y build-essential cmake g++ gcc libasio-dev libboost-date-time-dev libboost-filesystem-dev libboost-program-options-dev libboost-system-dev libboost-thread-dev libfreetype6-dev libssl-dev libzmq5-dev mkdir build 
         mkdir build
         cd build
-    - name: end
 #        cmake ../
 #    - name: build
 #      run: |
