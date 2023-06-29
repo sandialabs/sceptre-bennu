@@ -60,6 +60,8 @@ PACKAGE_LICENSE = Proprietary
 PACKAGE_URL = https://github.com/sandialabs/sceptre-bennu.git
 PACKAGE_ARCHITECTURE = amd64
 
+echo $PACKAGE_FULL_VERSION
+
 ##
 # Utility functions
 ##
