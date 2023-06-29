@@ -35,7 +35,7 @@ jobs:
         sudo apt-get install --no-install-recommends -y python3-pip python3-wheel
         cd src/pybennu
         make deb
-        make dist
+        sudo -E make dist
     - name: archive artifacts
       uses: actions/upload-artifact@v3
       with:
