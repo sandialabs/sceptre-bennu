@@ -30,3 +30,13 @@ jobs:
 #      run: make check
 #    - name: make distcheck
 #      run: make distcheck
+    - name: archive artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: bennu artifacts
+        path: |
+          build
+          ./*.log
+          build/*.deb
+          src/pybennu/dist/*
+
