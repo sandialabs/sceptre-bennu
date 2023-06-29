@@ -1,0 +1,15 @@
+{
+    "analog_input_0":"AIN0",
+    "analog_input_1":"AIN1",
+    "digital_output_0":"FIO1",
+    "digital_output_1":"FIO2",
+    "digital_input_0":"FIO3",
+    "analog_output_0":{
+        "label":"DAC0",
+        "min_data":0.0,
+        "max_data":6.0,
+        "min_voltage":0.0,
+        "max_voltage":6.0
+    },
+    "analog_output_1":"DAC1"
+}

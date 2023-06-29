@@ -1,0 +1,158 @@
+clear
+New Circuit.TRIKE basekv=138.00 bus1=1 pu=1.02 R1=1.2 X1=7.0 R0=2.0 X0=10.0
+
+New Generator.util phases=3 kv=12.47 bus=58417 kw=5000 pf=1
+
+New Linecode.UG-4/0_AL_XLP-CONC-PVC_22KV_3P nphases=3 r1=0.317943 x1=0.150262 r0=1.128609 x0=0.505249 c1=165.0232 c0=165.0232 units=km baseFreq=60 normamps=269.000000 emergamps=277.000000
+
+
+// Substation Model ///////////////////
+New Transformer.Sub1 phases=3 windings=2 buses=(1.1.2.3,2.1.2.3.0) conns=(delta,wye) 
+~ kvs=(138,24.94) kvas=(20000,20000)
+~ xhl=7.5 wdg=1 %r=.15 wdg=2 %r=.15
+~ numtaps=16
+
+New RegControl.Sub1 transformer=Sub1 winding=2 vreg=120 ptratio=120 band=3 delay=45
+
+New Transformer.Sub2 phases=3 windings=2 buses=(1.1.2.3,3.1.2.3.0) conns=(delta,wye) 
+~ kvs=(138,24.94) kvas=(20000,20000)
+~ xhl=7.5 wdg=1 %r=.15 wdg=2 %r=.15
+~ numtaps=16
+
+New RegControl.Sub2 transformer=Sub2 winding=2 vreg=120 ptratio=120 band=3 delay=45
+
+New Line.Breaker1 Phases=3 bus1=2 bus2=4 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=500
+
+New Line.Breaker2 Phases=3 bus1=3 bus2=5 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=500
+
+New Line.Breaker3 Phases=3 bus1=4 bus2=5 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=500 enabled=false
+
+New Line.Breaker4 Phases=3 bus1=4 bus2=6 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=500
+
+New Line.Breaker5 Phases=3 bus1=5 bus2=7 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=500
+//////////////////////////////////////
+
+// First Line /////////////////////////
+New Line.1 Phases=3 bus1=6 bus2=8 length=1200 units=ft linecode=UG-4/0_AL_XLP-CONC-PVC_22KV_3P
+
+New Line.2 Phases=3 bus1=7 bus2=9 length=1200 units=ft linecode=UG-4/0_AL_XLP-CONC-PVC_22KV_3P
+///////////////////////////////////////
+
+// Administration ////////////////////
+New Line.Breaker6 Phases=3 bus1=8 bus2=10 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=500
+
+New Line.Breaker7 Phases=3 bus1=9 bus2=11 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=500
+
+New Line.Breaker8 Phases=3 bus1=10 bus2=11 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=500 enabled=false
+
+New Line.Breaker9 Phases=3 bus1=10 bus2=14 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=500
+
+New Line.Breaker10 Phases=3 bus1=11 bus2=15 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=500
+
+New Line.Switch1 Phases=3 bus1=10 bus2=12 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=200
+
+New Line.Switch2 Phases=3 bus1=11 bus2=12 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=200 enabled=false
+
+New Transformer.Admin phases=3 wdg=1 bus=12 conn=delta kv=24.94 kVA=1000.000 %R=0.3783 wdg=2 bus=13 conn=wye kv=0.480 kVA=1000.000 tap=1.000 %R=0.3783 XHL=6.0529
+
+New Capacitor.C1 phases=3 bus1=12 kV=24.94 kvar=600
+
+New Load.Admin phases=1 bus=13.2 kV=0.480 kw=760 kvar=160
+////////////////////////////////////
+
+// Second Line ////////////////////////
+New Line.3 Phases=3 bus1=14 bus2=16 length=600 units=ft linecode=UG-4/0_AL_XLP-CONC-PVC_22KV_3P
+
+New Line.4 Phases=3 bus1=15 bus2=17 length=600 units=ft linecode=UG-4/0_AL_XLP-CONC-PVC_22KV_3P
+///////////////////////////////////////
+
+// Tank Farm ////////////////////
+New Line.Breaker11 Phases=3 bus1=16 bus2=18 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=500
+
+New Line.Breaker12 Phases=3 bus1=17 bus2=19 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=500
+
+New Line.Breaker13 Phases=3 bus1=18 bus2=19 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=500 enabled=false
+
+New Line.Breaker14 Phases=3 bus1=18 bus2=22 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=500
+
+New Line.Breaker15 Phases=3 bus1=19 bus2=23 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=500
+
+New Line.Switch3 Phases=3 bus1=18 bus2=20 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=200 enabled=false
+
+New Line.Switch4 Phases=3 bus1=19 bus2=20 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=200
+
+New Transformer.Tank phases=3 wdg=1 bus=20 conn=delta kv=24.94 kVA=2000.000 %R=0.3783 wdg=2 bus=21 conn=wye kv=0.480 kVA=2000.000 tap=1.000 %R=0.3783 XHL=6.0529
+
+New Load.Tank phases=2 bus=21 kV=0.480 kw=1350 kvar=580
+////////////////////////////////////
+
+// Third Line ////////////////////////
+New Line.5 Phases=3 bus1=22 bus2=24 length=1400 units=ft linecode=UG-4/0_AL_XLP-CONC-PVC_22KV_3P
+///////////////////////////////////////
+
+// Catalytic processing////////////////////
+New Line.Breaker16 Phases=3 bus1=24 bus2=25 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=500
+
+New Line.Breaker17 Phases=3 bus1=29 bus2=26 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=500 enabled=false
+
+New Line.Breaker18 Phases=3 bus1=25 bus2=26 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=500
+
+New Line.Switch5 Phases=3 bus1=25 bus2=27 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=200
+
+New Line.Switch6 Phases=3 bus1=26 bus2=27 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=200 enabled=false
+
+New Transformer.Catalytic phases=3 wdg=1 bus=27 conn=delta kv=24.94 kVA=5000.000 %R=0.3783 wdg=2 bus=28 conn=wye kv=0.480 kVA=5000.000 tap=1.000 %R=0.3783 XHL=6.0529
+
+New Load.Catalytic phases=3 bus=28 kV=0.480 kw=2950 kvar=1660
+////////////////////////////////////
+
+// Fourth Line ////////////////////////
+New Line.6 Phases=3 bus1=29 bus2=30 length=1300 units=ft linecode=UG-4/0_AL_XLP-CONC-PVC_22KV_3P
+///////////////////////////////////////
+
+// Distillation////////////////////
+New Line.Breaker19 Phases=3 bus1=31 bus2=33 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=500
+
+New Line.Breaker20 Phases=3 bus1=30 bus2=32 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=500 enabled=false
+
+New Line.Breaker21 Phases=3 bus1=32 bus2=33 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=500
+
+New Line.Switch7 Phases=3 bus1=33 bus2=34 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=200 enabled=false
+
+New Line.Switch8 Phases=3 bus1=32 bus2=34 Switch=y r1=1e-4 x1=0  r0=1e-4 x0=0 c1=0 c0=0 normamps=200
+
+New Transformer.Distilation phases=3 wdg=1 bus=34 conn=delta kv=24.94 kVA=3000.000 %R=0.3783 wdg=2 bus=35 conn=wye kv=0.480 kVA=3000.000 tap=1.000 %R=0.3783 XHL=6.0529
+
+New Load.Distillation phases=3 bus=35 kV=0.480 kw=2190 kvar=750
+////////////////////////////////////
+
+// Fifth Line ////////////////////////
+New Line.7 Phases=3 bus1=23 bus2=31 length=200 units=ft linecode=UG-4/0_AL_XLP-CONC-PVC_22KV_3P
+///////////////////////////////////////
+
+// Inverter ///////////////////////////
+New PVsystem.Inverter1 Phases=3 bus1=28 kv=0.480 kva=50 pmpp=25
+///////////////////////////////////////
+
+// XYcurve ///////////////////////////
+New XYcurve.Inverter1vvc npts=6 Yarray=[0.5 0.5 0 0 -0.5 -0.5] Xarray=[0.9 0.95 0.98 1.02 1.05 1.1]
+///////////////////////////////////////
+
+// Volt/VAR ///////////////////////////
+New INVcontrol.InverterControl PVSystemList=Inverter1 Mode=VOLTVAR vvc_curve1=Inverter1vvc
+///////////////////////////////////////
+
+Set voltagebases = [138, 24.94, 0.480]
+CalcVoltageBases
+solve
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,1717 @@
+<?xml version="1.0" encoding="utf-8"?>
+<SCEPTRE>
+    <field-device>
+
+        <name>sunspec-inv_01_fl</name>
+        <cycle-time>1000</cycle-time>
+        <tags>
+            <internal-tag>
+                <!-- Well-known SunSpec device map identifier 'SunS' as 32-bit
+                integer (0x53756e53). -->
+                <name>identifier</name>
+                <value>1400204883</value>
+            </internal-tag>
+            <internal-tag>
+                <name>end</name>
+                <value>65535</value>
+            </internal-tag>
+            <internal-tag>
+                <name>end-length</name>
+                <value>0</value>
+            </internal-tag>
+        		    
+            <internal-tag>
+                <name>common</name>
+                <value>1</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>common-length</name>
+                <value>66</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>Mn</name>
+                <string>Sandia SCEPTRE</string>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>Md</name>
+                <string>SunSpec RTU</string>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>Opt</name>
+                <string>0</string>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>Vr</name>
+                <string>0</string>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>SN</name>
+                <string>KTYBECYNZAGAUYJMS0EZ69IH6Y4I9K2R</string>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>DA</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>Pad</name>
+                <value>0</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>inverter</name>
+                <value>101</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>inverter-length</name>
+                <value>50</value>
+            </internal-tag>
+                    
+            <external-tag>
+                <name>A</name>
+                <io>sunspec-inv_01_fl_O0</io>
+                <type>analog</type>
+            </external-tag>
+                    
+            <external-tag>
+                <name>AphA</name>
+                <io>sunspec-inv_01_fl_O1</io>
+                <type>analog</type>
+            </external-tag>
+                    
+            <external-tag>
+                <name>AphB</name>
+                <io>sunspec-inv_01_fl_O2</io>
+                <type>analog</type>
+            </external-tag>
+                    
+            <external-tag>
+                <name>AphC</name>
+                <io>sunspec-inv_01_fl_O3</io>
+                <type>analog</type>
+            </external-tag>
+		    
+            <internal-tag>
+                <name>A_SF</name>
+                <value>-2</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>PPVphAB</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>PPVphBC</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>PPVphCA</name>
+                <value>65535</value>
+            </internal-tag>
+                    
+            <external-tag>
+                <name>PhVphA</name>
+                <io>sunspec-inv_01_fl_O4</io>
+                <type>analog</type>
+            </external-tag>
+                    
+            <external-tag>
+                <name>PhVphB</name>
+                <io>sunspec-inv_01_fl_O5</io>
+                <type>analog</type>
+            </external-tag>
+                    
+            <external-tag>
+                <name>PhVphC</name>
+                <io>sunspec-inv_01_fl_O6</io>
+                <type>analog</type>
+            </external-tag>
+		    
+            <internal-tag>
+                <name>V_SF</name>
+                <value>-2</value>
+            </internal-tag>
+                    
+            <external-tag>
+                <name>W</name>
+                <io>sunspec-inv_01_fl_O7</io>
+                <type>analog</type>
+            </external-tag>
+		    
+            <internal-tag>
+                <name>W_SF</name>
+                <value>0</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>Hz</name>
+                <value>600</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>Hz_SF</name>
+                <value>-1</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VA</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VA_SF</name>
+                <value>0</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VAr</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VAr_SF</name>
+                <value>0</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>PF</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>PF_SF</name>
+                <value>0</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>WH</name>
+                <value>0</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>WH_SF</name>
+                <value>0</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>DCA</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>DCA_SF</name>
+                <value>0</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>DCV</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>DCV_SF</name>
+                <value>0</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>DCW</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>DCW_SF</name>
+                <value>0</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>TmpCab</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>TmpSnk</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>TmpTrns</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>TmpOt</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>Tmp_SF</name>
+                <value>-1</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>St</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>StVnd</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>Evt1</name>
+                <value>4294967295</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>Evt2</name>
+                <value>4294967295</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>EvtVnd1</name>
+                <value>4294967295</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>EvtVnd2</name>
+                <value>4294967295</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>EvtVnd3</name>
+                <value>4294967295</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>EvtVnd4</name>
+                <value>4294967295</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>controls</name>
+                <value>123</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>controls-length</name>
+                <value>24</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>Conn_WinTms</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>Conn_RvrtTms</name>
+                <value>65535</value>
+            </internal-tag>
+                    
+            <external-tag>
+                <name>Conn</name>
+                <io>sunspec-inv_01_fl_O8</io>
+                <type>binary</type>
+            </external-tag>
+		    
+            <internal-tag>
+                <name>WMaxLimPct</name>
+                <value>100</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>WMaxLimPct_WinTms</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>WMaxLimPct_RvrtTms</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>WMaxLimPct_RmpTms</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>WMaxLim_Ena</name>
+                <value>0</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>OutPFSet</name>
+                <value>100</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>OutPFSet_WinTms</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>OutPFSet_RvrtTms</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>OutPFSet_RmpTms</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>OutPFSet_Ena</name>
+                <value>0</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VArWMaxPct</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VArMaxPct</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VArAvalPct</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VArPct_WinTms</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VArPct_RvrtTms</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VArPct_RmpTms</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VArPct_Mod</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VArPct_Ena</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>WMaxLimPct_SF</name>
+                <value>-2</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>OutPFSet_SF</name>
+                <value>-2</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VArPct_SF</name>
+                <value>0</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>volt_var</name>
+                <value>126</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>volt_var-length</name>
+                <value>64</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>ActCrv</name>
+                <value>1</value>
+            </internal-tag>
+                    
+            <external-tag>
+                <name>ModEna</name>
+                <io>sunspec-inv_01_fl_O9</io>
+                <type>analog</type>
+            </external-tag>
+		    
+            <internal-tag>
+                <name>WinTms</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>RvrtTms</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>RmpTms</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>NCrv</name>
+                <value>1</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>NPt</name>
+                <value>6</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>V_SF</name>
+                <value>-2</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>DeptRef_SF</name>
+                <value>-1</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>RmpIncDec_SF</name>
+                <value>0</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>ActPt</name>
+                <value>6</value>
+            </internal-tag>
+                    
+            <external-tag>
+                <name>DeptRef</name>
+                <io>sunspec-inv_01_fl_O10</io>
+                <type>analog</type>
+            </external-tag>
+                    
+            <external-tag>
+                <name>V1</name>
+                <io>sunspec-inv_01_fl_O11</io>
+                <type>analog</type>
+            </external-tag>
+                    
+            <external-tag>
+                <name>VAr1</name>
+                <io>sunspec-inv_01_fl_O12</io>
+                <type>analog</type>
+            </external-tag>
+                    
+            <external-tag>
+                <name>V2</name>
+                <io>sunspec-inv_01_fl_O13</io>
+                <type>analog</type>
+            </external-tag>
+                    
+            <external-tag>
+                <name>VAr2</name>
+                <io>sunspec-inv_01_fl_O14</io>
+                <type>analog</type>
+            </external-tag>
+                    
+            <external-tag>
+                <name>V3</name>
+                <io>sunspec-inv_01_fl_O15</io>
+                <type>analog</type>
+            </external-tag>
+                    
+            <external-tag>
+                <name>VAr3</name>
+                <io>sunspec-inv_01_fl_O16</io>
+                <type>analog</type>
+            </external-tag>
+                    
+            <external-tag>
+                <name>V4</name>
+                <io>sunspec-inv_01_fl_O17</io>
+                <type>analog</type>
+            </external-tag>
+                    
+            <external-tag>
+                <name>VAr4</name>
+                <io>sunspec-inv_01_fl_O18</io>
+                <type>analog</type>
+            </external-tag>
+                    
+            <external-tag>
+                <name>V5</name>
+                <io>sunspec-inv_01_fl_O19</io>
+                <type>analog</type>
+            </external-tag>
+                    
+            <external-tag>
+                <name>VAr5</name>
+                <io>sunspec-inv_01_fl_O20</io>
+                <type>analog</type>
+            </external-tag>
+                    
+            <external-tag>
+                <name>V6</name>
+                <io>sunspec-inv_01_fl_O21</io>
+                <type>analog</type>
+            </external-tag>
+                    
+            <external-tag>
+                <name>VAr6</name>
+                <io>sunspec-inv_01_fl_O22</io>
+                <type>analog</type>
+            </external-tag>
+		    
+            <internal-tag>
+                <name>V7</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VAr7</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>V8</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VAr8</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>V9</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VAr9</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>V10</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VAr10</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>V11</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VAr11</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>V12</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VAr12</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>V13</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VAr13</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>V14</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VAr14</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>V15</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VAr15</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>V16</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VAr16</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>V17</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VAr17</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>V18</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VAr18</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>V19</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VAr19</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>V20</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>VAr20</name>
+                <value>32767</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>CrvNam</name>
+                <string>0</string>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>RmpTms</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>RmpDecTmm</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>RmpIncTmm</name>
+                <value>65535</value>
+            </internal-tag>
+		    
+            <internal-tag>
+                <name>ReadOnly</name>
+                <value>0</value>
+            </internal-tag>
+        </tags>
+        <comms>
+            <sunspec-tcp-server>
+                <port>5502</port>
+                <event-logging>sunspec-inv_01_fl-sunspec-tcp-server.log</event-logging>
+                <register>
+                    <address>40000</address>
+		    <uint32>identifier</uint32>
+		</register>
+                <ip>127.0.0.1</ip>
+                      
+                <register>
+                    <address>40002</address>
+                    <uint16>common</uint16>
+                </register>
+              
+                <register>
+                    <address>40003</address>
+                    <uint16>common-length</uint16>
+                </register>
+              
+                <register>
+                    <address>40004</address>
+                    <string16>Mn</string16>
+                </register>
+              
+                <register>
+                    <address>40020</address>
+                    <string16>Md</string16>
+                </register>
+              
+                <register>
+                    <address>40036</address>
+                    <string8>Opt</string8>
+                </register>
+              
+                <register>
+                    <address>40044</address>
+                    <string8>Vr</string8>
+                </register>
+              
+                <register>
+                    <address>40052</address>
+                    <string16>SN</string16>
+                </register>
+              
+                <register>
+                    <address>40068</address>
+                    <uint16>DA</uint16>
+                </register>
+              
+                <register>
+                    <address>40069</address>
+                    <int16>Pad</int16>
+                </register>
+              
+                <register>
+                    <address>40070</address>
+                    <uint16>inverter</uint16>
+                </register>
+              
+                <register>
+                    <address>40071</address>
+                    <uint16>inverter-length</uint16>
+                </register>
+              
+                <register>
+                    <address>40072</address>
+                    <scaling-factor>-2</scaling-factor>
+                    <uint16>A</uint16>
+                </register>
+              
+                <register>
+                    <address>40073</address>
+                    <scaling-factor>-2</scaling-factor>
+                    <uint16>AphA</uint16>
+                </register>
+              
+                <register>
+                    <address>40074</address>
+                    <scaling-factor>-2</scaling-factor>
+                    <uint16>AphB</uint16>
+                </register>
+              
+                <register>
+                    <address>40075</address>
+                    <scaling-factor>-2</scaling-factor>
+                    <uint16>AphC</uint16>
+                </register>
+              
+                <register>
+                    <address>40076</address>
+                    <sunssf>A_SF</sunssf>
+                </register>
+              
+                <register>
+                    <address>40077</address>
+                    <uint16>PPVphAB</uint16>
+                </register>
+              
+                <register>
+                    <address>40078</address>
+                    <uint16>PPVphBC</uint16>
+                </register>
+              
+                <register>
+                    <address>40079</address>
+                    <uint16>PPVphCA</uint16>
+                </register>
+              
+                <register>
+                    <address>40080</address>
+                    <scaling-factor>-2</scaling-factor>
+                    <uint16>PhVphA</uint16>
+                </register>
+              
+                <register>
+                    <address>40081</address>
+                    <scaling-factor>-2</scaling-factor>
+                    <uint16>PhVphB</uint16>
+                </register>
+              
+                <register>
+                    <address>40082</address>
+                    <scaling-factor>-2</scaling-factor>
+                    <uint16>PhVphC</uint16>
+                </register>
+              
+                <register>
+                    <address>40083</address>
+                    <sunssf>V_SF</sunssf>
+                </register>
+              
+                <register>
+                    <address>40084</address>
+                    <scaling-factor>0</scaling-factor>
+                    <int16>W</int16>
+                </register>
+              
+                <register>
+                    <address>40085</address>
+                    <sunssf>W_SF</sunssf>
+                </register>
+              
+                <register>
+                    <address>40086</address>
+                    <scaling-factor>-1</scaling-factor>
+                    <uint16>Hz</uint16>
+                </register>
+              
+                <register>
+                    <address>40087</address>
+                    <sunssf>Hz_SF</sunssf>
+                </register>
+              
+                <register>
+                    <address>40088</address>
+                    <int16>VA</int16>
+                </register>
+              
+                <register>
+                    <address>40089</address>
+                    <sunssf>VA_SF</sunssf>
+                </register>
+              
+                <register>
+                    <address>40090</address>
+                    <int16>VAr</int16>
+                </register>
+              
+                <register>
+                    <address>40091</address>
+                    <sunssf>VAr_SF</sunssf>
+                </register>
+              
+                <register>
+                    <address>40092</address>
+                    <int16>PF</int16>
+                </register>
+              
+                <register>
+                    <address>40093</address>
+                    <sunssf>PF_SF</sunssf>
+                </register>
+              
+                <register>
+                    <address>40094</address>
+                    <scaling-factor>0</scaling-factor>
+                    <acc32>WH</acc32>
+                </register>
+              
+                <register>
+                    <address>40096</address>
+                    <sunssf>WH_SF</sunssf>
+                </register>
+              
+                <register>
+                    <address>40097</address>
+                    <uint16>DCA</uint16>
+                </register>
+              
+                <register>
+                    <address>40098</address>
+                    <sunssf>DCA_SF</sunssf>
+                </register>
+              
+                <register>
+                    <address>40099</address>
+                    <uint16>DCV</uint16>
+                </register>
+              
+                <register>
+                    <address>40100</address>
+                    <sunssf>DCV_SF</sunssf>
+                </register>
+              
+                <register>
+                    <address>40101</address>
+                    <int16>DCW</int16>
+                </register>
+              
+                <register>
+                    <address>40102</address>
+                    <sunssf>DCW_SF</sunssf>
+                </register>
+              
+                <register>
+                    <address>40103</address>
+                    <int16>TmpCab</int16>
+                </register>
+              
+                <register>
+                    <address>40104</address>
+                    <int16>TmpSnk</int16>
+                </register>
+              
+                <register>
+                    <address>40105</address>
+                    <int16>TmpTrns</int16>
+                </register>
+              
+                <register>
+                    <address>40106</address>
+                    <int16>TmpOt</int16>
+                </register>
+              
+                <register>
+                    <address>40107</address>
+                    <sunssf>Tmp_SF</sunssf>
+                </register>
+              
+                <register>
+                    <address>40108</address>
+                    <enum16>St</enum16>
+                </register>
+              
+                <register>
+                    <address>40109</address>
+                    <enum16>StVnd</enum16>
+                </register>
+              
+                <register>
+                    <address>40110</address>
+                    <bitfield32>Evt1</bitfield32>
+                </register>
+              
+                <register>
+                    <address>40112</address>
+                    <bitfield32>Evt2</bitfield32>
+                </register>
+              
+                <register>
+                    <address>40114</address>
+                    <bitfield32>EvtVnd1</bitfield32>
+                </register>
+              
+                <register>
+                    <address>40116</address>
+                    <bitfield32>EvtVnd2</bitfield32>
+                </register>
+              
+                <register>
+                    <address>40118</address>
+                    <bitfield32>EvtVnd3</bitfield32>
+                </register>
+              
+                <register>
+                    <address>40120</address>
+                    <bitfield32>EvtVnd4</bitfield32>
+                </register>
+              
+                <register>
+                    <address>40122</address>
+                    <uint16>controls</uint16>
+                </register>
+              
+                <register>
+                    <address>40123</address>
+                    <uint16>controls-length</uint16>
+                </register>
+              
+                <register>
+                    <address>40124</address>
+                    <uint16>Conn_WinTms</uint16>
+                </register>
+              
+                <register>
+                    <address>40125</address>
+                    <uint16>Conn_RvrtTms</uint16>
+                </register>
+              
+                <register>
+                    <address>40126</address>
+                    <enum16>Conn</enum16>
+                </register>
+              
+                <register>
+                    <address>40127</address>
+                    <scaling-factor>-2</scaling-factor>
+                    <uint16>WMaxLimPct</uint16>
+                </register>
+              
+                <register>
+                    <address>40128</address>
+                    <uint16>WMaxLimPct_WinTms</uint16>
+                </register>
+              
+                <register>
+                    <address>40129</address>
+                    <uint16>WMaxLimPct_RvrtTms</uint16>
+                </register>
+              
+                <register>
+                    <address>40130</address>
+                    <uint16>WMaxLimPct_RmpTms</uint16>
+                </register>
+              
+                <register>
+                    <address>40131</address>
+                    <enum16>WMaxLim_Ena</enum16>
+                </register>
+              
+                <register>
+                    <address>40132</address>
+                    <scaling-factor>-2</scaling-factor>
+                    <int16>OutPFSet</int16>
+                </register>
+              
+                <register>
+                    <address>40133</address>
+                    <uint16>OutPFSet_WinTms</uint16>
+                </register>
+              
+                <register>
+                    <address>40134</address>
+                    <uint16>OutPFSet_RvrtTms</uint16>
+                </register>
+              
+                <register>
+                    <address>40135</address>
+                    <uint16>OutPFSet_RmpTms</uint16>
+                </register>
+              
+                <register>
+                    <address>40136</address>
+                    <enum16>OutPFSet_Ena</enum16>
+                </register>
+              
+                <register>
+                    <address>40137</address>
+                    <int16>VArWMaxPct</int16>
+                </register>
+              
+                <register>
+                    <address>40138</address>
+                    <int16>VArMaxPct</int16>
+                </register>
+              
+                <register>
+                    <address>40139</address>
+                    <int16>VArAvalPct</int16>
+                </register>
+              
+                <register>
+                    <address>40140</address>
+                    <uint16>VArPct_WinTms</uint16>
+                </register>
+              
+                <register>
+                    <address>40141</address>
+                    <uint16>VArPct_RvrtTms</uint16>
+                </register>
+              
+                <register>
+                    <address>40142</address>
+                    <uint16>VArPct_RmpTms</uint16>
+                </register>
+              
+                <register>
+                    <address>40143</address>
+                    <enum16>VArPct_Mod</enum16>
+                </register>
+              
+                <register>
+                    <address>40144</address>
+                    <enum16>VArPct_Ena</enum16>
+                </register>
+              
+                <register>
+                    <address>40145</address>
+                    <sunssf>WMaxLimPct_SF</sunssf>
+                </register>
+              
+                <register>
+                    <address>40146</address>
+                    <sunssf>OutPFSet_SF</sunssf>
+                </register>
+              
+                <register>
+                    <address>40147</address>
+                    <sunssf>VArPct_SF</sunssf>
+                </register>
+              
+                <register>
+                    <address>40148</address>
+                    <uint16>volt_var</uint16>
+                </register>
+              
+                <register>
+                    <address>40149</address>
+                    <uint16>volt_var-length</uint16>
+                </register>
+              
+                <register>
+                    <address>40150</address>
+                    <uint16>ActCrv</uint16>
+                </register>
+              
+                <register>
+                    <address>40151</address>
+                    <bitfield16>ModEna</bitfield16>
+                </register>
+              
+                <register>
+                    <address>40152</address>
+                    <uint16>WinTms</uint16>
+                </register>
+              
+                <register>
+                    <address>40153</address>
+                    <uint16>RvrtTms</uint16>
+                </register>
+              
+                <register>
+                    <address>40154</address>
+                    <uint16>RmpTms</uint16>
+                </register>
+              
+                <register>
+                    <address>40155</address>
+                    <uint16>NCrv</uint16>
+                </register>
+              
+                <register>
+                    <address>40156</address>
+                    <uint16>NPt</uint16>
+                </register>
+              
+                <register>
+                    <address>40157</address>
+                    <sunssf>V_SF</sunssf>
+                </register>
+              
+                <register>
+                    <address>40158</address>
+                    <sunssf>DeptRef_SF</sunssf>
+                </register>
+              
+                <register>
+                    <address>40159</address>
+                    <sunssf>RmpIncDec_SF</sunssf>
+                </register>
+              
+                <register>
+                    <address>40160</address>
+                    <uint16>ActPt</uint16>
+                </register>
+              
+                <register>
+                    <address>40161</address>
+                    <enum16>DeptRef</enum16>
+                </register>
+              
+                <register>
+                    <address>40162</address>
+                    <scaling-factor>-2</scaling-factor>
+                    <uint16>V1</uint16>
+                </register>
+              
+                <register>
+                    <address>40163</address>
+                    <scaling-factor>-1</scaling-factor>
+                    <int16>VAr1</int16>
+                </register>
+              
+                <register>
+                    <address>40164</address>
+                    <scaling-factor>-2</scaling-factor>
+                    <uint16>V2</uint16>
+                </register>
+              
+                <register>
+                    <address>40165</address>
+                    <scaling-factor>-1</scaling-factor>
+                    <int16>VAr2</int16>
+                </register>
+              
+                <register>
+                    <address>40166</address>
+                    <scaling-factor>-2</scaling-factor>
+                    <uint16>V3</uint16>
+                </register>
+              
+                <register>
+                    <address>40167</address>
+                    <scaling-factor>-1</scaling-factor>
+                    <int16>VAr3</int16>
+                </register>
+              
+                <register>
+                    <address>40168</address>
+                    <scaling-factor>-2</scaling-factor>
+                    <uint16>V4</uint16>
+                </register>
+              
+                <register>
+                    <address>40169</address>
+                    <scaling-factor>-1</scaling-factor>
+                    <int16>VAr4</int16>
+                </register>
+              
+                <register>
+                    <address>40170</address>
+                    <scaling-factor>-2</scaling-factor>
+                    <uint16>V5</uint16>
+                </register>
+              
+                <register>
+                    <address>40171</address>
+                    <scaling-factor>-1</scaling-factor>
+                    <int16>VAr5</int16>
+                </register>
+              
+                <register>
+                    <address>40172</address>
+                    <scaling-factor>-2</scaling-factor>
+                    <uint16>V6</uint16>
+                </register>
+              
+                <register>
+                    <address>40173</address>
+                    <scaling-factor>-1</scaling-factor>
+                    <int16>VAr6</int16>
+                </register>
+              
+                <register>
+                    <address>40174</address>
+                    <uint16>V7</uint16>
+                </register>
+              
+                <register>
+                    <address>40175</address>
+                    <int16>VAr7</int16>
+                </register>
+              
+                <register>
+                    <address>40176</address>
+                    <uint16>V8</uint16>
+                </register>
+              
+                <register>
+                    <address>40177</address>
+                    <int16>VAr8</int16>
+                </register>
+              
+                <register>
+                    <address>40178</address>
+                    <uint16>V9</uint16>
+                </register>
+              
+                <register>
+                    <address>40179</address>
+                    <int16>VAr9</int16>
+                </register>
+              
+                <register>
+                    <address>40180</address>
+                    <uint16>V10</uint16>
+                </register>
+              
+                <register>
+                    <address>40181</address>
+                    <int16>VAr10</int16>
+                </register>
+              
+                <register>
+                    <address>40182</address>
+                    <uint16>V11</uint16>
+                </register>
+              
+                <register>
+                    <address>40183</address>
+                    <int16>VAr11</int16>
+                </register>
+              
+                <register>
+                    <address>40184</address>
+                    <uint16>V12</uint16>
+                </register>
+              
+                <register>
+                    <address>40185</address>
+                    <int16>VAr12</int16>
+                </register>
+              
+                <register>
+                    <address>40186</address>
+                    <uint16>V13</uint16>
+                </register>
+              
+                <register>
+                    <address>40187</address>
+                    <int16>VAr13</int16>
+                </register>
+              
+                <register>
+                    <address>40188</address>
+                    <uint16>V14</uint16>
+                </register>
+              
+                <register>
+                    <address>40189</address>
+                    <int16>VAr14</int16>
+                </register>
+              
+                <register>
+                    <address>40190</address>
+                    <uint16>V15</uint16>
+                </register>
+              
+                <register>
+                    <address>40191</address>
+                    <int16>VAr15</int16>
+                </register>
+              
+                <register>
+                    <address>40192</address>
+                    <uint16>V16</uint16>
+                </register>
+              
+                <register>
+                    <address>40193</address>
+                    <int16>VAr16</int16>
+                </register>
+              
+                <register>
+                    <address>40194</address>
+                    <uint16>V17</uint16>
+                </register>
+              
+                <register>
+                    <address>40195</address>
+                    <int16>VAr17</int16>
+                </register>
+              
+                <register>
+                    <address>40196</address>
+                    <uint16>V18</uint16>
+                </register>
+              
+                <register>
+                    <address>40197</address>
+                    <int16>VAr18</int16>
+                </register>
+              
+                <register>
+                    <address>40198</address>
+                    <uint16>V19</uint16>
+                </register>
+              
+                <register>
+                    <address>40199</address>
+                    <int16>VAr19</int16>
+                </register>
+              
+                <register>
+                    <address>40200</address>
+                    <uint16>V20</uint16>
+                </register>
+              
+                <register>
+                    <address>40201</address>
+                    <int16>VAr20</int16>
+                </register>
+              
+                <register>
+                    <address>40202</address>
+                    <string8>CrvNam</string8>
+                </register>
+              
+                <register>
+                    <address>40210</address>
+                    <uint16>RmpTms</uint16>
+                </register>
+              
+                <register>
+                    <address>40211</address>
+                    <uint16>RmpDecTmm</uint16>
+                </register>
+              
+                <register>
+                    <address>40212</address>
+                    <uint16>RmpIncTmm</uint16>
+                </register>
+              
+                <register>
+                    <address>40213</address>
+                    <enum16>ReadOnly</enum16>
+                </register>
+                <register>
+	            <address>40214</address>
+		    <uint16>end</uint16>
+                </register>
+                <register>
+	            <address>40215</address>
+		    <uint16>end-length</uint16>
+                </register>
+            </sunspec-tcp-server>
+        </comms>
+        <input>
+            <endpoint>udp://239.0.0.1:40000</endpoint>
+                            
+            <analog>
+                <id>sunspec-inv_01_fl_I0</id>
+                <name>inverter_inverter1.current_mag_total</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_I1</id>
+                <name>inverter_inverter1.current_mag_p1</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_I2</id>
+                <name>inverter_inverter1.current_mag_p2</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_I3</id>
+                <name>inverter_inverter1.current_mag_p3</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_I4</id>
+                <name>inverter_inverter1.voltage_mag_p1</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_I5</id>
+                <name>inverter_inverter1.voltage_mag_p2</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_I6</id>
+                <name>inverter_inverter1.voltage_mag_p3</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_I7</id>
+                <name>inverter_inverter1.real_power_total</name>
+            </analog>
+                    
+            <binary>
+                <id>sunspec-inv_01_fl_I8</id>
+                <name>inverter_inverter1.active</name>
+            </binary>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_I9</id>
+                <name>inverter_inverter1.volt_var_enable</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_I10</id>
+                <name>inverter_inverter1.volt_var_reference</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_I11</id>
+                <name>inverter_inverter1.curve_volt_pt_1</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_I12</id>
+                <name>inverter_inverter1.curve_var_pt_1</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_I13</id>
+                <name>inverter_inverter1.curve_volt_pt_2</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_I14</id>
+                <name>inverter_inverter1.curve_var_pt_2</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_I15</id>
+                <name>inverter_inverter1.curve_volt_pt_3</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_I16</id>
+                <name>inverter_inverter1.curve_var_pt_3</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_I17</id>
+                <name>inverter_inverter1.curve_volt_pt_4</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_I18</id>
+                <name>inverter_inverter1.curve_var_pt_4</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_I19</id>
+                <name>inverter_inverter1.curve_volt_pt_5</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_I20</id>
+                <name>inverter_inverter1.curve_var_pt_5</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_I21</id>
+                <name>inverter_inverter1.curve_volt_pt_6</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_I22</id>
+                <name>inverter_inverter1.curve_var_pt_6</name>
+            </analog>
+        </input>
+        <output>
+            <endpoint>tcp://127.0.0.1:5555</endpoint>
+                            
+            <analog>
+                <id>sunspec-inv_01_fl_O0</id>
+                <name>inverter_inverter1.current_mag_total</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_O1</id>
+                <name>inverter_inverter1.current_mag_p1</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_O2</id>
+                <name>inverter_inverter1.current_mag_p2</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_O3</id>
+                <name>inverter_inverter1.current_mag_p3</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_O4</id>
+                <name>inverter_inverter1.voltage_mag_p1</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_O5</id>
+                <name>inverter_inverter1.voltage_mag_p2</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_O6</id>
+                <name>inverter_inverter1.voltage_mag_p3</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_O7</id>
+                <name>inverter_inverter1.real_power_total</name>
+            </analog>
+                    
+            <binary>
+                <id>sunspec-inv_01_fl_O8</id>
+                <name>inverter_inverter1.active</name>
+            </binary>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_O9</id>
+                <name>inverter_inverter1.volt_var_enable</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_O10</id>
+                <name>inverter_inverter1.volt_var_reference</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_O11</id>
+                <name>inverter_inverter1.curve_volt_pt_1</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_O12</id>
+                <name>inverter_inverter1.curve_var_pt_1</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_O13</id>
+                <name>inverter_inverter1.curve_volt_pt_2</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_O14</id>
+                <name>inverter_inverter1.curve_var_pt_2</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_O15</id>
+                <name>inverter_inverter1.curve_volt_pt_3</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_O16</id>
+                <name>inverter_inverter1.curve_var_pt_3</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_O17</id>
+                <name>inverter_inverter1.curve_volt_pt_4</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_O18</id>
+                <name>inverter_inverter1.curve_var_pt_4</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_O19</id>
+                <name>inverter_inverter1.curve_volt_pt_5</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_O20</id>
+                <name>inverter_inverter1.curve_var_pt_5</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_O21</id>
+                <name>inverter_inverter1.curve_volt_pt_6</name>
+            </analog>
+                    
+            <analog>
+                <id>sunspec-inv_01_fl_O22</id>
+                <name>inverter_inverter1.curve_var_pt_6</name>
+            </analog>
+        </output>
+    </field-device>
+</SCEPTRE>
+

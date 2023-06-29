@@ -1,0 +1,6 @@
+add_subdirectory(parsers)
+add_subdirectory(distributed)
+add_subdirectory(utility)
+add_subdirectory(loaders)
+add_subdirectory(devices)
+add_subdirectory(executables)

@@ -1,0 +1,4 @@
+graft deps
+graft pybennu/siren/hil_device/configs
+include pybennu/distributed/swig/_Endpoint.so
+include pybennu/distributed/swig/_Endpoint.pyd

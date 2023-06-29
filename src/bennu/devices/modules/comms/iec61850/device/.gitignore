@@ -1,0 +1,21 @@
+# All patterns in this file will be ignored by git (untracked)
+
+# All files in the build/ directory
+build/
+
+# All backup files
+*~     
+*#
+.#*
+
+# All Makefiles
+Makefile
+
+# Video files
+*.mp4
+
+# For Mac fanboys
+.DS_Store  
+
+# For VIM
+*.swp

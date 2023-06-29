@@ -1,0 +1,13 @@
+version: '3'
+services:
+  solver:
+    image: bennu
+    command:
+      - python3
+      - -u
+      - /usr/local/bin/pybennu-power-solver
+      - --config-file=/tmp/data/config.ini
+      - start
+    network_mode: host
+    volumes:
+      - ./:/tmp/data

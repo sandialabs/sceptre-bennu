@@ -1,0 +1,13 @@
+syntax_version: "7"
+project_name: pybennu-swig
+macros:
+  swig:
+    usage: swig the Endpoint struct (C++) in order to use it in Python
+    docker_image: swig
+    work_in_project_folder_as: .
+    container_working_directory: .
+    enable_current_user: true
+    actions:
+      - swig3.0 -c++ -python Endpoint.i
+      - g++ -O2 -fPIC -shared Endpoint_wrap.cxx -I/usr/include/python3.7m/ -o _Endpoint.so
+      - rm Endpoint.py Endpoint_wrap.*

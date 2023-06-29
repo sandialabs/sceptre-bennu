@@ -1,0 +1,60 @@
+# Endpoint
+
+- This directory is used for wrapping c++ code (the Endpoint struct) into a Python library.
+- The c++ struct is needed because there is no `std::hash()` function in python. The Endpoint hash that is generated in c++ needs to match the one in Python.
+
+```
+#include <functional>
+#include <sstream>
+#include <string>
+struct Endpoint
+{
+    std::string str;
+    std::string hash() const
+    {
+        //  If we have a semicolon then we should have an interface specifier in the URL
+        std::string delim{";"};
+        std::string str2 = this->str;
+        size_t pos = str2.find(delim);
+        if (pos != std::string::npos)
+        {
+            delim = "/";
+            size_t start = str2.find(delim) + 2;
+            str2.erase(start, pos - (start-1));
+        }
+        auto hash = std::hash<std::string>{}(str2);
+        std::stringstream ss;
+        ss << std::hex << hash;
+        return ss.str().substr(0, ss.str().length()-1);
+    }
+};
+```
+
+## Linux build
+
+- 1. `apt install -y swig g++ build-essential`
+- 2. Install python3.7 (make sure you have the directory: `/usr/include/python3.7m/`)
+- 3. Build library:
+
+```
+swig3.0 -c++ -python Endpoint.i
+g++ -O2 -fPIC -shared Endpoint_wrap.cxx -I/usr/include/python3.7m/ -o _Endpoint.so
+```
+
+- `_Endpoint.so` is the resulting shared library for linux
+
+## Windows build
+
+- 1. Download mingw and extract to C:\MinGW: https://nuwen.net/files/mingw/mingw-16.1-without-git.exe
+- 2. Open cmd to C:\MinGW and run `set_distro_paths.bat`
+- 3. Open C:\MinGW\include\c++\8.2.0\cmath and change line 1121 from `::hypot` to `::_hypot` and save
+- 4. Download and install Python (64-bit) to C:\Python37: https://www.python.org/ftp/python/3.7.2/python-3.7.2-amd64.exe
+- 5. Download and extract swig: http://prdownloads.sourceforge.net/swig/swigwin-3.0.12.zip
+- 3. Build library:
+
+```
+swig.exe -c++ -python Endpoint.i
+g++ -O2 -fPIC -shared -DMS_WIN64 Endpoint_wrap.cxx -LC:\Python37\libs -lpython37 -IC:\Python37\include -o _Endpoint.pyd
+```
+
+- `_Endpoint.pyd` is the resulting shared library for windows
