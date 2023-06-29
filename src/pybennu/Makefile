@@ -120,7 +120,7 @@ coverage: install-extras
 
 deb: packagetools
 		@echo $PACKAGE_FULL_VERSION
-                @mkdir -p dist/
+		@mkdir -p dist/
 		@echo 'printf "\n--- RUNNING PYBENNU AFTER INSTALL SCRIPT ---\n\n"' > $(POST)
 		#@echo 'export http_proxy=host:port' >> $(POST)
 		#@echo 'export https_proxy=host:port' >> $(POST)
