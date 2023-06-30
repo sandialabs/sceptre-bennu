@@ -119,12 +119,8 @@ coverage: install-extras
 		@$(BROWSER) htmlcov/index.html
 
 deb: packagetools
-		@echo $(PACKAGE_FULL_VERSION)
 		@mkdir -p dist/
 		@echo 'printf "\n--- RUNNING PYBENNU AFTER INSTALL SCRIPT ---\n\n"' > $(POST)
-		#@echo 'export http_proxy=host:port' >> $(POST)
-		#@echo 'export https_proxy=host:port' >> $(POST)
-		#@echo 'export no_proxy=host' >> $(POST)
 		@echo 'mv /root/libzmq* /usr/lib/x86_64-linux-gnu' >> $(POST)
 		@echo 'printf "\n\tINSTALLING ZMQ WITH DRAFT SUPPORT...\n\n"' >> $(POST)
 		@echo 'wget --no-check-certificate https://raw.githubusercontent.com/zeromq/pyzmq/main/examples/draft/install.sh' >> $(POST)
