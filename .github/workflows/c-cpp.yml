@@ -15,9 +15,7 @@ jobs:
     - name: checkout the repo 
       uses: actions/checkout@v3
     - name: get tags
-      run: |
-        git fetch --tags
-        git describe --tags --always
+      run: git fetch --tags
     - name: package pybennu
       run: |
         sudo apt-get install --no-install-recommends -y python3-pip python3-wheel git
