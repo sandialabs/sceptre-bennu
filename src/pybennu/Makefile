@@ -119,7 +119,7 @@ coverage: install-extras
 		@$(BROWSER) htmlcov/index.html
 
 deb: packagetools
-		@echo $PACKAGE_FULL_VERSION
+		@echo $(PACKAGE_FULL_VERSION)
 		@mkdir -p dist/
 		@echo 'printf "\n--- RUNNING PYBENNU AFTER INSTALL SCRIPT ---\n\n"' > $(POST)
 		#@echo 'export http_proxy=host:port' >> $(POST)
