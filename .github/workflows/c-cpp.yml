@@ -15,14 +15,7 @@ jobs:
     - name: checkout the repo 
       uses: actions/checkout@v3
     - name: get tags
-      run: git fetch --tags && git describe --always
-    - name: package pybennu
-      run: |
-        sudo apt-get install --no-install-recommends -y python3-pip python3-wheel git
-        sudo gem install fpm
-        cd src/pybennu
-        make deb 
-        #make dist > dist.log 2>&1
+      run: git fetch --tags
     - name: configure bennu
       run: |
         sudo apt-get install --no-install-recommends -y build-essential cmake g++ gcc libasio-dev libboost-date-time-dev libboost-filesystem-dev libboost-program-options-dev libboost-system-dev libboost-thread-dev libfreetype6-dev libssl-dev libzmq5-dev
@@ -39,6 +32,13 @@ jobs:
       run: |
         cd build/
         make package
+    - name: package pybennu
+      run: |
+        sudo apt-get install --no-install-recommends -y python3-pip python3-wheel
+        sudo gem install fpm
+        cd src/pybennu
+        make deb > deb.log 2>&1
+        #make dist > dist.log 2>&1
     - name: archive artifacts
       uses: actions/upload-artifact@v3
       with:
