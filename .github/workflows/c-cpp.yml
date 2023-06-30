@@ -14,6 +14,8 @@ jobs:
     steps:
     - name: checkout the repo 
       uses: actions/checkout@v3
+    - name: get tags
+      run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
     - name: package pybennu
       run: |
         sudo apt-get install --no-install-recommends -y python3-pip python3-wheel git
