@@ -120,7 +120,7 @@ coverage: install-extras
 
 deb: packagetools
 		@echo $(TIMESTAMP)
-		@echo $(shell date)
+		@echo $(shell git --version)
 		@mkdir -p dist/
 		@echo 'printf "\n--- RUNNING PYBENNU AFTER INSTALL SCRIPT ---\n\n"' > $(POST)
 		@echo 'mv /root/libzmq* /usr/lib/x86_64-linux-gnu' >> $(POST)
