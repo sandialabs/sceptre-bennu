@@ -17,7 +17,7 @@ jobs:
     - name: get tags
       run: |
         git fetch --tags
-        git describe --tags
+        git describe --tags --always
     - name: package pybennu
       run: |
         sudo apt-get install --no-install-recommends -y python3-pip python3-wheel git
