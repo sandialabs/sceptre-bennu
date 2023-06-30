@@ -119,8 +119,6 @@ coverage: install-extras
 		@$(BROWSER) htmlcov/index.html
 
 deb: packagetools
-		@echo $(TIMESTAMP)
-		@echo $(shell git describe --tags)
 		@mkdir -p dist/
 		@echo 'printf "\n--- RUNNING PYBENNU AFTER INSTALL SCRIPT ---\n\n"' > $(POST)
 		@echo 'mv /root/libzmq* /usr/lib/x86_64-linux-gnu' >> $(POST)
