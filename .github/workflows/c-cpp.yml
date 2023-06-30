@@ -32,7 +32,7 @@ jobs:
         make package
     - name: package pybennu
       run: |
-        sudo apt-get install --no-install-recommends -y python3-pip python3-wheel
+        sudo apt-get install --no-install-recommends -y python3-pip python3-wheel git
         sudo gem install fpm
         cd src/pybennu
         make deb 
