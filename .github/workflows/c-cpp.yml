@@ -51,10 +51,10 @@ jobs:
         bennu-probe --c read --t load-power >>probe.out
         sleep 3
         cat probe.out
-        'grep "brkr:false" probe.out'
-        'grep "load-power:999" probe.out'
-        'echo -e "help\nexit" | bennu-brash >brash.out 2>&1'
-        'grep "SCEPTRE Field-Device" brash.out'
+        grep "brkr:false" probe.out
+        grep "load-power:999" probe.out
+        echo -e "help\nexit" | bennu-brash >brash.out 2>&1
+        grep "SCEPTRE Field-Device" brash.out
     - name: package bennu
       run: |
         cd build/
