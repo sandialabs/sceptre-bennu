@@ -74,5 +74,12 @@ jobs:
           *.log
           build/*.deb
           src/pybennu/dist/*
+    - name: release bennu and pybennu - only on PR
+      if: github.event_name == 'pull-request'
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          build/*.deb
+          src/pybennu/dist/*.deb
 
 
