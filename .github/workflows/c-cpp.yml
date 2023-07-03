@@ -29,7 +29,7 @@ jobs:
     - name: test bennu
       run: |
         cd build/
-        make -j$(nproc) install
+        sudo make install
         ldconfig
         bennu-test-ep-server --d 1 >ep.out 2>&1 &
         bennu-field-device --f ../data/configs/ep/dnp3-server.xml >fd-server.out 2>&1 &
