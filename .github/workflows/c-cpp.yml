@@ -58,7 +58,7 @@ jobs:
     - name: package bennu
       run: |
         cd build/
-        make package
+        sudo make package
     - name: package pybennu
       run: |
         sudo apt-get install --no-install-recommends -y python3-pip python3-wheel
