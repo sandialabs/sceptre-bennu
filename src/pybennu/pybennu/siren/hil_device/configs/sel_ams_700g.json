@@ -1,0 +1,17 @@
+{
+    "config":{
+        "connect_to_ams":true,
+        "serial_baudrate":9600,
+        "serial_timeout":1,
+        "inputs":[
+            "digital_input_1",
+            "digital_input_2",
+            "digital_input_3",
+            "digital_input_4"
+        ],
+        "outputs":{
+            "Bus-1":[[4, 10], 0.00342429],
+            "Branch-1_1-2":[[1, 7], 0.0135]
+        }
+    }
+}

@@ -1,0 +1,5 @@
+add_subdirectory(base)
+add_subdirectory(modbus)
+add_subdirectory(iec60870-5)
+add_subdirectory(dnp3)
+add_subdirectory(bacnet)

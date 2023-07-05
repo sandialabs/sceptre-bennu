@@ -1,0 +1,13 @@
+# Generate deb package
+string(TIMESTAMP timestamp "%Y%m%d_%H-%M-%S")
+set(CPACK_GENERATOR "DEB")
+set(CPACK_STRIP_FILES TRUE)
+set(CPACK_DEBIAN_PACKAGE_NAME bennu)
+set(CPACK_DEBIAN_PACKAGE_VERSION ${bennu_TAG_HASH})
+set(CPACK_DEBIAN_PACKAGE_ARCHITECHTURE amd64)
+set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Sandia National Laboratories <emulytics@sandia.gov")
+set(CPACK_DEBIAN_PACKAGE_DEPENDS "libasio-dev, libboost-date-time-dev, libboost-filesystem-dev, libboost-program-options-dev, libboost-system-dev")
+set(CPACK_DEBIAN_PACKAGE_SECTION misc)
+set(CPACK_DEBIAN_PACKAGE_DESCRIPTION "SCEPTRE ICS Modeling and Simulation Package")
+set(CPACK_PACKAGE_FILE_NAME "bennu-${CPACK_DEBIAN_PACKAGE_VERSION}_amd64_${timestamp}")
+include(CPack)

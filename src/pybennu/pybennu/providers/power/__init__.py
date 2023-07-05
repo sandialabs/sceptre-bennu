@@ -1,0 +1,1 @@
+class PowerSolverError(Exception): pass

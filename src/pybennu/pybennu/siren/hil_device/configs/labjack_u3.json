@@ -1,0 +1,15 @@
+{
+    "analog_input_0":"FIO2",
+    "analog_input_1":"FIO3",
+    "digital_input_0":"FIO7",
+    "digital_output_0":"FIO6",
+    "digital_output_1":"FIO5",
+    "analog_output_0":{
+        "label":5000,
+        "min_data":0,
+        "max_data":100,
+        "min_voltage":0.0,
+        "max_voltage":3.3
+    }
+}
+
