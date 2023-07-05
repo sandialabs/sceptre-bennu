@@ -75,7 +75,7 @@ jobs:
           build/*.deb
           src/pybennu/dist/*
     - name: release bennu and pybennu - only on PR
-      #if: github.event_name == 'pull-request'
+      if: github.event_name == 'pull-request'
       run: |
         cp build/*.deb build/bennu.deb
         cp src/pybennu/dist/*.deb src/pybennu/dist/pybennu.deb
