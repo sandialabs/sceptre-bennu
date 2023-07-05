@@ -78,7 +78,7 @@ jobs:
       #if: github.event_name == 'pull-request'
       run: |
         cp build/*.deb build/bennu.deb
-        cp src/pybennu/dist/*.deb src/pybennu/dist/*.deb pybennu.deb
+        cp src/pybennu/dist/*.deb src/pybennu/dist/pybennu.deb
         curl -F package=@build/bennu.deb https://mdKP0-NaTZ7EX8SeYwlFRPr3EwKnhYPg@push.fury.io/sceptre/
         curl -F package=@src/pybennu/dist/pybennu.deb https://mdKP0-NaTZ7EX8SeYwlFRPr3EwKnhYPg@push.fury.io/sceptre/
 
