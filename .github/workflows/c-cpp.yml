@@ -14,13 +14,8 @@ jobs:
     steps:
     - name: checkout the repo 
       uses: actions/checkout@v3
-    - name: package pybennu
-      run: |
-        sudo apt-get install --no-install-recommends -y python3-pip python3-wheel git
-        sudo gem install fpm
-        cd src/pybennu
-        make deb 
-        #make dist > dist.log 2>&1
+    - name: get tags
+      run: git fetch --tags
     - name: configure bennu
       run: |
         sudo apt-get install --no-install-recommends -y build-essential cmake g++ gcc libasio-dev libboost-date-time-dev libboost-filesystem-dev libboost-program-options-dev libboost-system-dev libboost-thread-dev libfreetype6-dev libssl-dev libzmq5-dev
@@ -32,11 +27,45 @@ jobs:
         cd build/
         make -j$(nproc)
     - name: test bennu
-      run: cd build/
+      run: |
+        cd build/
+        sudo make install
+        sudo ldconfig
+        bennu-test-ep-server --d 1 >ep.out 2>&1 &
+        bennu-field-device --f ../data/configs/ep/dnp3-server.xml >fd-server.out 2>&1 &
+        bennu-field-device --f ../data/configs/ep/dnp3-client.xml >fd-client.out 2>&1 &
+        sleep 5
+        bennu-probe --c query >probe.out
+        grep "brkr" probe.out
+        sleep 10
+        bennu-probe --c read --t brkr >>probe.out
+        bennu-probe --c read --t load-power >>probe.out
+        sleep 3
+        cat probe.out
+        grep "brkr:true" probe.out
+        grep "load-power:400.5" probe.out
+        bennu-probe --c write --t load-breaker-toggle --s false >>probe.out
+        bennu-probe --c write --t load-mw-setpoint --v 999 >>probe.out
+        sleep 8
+        bennu-probe --c read --t brkr >>probe.out
+        bennu-probe --c read --t load-power >>probe.out
+        sleep 3
+        cat probe.out
+        grep "brkr:false" probe.out
+        grep "load-power:999" probe.out
+        echo -e "help\nexit" | bennu-brash >brash.out 2>&1
+        grep "SCEPTRE Field-Device" brash.out
     - name: package bennu
       run: |
         cd build/
-        make package
+        sudo make package
+    - name: package pybennu
+      run: |
+        sudo apt-get install --no-install-recommends -y python3-pip python3-wheel
+        sudo gem install fpm
+        cd src/pybennu
+        make deb > deb.log 2>&1
+        #make dist > dist.log 2>&1
     - name: archive artifacts
       uses: actions/upload-artifact@v3
       with:
@@ -46,9 +75,9 @@ jobs:
           build/*.deb
           src/pybennu/dist/*
     - name: release bennu and pybennu
-      uses: softprops/action-gh-release@v1
-      with:
-        files: |
-          build/*.deb
-          src/pybennu/dist/*.deb
+      run: |
+        cp build/*.deb build/bennu.deb
+        cp src/pybennu/dist/*.deb src/pybennu/dist/pybennu.deb
+        curl -F package=@build/bennu.deb https://mdKP0-NaTZ7EX8SeYwlFRPr3EwKnhYPg@push.fury.io/sceptre/
+        curl -F package=@src/pybennu/dist/pybennu.deb https://mdKP0-NaTZ7EX8SeYwlFRPr3EwKnhYPg@push.fury.io/sceptre/
 

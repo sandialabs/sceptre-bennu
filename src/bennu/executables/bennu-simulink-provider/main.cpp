@@ -228,6 +228,10 @@ public:
     {
         std::string result;
 
+<<<<<<< HEAD
+=======
+        sem_wait(mUpdatesSemaphore);
+>>>>>>> upstream/main
         for (auto &it : tags)
         {
             std::string tag{it.first};
@@ -236,7 +240,10 @@ public:
             // recieve write and format newDto
             if (mDebug) { std::cout << "BennuSimulinkProvider::write ---- received write for tag: " << tag << " -- " << value << std::endl; }
             std::scoped_lock<std::shared_mutex> lock(mLock);
+<<<<<<< HEAD
             sem_wait(mUpdatesSemaphore);
+=======
+>>>>>>> upstream/main
             std::string dataStr, dataType;
             if(value == "true" || value == "false")
             {
@@ -268,13 +275,20 @@ public:
                 break;
             }
         }
+<<<<<<< HEAD
+=======
+        sem_post(mUpdatesSemaphore);
+>>>>>>> upstream/main
 
         if (result.empty())
         {
             result += "ACK=Updated tags in Simulink provider";
         }
 
+<<<<<<< HEAD
         sem_post(mUpdatesSemaphore);
+=======
+>>>>>>> upstream/main
         return result;
     }
 
