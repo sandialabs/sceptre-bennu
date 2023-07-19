@@ -136,12 +136,7 @@ entries = {
         'pybennu-test-ep-server           = pybennu.executables.pybennu_test_ep_server:main',
         'pybennu-test-subscriber          = pybennu.executables.pybennu_test_subscriber:main',
         'pybennu-probe                    = pybennu.executables.pybennu_probe:main',
-<<<<<<< HEAD
-        'pybennu-siren                    = pybennu.siren.siren:main',
-        'pybennu-bicker                   = pybennu.executables.bicker_provider:main',
-=======
         'pybennu-siren                    = pybennu.siren.siren:main'
->>>>>>> upstream/main
     ]
 }
 
