@@ -1,8 +1,6 @@
 name: C/C++ CI
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
@@ -74,12 +72,10 @@ jobs:
           *.log
           build/*.deb
           src/pybennu/dist/*
-    - name: release bennu and pybennu - only on PR
-      if: github.event_name == 'pull-request'
+    - name: release bennu and pybennu
       run: |
         cp build/*.deb build/bennu.deb
         cp src/pybennu/dist/*.deb src/pybennu/dist/pybennu.deb
         curl -F package=@build/bennu.deb https://mdKP0-NaTZ7EX8SeYwlFRPr3EwKnhYPg@push.fury.io/sceptre/
         curl -F package=@src/pybennu/dist/pybennu.deb https://mdKP0-NaTZ7EX8SeYwlFRPr3EwKnhYPg@push.fury.io/sceptre/
-
 
