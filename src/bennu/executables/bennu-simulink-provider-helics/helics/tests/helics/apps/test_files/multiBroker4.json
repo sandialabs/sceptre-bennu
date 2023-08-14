@@ -1,0 +1,11 @@
+{
+  "type": "test",
+  "comms": [
+    {
+      "type": "zmq"
+    },
+    {
+      "type": "tcp"
+    }
+  ]
+}

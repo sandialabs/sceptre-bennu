@@ -1,0 +1,20 @@
+branches:
+  only:
+    - master
+
+install:
+  - git submodule update --init --recursive
+  - set PATH=C:\Python36;%PATH%
+  - cmake --version
+
+build_script:
+  - mkdir build
+  - cd build
+  - ps: cmake .. -DCMAKE_BUILD_TYPE=Debug -DCMAKE_GENERATOR="Visual Studio 14 2015"
+  - ps: cmake --build .
+  - cd ..
+
+test_script:
+  - cd build
+  - ps: ctest --output-on-failure -C Debug
+

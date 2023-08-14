@@ -1,0 +1,50 @@
+exclude: ^(ThirdParty/|test/files/|.github/workflows/|.github/actions/)
+repos:
+  - repo: https://github.com/jumanjihouse/pre-commit-hooks
+    rev: 2.0.2
+    hooks:
+      - id: markdownlint
+        args: [-s, ./config/.markdownlintrc]
+      - id: script-must-have-extension
+  - repo: https://github.com/cheshirekow/cmake-format-precommit
+    rev: v0.6.13
+    hooks:
+      - id: cmake-format
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-nodejs
+    rev: v1.1.1
+    hooks:
+      - id: dockerfile_lint
+        args: [--rulefile, ./config/docker_rules.yml, --dockerfile]
+  - repo: https://github.com/prettier/prettier
+    rev: 2.1.2
+    hooks:
+      - id: prettier
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.1.7
+    hooks:
+      - id: remove-tabs
+  - repo: https://github.com/codespell-project/codespell
+    rev: v1.17.1
+    hooks:
+      - id: codespell
+        exclude: ^(test/|units/|docs/reference/)
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.3.0
+    hooks:
+      - id: mixed-line-ending
+      - id: trailing-whitespace
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-yaml
+        args: ["--allow-multiple-documents"]
+  - repo: local
+    hooks:
+      - id: docker-clang-format
+        name: Docker Clang Format
+        language: docker_image
+        types:
+          - c++
+        entry: unibeautify/clang-format:latest
+        args:
+          - -style=file
+          - -i

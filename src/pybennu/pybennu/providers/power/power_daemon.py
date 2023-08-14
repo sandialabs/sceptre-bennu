@@ -134,7 +134,28 @@ class ServerDaemon(Daemon):
                 self.solver = PowerWorld(server_endpoint, publish_endpoint,
                                          case_file, oneline_file, objects_file,
                                          debug, noise)
-            
+            #########################################
+            ########### PowerWorldHelics ############
+            #########################################
+            elif solver == 'PowerWorldHelics':
+                try:
+                    case_file = config.get('power-solver-service',
+                                           'case-file').strip()
+                    oneline_file = config.get('power-solver-service',
+                                              'oneline-file').strip()
+                    config_file = config.get('power-solver-service',
+                                             'config-file').strip()
+                except NoOptionError:
+                    print("\nERROR: The following must be defined in the "
+                          "configuration file: 'case-file', "
+                          "'oneline-file', 'config-file'\n")
+                    sys.exit(-1)
+
+                from pybennu.providers.power.solvers.power_world_helics \
+                   import PowerWorldHelics
+                self.solver = PowerWorldHelics(case_file, config_file,
+                                               oneline_file,
+                                               debug)
             #########################################
             ################# PWDS ##################
             #########################################
@@ -218,6 +239,32 @@ class ServerDaemon(Daemon):
                     print(f"\nERROR: The following must be defined in the "
                           f"configuration file: {RTDS.REQUIRED_CONF_KEYS}\n")
                     sys.exit(-1)
+            #########################################
+            ################ HELICS #################
+            #########################################
+            elif solver == 'Helics':
+                try:
+                    E.Endpoint_str_set(server_endpoint,
+                                       config.get('power-solver-service',
+                                                  'server-endpoint').strip())
+                    E.Endpoint_str_set(publish_endpoint,
+                                       config.get('power-solver-service',
+                                                  'publish-endpoint').strip())
+
+                    config_file = config.get('power-solver-service',
+                                             'config-file').strip()
+                except NoOptionError:
+                    print("\nERROR: The following must be defined in the "
+                          "configuration file: 'server-endpoint', "
+                          "'publish-endpoint', 'config-file'\n")
+                    sys.exit(-1)
+
+                from pybennu.providers.power.solvers.helics \
+                    import Helics
+                self.solver = Helics(server_endpoint,
+                                     publish_endpoint,
+                                     config_file,
+                                     debug)
             #########################################
             ############### Default #################
             #########################################

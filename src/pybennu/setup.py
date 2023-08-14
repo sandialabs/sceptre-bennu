@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """Python setup module for pybennu."""
 import itertools
 import os
@@ -99,6 +98,7 @@ END CUSTOM INSTALL COMMANDS
 # If you need something in a newer version of a package, increase the version pinned here
 requires = [
     'elasticsearch>=5.3.0',  # ==7.14.0
+    'helics~=2.7.1',
     'matplotlib>=1.5.3',  # ~=3.4.3
     'networkx>=1.11',  # ==2.6.2
     'numpy>=1.11.2',  # >=1.11.2  ~=1.21.2
@@ -134,6 +134,7 @@ entries = {
         'pybennu-sel-ams-writer           = pybennu.providers.power.utils.sel.sel_ams_writer:server',
         'pybennu-groundtruth-monitor      = pybennu.analytics.groundtruth_monitor:main',
         'pybennu-test-ep-server           = pybennu.executables.pybennu_test_ep_server:main',
+        'pybennu-test-ep-server-helics    = pybennu.executables.pybennu_test_ep_server_helics:main',
         'pybennu-test-subscriber          = pybennu.executables.pybennu_test_subscriber:main',
         'pybennu-probe                    = pybennu.executables.pybennu_probe:main',
         'pybennu-siren                    = pybennu.siren.siren:main'
