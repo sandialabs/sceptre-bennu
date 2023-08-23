@@ -1,0 +1,34 @@
+{
+    "name": "helics-simulink-provider",
+    "period": 1,
+    "real_time": true,
+    "terminate_on_error": true,
+    "only_update_on_change": true,
+    "subscriptions": [
+        {
+            "key": "helics-test-ep-server/bus-1.voltage",
+            "type": "double",
+            "info": "Pump1.active = bus-1.voltage > 0.5"
+        }
+    ],
+    "publications": [
+        {
+            "key": "Pump1.flow",
+            "type": "double"
+        },
+
+        {
+            "key": "Pump1.active",
+            "type": "bool"
+        }
+    ],
+    "endpoints": [
+        {
+            "name": "Pump1.flow"
+        },
+
+        {
+            "name": "Pump1.active"
+        }
+    ]
+}

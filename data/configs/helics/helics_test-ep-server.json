@@ -1,0 +1,42 @@
+{
+    "name": "helics-test-ep-server",
+    "request_time": "max",
+    "terminate_on_error": true,
+    "only_update_on_change": true,
+    "subscriptions": [
+        {
+            "key": "helics-simulink-provider/Pump1.active",
+            "type": "bool",
+            "info": "generator-1_bus-1.active = Pump1.active; load-1_bus-1.active = Pump1.active"
+        },
+    ],
+    "publications": [
+        {
+            "key": "bus-1.voltage",
+            "type": "double"
+        },
+
+        {
+            "key": "generator-1_bus-1.active",
+            "type": "bool"
+        },
+
+        {
+            "key": "load-1_bus-1.active",
+            "type": "bool"
+        }
+    ],
+    "endpoints": [
+        {
+            "name": "bus-1.voltage"
+        },
+
+        {
+            "name": "generator-1_bus-1.active"
+        },
+
+        {
+            "name": "load-1_bus-1.active"
+        }
+    ]
+}

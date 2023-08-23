@@ -1,0 +1,105 @@
+language: cpp
+dist: xenial
+
+# Exclude ghpages,
+# but even better, don't build branch and PR, just PR
+# Include tags starting with v and a digit
+branches:
+  only:
+  - master
+  - /^v\d/
+
+cache:
+  apt: true
+  directories:
+  - "${TRAVIS_BUILD_DIR}/deps/doxygen"
+
+matrix:
+  include:
+    # Default clang
+  - compiler: clang
+    env:
+    - CCACHE_CPP2=yes
+    script:
+    - .ci/make_and_test.sh
+
+    # thread sanitize
+
+    # Check style/tidy
+  - compiler: clang
+    env:
+    - CHECK_STYLE=yes
+    script:
+    - cd "${TRAVIS_BUILD_DIR}"
+    - bash scripts/check_style.sh
+    - bash .ci/check_tidy.sh
+
+    # Docs and clang 3.6
+  - compiler: clang
+    env:
+    - DEPLOY_MAT=yes
+    - CCACHE_CPP2=yes
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-xenial-3.6
+        packages:
+          - clang-3.6
+          - libstdc++-6-dev
+    install:
+    - export CC=clang-3.6
+    - export CXX=clang++-3.6
+    script:
+    - .ci/make_and_test.sh
+    after_success:
+    - export DOXYFILE=$TRAVIS_BUILD_DIR/docs/Doxyfile
+    - export DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
+    - |
+      if [ "${TRAVIS_BRANCH}" == "master" ] && [ "${TRAVIS_PULL_REQUEST}" == "false" ]
+      then
+      #  . .ci/build_doxygen.sh
+       # .ci/build_docs.sh
+      fi
+
+    # GCC 7 and coverage (8 does not support lcov, wait till 9 and new lcov)
+  - compiler: gcc
+    env:
+    - GCC_VER=7
+    addons:
+      apt:
+        sources:
+        - ubuntu-toolchain-r-test
+        packages:
+        - g++-7
+        - curl
+        - lcov
+    install:
+    - export CC=gcc-7
+    - export CXX=g++-7
+    - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
+    - cd $TRAVIS_BUILD_DIR
+    - ". .ci/build_lcov.sh"
+    - "bash .ci/run_codecov.sh"
+    script:
+    - .ci/make_and_test.sh
+
+
+    # GCC 4.9
+  - compiler: gcc
+    env:
+    - GCC_VER=4.9
+    addons:
+      apt:
+        packages:
+        - g++-4.9
+    install:
+    - export CC=gcc-4.9
+    - export CXX=g++-4.9
+    script:
+    - .ci/make_and_test.sh
+
+install: skip
+
+script:
+- .ci/make_and_test.sh
