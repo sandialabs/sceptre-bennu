@@ -1,0 +1,25 @@
+{
+	"log_level": 3,
+	"subscriptions": [
+		{
+			"key": "239.0.0.1:40000/bus-1.voltage",
+			"type": "double"
+		},
+		{
+			"key": "239.0.0.1:40001/bus-2.voltage",
+			"type": "double"
+		}
+	],
+	"endpoints" : [
+		{
+			"name": "239.0.0.1:40000/bus-1.voltage",
+			"destination": "127.0.0.1:5557/bus-1.voltage",
+			"type": "double"
+		},
+		{
+			"name": "239.0.0.1:40001/bus-2.voltage",
+			"destination": "127.0.0.1:5556/bus-2.voltage",
+			"type": "double"
+		}
+	]
+}
