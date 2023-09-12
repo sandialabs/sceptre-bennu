@@ -1,3 +1,12 @@
+###################### UNCLASSIFIED // OFFICIAL USE ONLY ######################
+#
+# Copyright 2018 National Technology & Engineering Solutions of Sandia,
+# LLC (NTESS). Under the terms of Contract DE-NA0003525 with NTESS,
+# there is a non-exclusive license for use of this work by or on behalf
+# of the U.S. Government. Export of this data may require a license from
+# the United States Government.
+#
+###############################################################################
 import argparse
 import os
 import platform
@@ -262,6 +271,32 @@ class ServerDaemon(Daemon):
                 from pybennu.providers.power.solvers.helics \
                     import Helics
                 self.solver = Helics(server_endpoint,
+                                     publish_endpoint,
+                                     config_file,
+                                     debug)
+            #########################################
+            ############### ALICANTO ################
+            #########################################
+            elif solver == 'Alicanto':
+                try:
+                    E.Endpoint_str_set(server_endpoint,
+                                       config.get('power-solver-service',
+                                                  'server-endpoint').strip())
+                    E.Endpoint_str_set(publish_endpoint,
+                                       config.get('power-solver-service',
+                                                  'publish-endpoint').strip())
+
+                    config_file = config.get('power-solver-service',
+                                             'config-file').strip()
+                except NoOptionError:
+                    print("\nERROR: The following must be defined in the "
+                          "configuration file: 'server-endpoint', "
+                          "'publish-endpoint', 'config-file'\n")
+                    sys.exit(-1)
+
+                from pybennu.providers.alicanto.alicanto \
+                    import Alicanto
+                self.solver = Alicanto(server_endpoint,
                                      publish_endpoint,
                                      config_file,
                                      debug)
