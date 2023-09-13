@@ -1,0 +1,11 @@
+freebsd_instance:
+  image_family: freebsd-12-1
+
+task:
+  install_script: pkg install -y cmake
+  build_script: |
+    mkdir -p build && cd build
+    cmake -DENABLE_NETIF_TESTS=ON ..
+    make
+    ctest --verbose
+    ifconfig

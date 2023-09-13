@@ -1,0 +1,207 @@
+version: 2
+aliases:
+  - &setup_helics
+    name: setup_helics
+    environment:
+    command: |
+      mkdir -p build
+      cd build
+      eval cmake .. ${CMAKE_FLAGS}
+      make -j 4
+
+  - &run_octave_tests
+    name: run_octave_tests
+    command: |
+      cd build
+      make install
+      cd ${OCTAVETEST}
+      # this return the write error code in RESULT
+      octave -W -V --eval "source('runTestsCIRCLECI.m');"
+      RESULT=$?
+      echo "*** Octave test result: "${RESULT}
+      exit $RESULT
+
+  - &run_helics_tests
+    name: run_helics_tests
+    command: |
+      /root/project/scripts/run-circleci-tests.sh
+      RESULT=$?
+      exit $RESULT
+
+  - &run_installer_tests
+    name: run_installer_tests
+    command: |
+      cd build
+      make install
+      ctest -V -R find-package-tests
+      ctest -V -R package-config-tests
+
+  - &run_benchmarks
+    name: run_benchmarks
+    command: |
+      mkdir /tmp/bm_results
+      cd build
+      make RUN_KEY_BENCHMARKS
+
+jobs:
+  helicsoctave:
+    docker:
+      - image: helics/buildenv:octave
+    environment:
+      OCTAVETEST: '/root/project/tests/octave'
+      CMAKE_FLAGS: '-DBUILD_OCTAVE_INTERFACE=ON -DHELICS_BUILD_TESTS=ON'
+    steps:
+      - checkout
+      - run: *setup_helics
+      - run: *run_octave_tests
+
+  helicsgccTSan:
+    docker:
+      - image: helics/buildenv:builder
+    environment:
+      CMAKE_FLAGS: '-DCMAKE_CXX_FLAGS="-fsanitize=thread -g -O1 "  -DHELICS_BUILD_TESTS=ON -DHELICS_ZMQ_SUBPROJECT=ON  -DHELICS_ZMQ_FORCE_SUBPROJECT=ON -DHELICS_DISABLE_SYSTEM_CALL_TESTS=ON'
+      TSAN_OPTIONS: 'second_deadlock_stack=1 suppressions=/root/project/.circleci/tsan_suppression.txt history_size=4'
+
+    steps:
+      - checkout
+      - run: *setup_helics
+      - run: *run_helics_tests
+
+  helicsASan:
+    docker:
+      - image: helics/buildenv:sanitizers
+    environment:
+      CMAKE_FLAGS: '-DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_FLAGS="-fsanitize=undefined,address -fsanitize-address-use-after-scope -stdlib=libc++ -L/root/develop/libcxx_asan/lib -lc++abi -I/root/develop/libcxx_asan/include -I/root/develop/libcxx_asan/include/c++/v1 -Wno-unused-command-line-argument -fno-omit-frame-pointer -g -O1 -Wl,-rpath=/root/develop/libcxx_asan/lib -fsanitize-blacklist=/root/project/.circleci/asan_blacklist.txt"  -DHELICS_BUILD_TESTS=ON -DHELICS_ZMQ_SUBPROJECT=ON  -DHELICS_ZMQ_FORCE_SUBPROJECT=ON'
+      LSAN_OPTIONS: 'suppressions=/root/project/.circleci/leak_suppression.txt'
+      UBSAN_OPTIONS: 'print_stacktrace=1 suppressions=/root/project/.circleci/ubsan_suppression.txt'
+
+    steps:
+      - checkout
+      - run: *setup_helics
+      - run: *run_helics_tests
+
+  helicsMSan:
+    docker:
+      - image: helics/buildenv:sanitizers
+    environment:
+      CMAKE_FLAGS: '-DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_FLAGS="-fsanitize=memory -stdlib=libc++ -L/root/develop/libcxx_msan/lib -lc++abi -I/root/develop/libcxx_msan/include -I/root/develop/libcxx_msan/include/c++/v1 -Wno-unused-command-line-argument -fno-omit-frame-pointer -g -O1 -Wl,-rpath=/root/develop/libcxx_msan/lib"  -DHELICS_BUILD_TESTS=ON -DHELICS_ZMQ_SUBPROJECT=ON  -DHELICS_ZMQ_FORCE_SUBPROJECT=ON'
+
+    steps:
+      - checkout
+      - run: *setup_helics
+      - run: *run_helics_tests
+
+  helicsInstall1:
+    docker:
+      - image: helics/buildenv:builder
+    environment:
+      CMAKE_FLAGS: '-DHELICS_BUILD_CXX_SHARED_LIB=ON -DHELICS_BUILD_TESTS=ON -DHELICS_INSTALL_PACKAGE_TESTS=ON'
+    steps:
+      - checkout
+      - run: *setup_helics
+      - run: *run_installer_tests
+
+  helicsNoZmq:
+    docker:
+      - image: helics/buildenv:gcc8-builder
+    environment:
+      CMAKE_FLAGS: '-DHELICS_BUILD_CXX_SHARED_LIB=ON -DENABLE_ZMQ_CORE=OFF -DENABLE_IPC_CORE=OFF -DHELICS_BUILD_TESTS=ON -DCMAKE_CXX_STANDARD=17'
+    steps:
+      - checkout
+      - run: *setup_helics
+      - run: *run_helics_tests
+
+  helicsTumbleweed:
+    docker:
+      - image: helics/buildenv:tumbleweed-builder
+    environment:
+      CMAKE_FLAGS: '-DHELICS_BUILD_CXX_SHARED_LIB=ON -DENABLE_ZMQ_CORE=OFF -DENABLE_IPC_CORE=OFF -DENABLE_UDP_CORE=OFF -DHELICS_BUILD_TESTS=ON -DCMAKE_CXX_STANDARD=17'
+    steps:
+      - checkout
+      - run: *setup_helics
+
+  helicsInstall2:
+    docker:
+      - image: helics/buildenv:builder
+    environment:
+      CMAKE_FLAGS: '-DHELICS_BUILD_TESTS=ON -DHELICS_INSTALL_PACKAGE_TESTS=ON'
+    steps:
+      - checkout
+      - run: *setup_helics
+      - run: *run_installer_tests
+
+  gcc10:
+    docker:
+      - image: helics/buildenv:gcc10-builder
+    environment:
+      CMAKE_FLAGS: '-DHELICS_EXTRA_COMPILE_FLAGS=-Wredundant-tags'
+    steps:
+      - checkout
+      - run: *setup_helics
+
+  benchmarkjob:
+    docker:
+      - image: helics/buildenv:builder
+    environment:
+      CMAKE_FLAGS: '-DHELICS_BUILD_BENCHMARKS=ON -DBM_RESULT_DIR=/tmp/bm_results/ -DHELICS_DISABLE_C_SHARED_LIB=ON'
+    steps:
+      - checkout
+      - run: *setup_helics
+      - run: *run_benchmarks
+
+      - store_artifacts:
+          path: /tmp/bm_results
+
+workflows:
+  version: 2
+  helics_test:
+    jobs:
+      - helicsMSan:
+          filters:
+            branches:
+              ignore: /pre-commit\/.*/
+      - helicsASan:
+          filters:
+            branches:
+              ignore: /pre-commit\/.*/
+      - helicsInstall1:
+          filters:
+            branches:
+              ignore: /pre-commit\/.*/
+      - helicsInstall2:
+          filters:
+            branches:
+              ignore: /pre-commit\/.*/
+      - helicsgccTSan:
+          filters:
+            branches:
+              ignore: /pre-commit\/.*/
+
+  nightly:
+    triggers:
+      - schedule:
+          cron: '0 8 * * *'
+          filters:
+            branches:
+              only:
+                - develop
+                - helics3
+    jobs:
+      - helicsoctave
+      - helicsMSan
+      - helicsASan
+      - helicsTumbleweed
+      - helicsNoZmq
+      - helicsgccTSan
+      - gcc10
+  benchmark:
+    triggers:
+      - schedule:
+          cron: '17 9 * * 0,2,5'
+          filters:
+            branches:
+              only:
+                - develop
+                - helics3
+    jobs:
+      - benchmarkjob
