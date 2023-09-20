@@ -137,6 +137,7 @@ entries = {
         'pybennu-test-ep-server-helics    = pybennu.executables.pybennu_test_ep_server_helics:main',
         'pybennu-test-subscriber          = pybennu.executables.pybennu_test_subscriber:main',
         'pybennu-probe                    = pybennu.executables.pybennu_probe:main',
+        'pybennu-alicanto                 = pybennu.executables.pybennu_alicanto:main',
         'pybennu-siren                    = pybennu.siren.siren:main'
     ]
 }
