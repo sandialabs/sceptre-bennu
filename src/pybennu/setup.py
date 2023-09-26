@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Python setup module for pybennu."""
 import itertools
 import os
@@ -166,10 +167,9 @@ setup(
     classifiers             = [
         'Development Status :: 5 - Production/Stable',
         'Operating System :: POSIX :: Linux',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
     ],
-    python_requires         = '>=3.6',
+    python_requires         = '>=3.8',
     entry_points            = entries,
     data_files              = data_files,
     packages                = find_packages(),
