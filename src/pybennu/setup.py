@@ -11,8 +11,8 @@ from setuptools.command.develop import develop
 from setuptools.command.egg_info import egg_info
 from setuptools.command.install import install
 
-# Get git version
-import version
+# # Get git version
+# import version
 
 """
 BEGIN CUSTOM INSTALL COMMANDS
@@ -157,9 +157,15 @@ setup(
         'egg_info': CustomEggInfoCommand,
     },
     name                    = 'pybennu',
-    version                 = version.get_git_version(),
+    # NOTE: as of setuptools 66, "version" must be PEP 440-compliant string.
+    # In other words, a git commit hash is not valid for "version" anymore.
+    # https://peps.python.org/pep-0440/
+    # TODO: move to pyproject.toml, use setuptools_scm to do version handling
+    # https://github.com/pypa/setuptools_scm
+    # version                 = version.get_git_version(),
+    version                 = '0.0.0',
     description             = 'bennu python providers and utilities',
-    url                     = 'http://www.sandia.gov/emulytics/',
+    url                     = 'https://github.com/sandialabs/sceptre-bennu.git',
     author                  = 'Sandia National Laboratories',
     author_email            = 'emulytics@sandia.gov',
     license                 = 'Proprietary',
