@@ -209,7 +209,7 @@ bull = [r"""
 init()
 
 def colorize(chars, color):
-    for char in chars:
+	for char in chars:
 		bull[0] = bull[0].replace(char, color+char+Style.RESET_ALL)
 
 colorize("o", Fore.RED)
