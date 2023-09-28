@@ -280,15 +280,22 @@ class PMU:
 
     Polls for data using C37.118 protocol, utilizing the pypmu library under-the-hood.
     """
-    def __init__(self, ip: str, port: int, pdc_id: int, name: str = "", label: str = ""):
+    def __init__(self, ip: str, port: int, pdc_id: int, name: str = "", label: str = "", protocol: str = "tcp"):
         self.ip = ip
         self.port = port
         self.pdc_id = pdc_id
         self.name = name
         self.label = label
+        self.protocol = protocol
 
         # Configure PDC instance (pypmu.synchrophasor.pdc.Pdc)
-        self.pdc = Pdc(self.pdc_id, self.ip, self.port)
+        self.pdc = Pdc(
+            pdc_id=self.pdc_id,
+            pmu_ip=self.ip,
+            pmu_port=self.port,
+            method=self.protocol
+        )
+
         self.pdc_header = None  # type: Optional[HeaderFrame]
         self.pdc_config = None  # type: Optional[CommonFrame]
         self.channel_names = []  # type: List[str]
@@ -305,7 +312,7 @@ class PMU:
         self.log.info(f"Initialized {repr(self)}")
 
     def __repr__(self) -> str:
-        return f"PMU(ip={self.ip}, port={self.port}, pdc_id={self.pdc_id}, name={self.name}, label={self.label})"
+        return f"PMU(ip={self.ip}, port={self.port}, pdc_id={self.pdc_id}, name={self.name}, label={self.label}, protocol={self.protocol})"
 
     def __str__(self) -> str:
         if self.name and self.label:
@@ -437,13 +444,21 @@ class RTDS(Provider):
         else:
             self.gtnet_skt_udp_write_rate = 30
 
-        # Elastic-config
+        # Elastic config
         self.elastic_enabled = str_to_bool(self._conf("elastic-enabled"))  # type: bool
         self.elastic_host = self._conf("elastic-host")  # type: str
         if self._has_conf("elastic-index-basename"):
             self.elastic_index_basename = self._conf("elastic-index-basename")  # type: str
         else:
             self.elastic_index_basename = "rtds-default"
+
+        # rtds-pmu-protocols
+        if self._has_conf("rtds-pmu-protocols"):
+            self.pmu_protocols = self._conf("rtds-pmu-protocols", is_list=True)  # type: List[str]
+        else:
+            self.pmu_protocols = ["tcp" for _ in range(len(self.pmu_ips))]
+        if not all(p in ["tcp", "udp"] for p in self.pmu_protocols):
+            raise ValueError("rtds-pmu-protocols must be either 'tcp' or 'udp'")
 
         # Validate configuration values
         if self.retry_delay <= 0.0:
@@ -454,7 +469,7 @@ class RTDS(Provider):
             raise ValueError(f"'csv-rows-per-file' must be a positive integer, not {self.csv_rows_per_file}")
         if not self.pmu_ips or any(x.count(".") != 3 for x in self.pmu_ips):
             raise ValueError(f"invalid value(s) for 'rtds-pmu-ips': {self.pmu_ips}")
-        if not (len(self.pmu_ips) == len(self.pmu_names) == len(self.pmu_ports) == len(self.pmu_labels) == len(self.pdc_ids)):
+        if not (len(self.pmu_ips) == len(self.pmu_names) == len(self.pmu_ports) == len(self.pmu_labels) == len(self.pdc_ids) == len(self.pmu_protocols)):
             raise ValueError("lengths of pmu configuration options don't match, are you missing a pmu in one of the options?")
 
         # Validate GTNET-SKT configuration values only if there are values configured
@@ -504,9 +519,9 @@ class RTDS(Provider):
 
         # Create PMU instances: IP, Port, Name, Label, PDC ID
         self.pmus = []
-        pmu_info = zip(self.pmu_ips, self.pmu_names, self.pmu_ports, self.pmu_labels, self.pdc_ids)
-        for ip, name, port, label, pdc_id in pmu_info:
-            pmu = PMU(ip=ip, port=port, pdc_id=pdc_id, name=name, label=label)
+        pmu_info = zip(self.pmu_ips, self.pmu_names, self.pmu_ports, self.pmu_labels, self.pdc_ids, self.pmu_protocols)
+        for ip, name, port, label, pdc_id, protocol in pmu_info:
+            pmu = PMU(ip=ip, port=port, pdc_id=pdc_id, name=name, label=label, protocol=protocol)
             self._rebuild_pmu_connection(pmu)  # build PMU connection, with automatic retry
             self.pmus.append(pmu)
         self.log.info(f"Instantiated and started {len(self.pmus)} PMUs")
