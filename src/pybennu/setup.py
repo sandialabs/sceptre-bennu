@@ -143,13 +143,6 @@ entries = {
 }
 
 
-recommended = {
-    'extras': [
-        'tox'
-    ]
-}
-
-
 setup(
     cmdclass                = {
         'install': CustomInstallCommand,
@@ -180,6 +173,5 @@ setup(
     data_files              = data_files,
     packages                = find_packages(),
     install_requires        = requires,
-    extras_require          = recommended,
     include_package_data    = True,
 )

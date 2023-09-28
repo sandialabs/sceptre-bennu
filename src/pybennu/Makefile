@@ -78,24 +78,19 @@ endef
 
 help:
 		@echo "clean		- Remove python, build, and test file artifacts."
-		@echo "docs 		- Generate Sphinx HTML documentation and open index.html."
 		@echo "install		- Install the project in the current python environment."
 		@echo "uninstall 	- Uninstall the project."
 
 helpdev:
 		@echo "clean		- Remove python, build, and test file artifacts."
-		@echo "coverage 	- Check code coverage with tox/pytest-cov."
-		@echo "deb		- Create a Debian package."
+		@echo "deb			- Create a Debian package."
 		@echo "dist 		- Create a src and whl distribution."
-		@echo "docs 		- Generate Sphinx HTML documentation and open index.html."
 		@echo "install		- Install the project in the current python environment."
 		@echo "install-dev	- Install the project in editable (-e) mode."
-		@echo "lint 		- Check style with tox/pytest-pylint."
-		@echo "test 		- Run tests on Python versions in tox.ini with tox/pytest."
 		@echo "uninstall 	- Uninstall the project."
-		@echo "wheelhouse   	- Create a wheelhouse (deps included) archive."
+		@echo "wheelhouse   - Create a wheelhouse (deps included) archive."
 
-clean: root clean-pyc clean-build clean-tests
+clean: root clean-pyc clean-build
 
 clean-build:
 		@rm -rfv "$(BUILD_DIR)"
@@ -109,14 +104,6 @@ clean-pyc:
 		@find . -name "*~" -exec rm -fv {} +
 		@find . -name "__pycache__" -exec rm -rfv {} +
 		@find . -name ".cache" -exec rm -rfv {} +
-
-clean-tests:
-		@rm -rf .tox
-		@rm -rf htmlcov
-
-coverage: install-extras
-		@tox -e cov-report
-		@$(BROWSER) htmlcov/index.html
 
 deb: packagetools
 		@mkdir -p dist/
@@ -172,27 +159,11 @@ deb: packagetools
 dist: root pytools
 		@python3 setup.py sdist bdist_wheel
 
-docs: install-extras
-		@tox -e docs
-		@$(BROWSER) docs/build/html/index.html
-
-flake: install-extras
-		@tox -e flake8
-
-install: install-extras
+install: root pytools
 		@pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org .
 
-install-dev: install-extras
+install-dev: root pytools
 		@pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org -e .
-
-install-extras: root pytools
-		@pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org .[extras] > /dev/null 2>&1
-
-lint: install-extras
-		@tox -e pylint
-
-livedocs: install-extras
-		@tox -e livedocs
 
 packagetools:
 ifdef packagetools
@@ -211,9 +182,6 @@ endif
 
 sdist: root pytools
 		@python3 setup.py sdist
-
-test: install-extras
-		@tox
 
 uninstall: root pytools
 		@pip3 uninstall $(PACKAGE_NAME)
