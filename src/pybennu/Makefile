@@ -45,7 +45,7 @@ PACKAGE_NAME = pybennu
 PACKAGE_FILENAME = $(PACKAGE_NAME)_$(PACKAGE_FULL_VERSION)_amd64_$(TIMESTAMP).deb
 PACKAGE_VENDOR = SNL
 PACKAGE_MAINTAINER = Sandia National Laboratories <emulytics@sandia.gov>
-PACKAGE_LICENSE = Proprietary
+PACKAGE_LICENSE = GPLv3
 PACKAGE_URL = https://github.com/sandialabs/sceptre-bennu.git
 PACKAGE_ARCHITECTURE = amd64
 
