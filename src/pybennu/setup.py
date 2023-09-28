@@ -11,9 +11,6 @@ from setuptools.command.develop import develop
 from setuptools.command.egg_info import egg_info
 from setuptools.command.install import install
 
-# # Get git version
-# import version
-
 """
 BEGIN CUSTOM INSTALL COMMANDS
 These classes are used to hook into setup.py's install process.
@@ -155,7 +152,6 @@ setup(
     # https://peps.python.org/pep-0440/
     # TODO: move to pyproject.toml, use setuptools_scm to do version handling
     # https://github.com/pypa/setuptools_scm
-    # version                 = version.get_git_version(),
     version                 = '0.0.0',
     description             = 'bennu python providers and utilities',
     url                     = 'https://github.com/sandialabs/sceptre-bennu.git',
