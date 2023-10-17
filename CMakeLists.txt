@@ -10,7 +10,7 @@ execute_process(
 
 # Get the latest tag and abbreviated commit hash of the working branch
 execute_process(
-  COMMAND git describe --dirty
+  COMMAND git rev-parse --short HEAD
   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
   OUTPUT_VARIABLE bennu_TAG_HASH
   OUTPUT_STRIP_TRAILING_WHITESPACE
