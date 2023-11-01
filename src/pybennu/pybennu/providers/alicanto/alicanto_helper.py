@@ -18,12 +18,14 @@ import pybennu.distributed.swig._Endpoint as E
 logger = logging.getLogger('alicanto')
 logger.setLevel(logging.INFO)
 
+# TestSubscriber used for easy multiple subscribers
 class TestSubscriber(Subscriber):
     def __init__(self, sub_source):
         new_publish_endpoint = E.new_Endpoint()
         E.Endpoint_str_set(new_publish_endpoint, 'udp://'+str(sub_source))
         Subscriber.__init__(self, new_publish_endpoint)
 
+#TestClient used with special send function which returns the reply
 class TestClient(Client):
     def __init__(self, end_dest):
         new_endpoint_dest = E.new_Endpoint()
@@ -176,17 +178,20 @@ class alicantoFederate():
         
         # Endpoint initial values to alicanto
         for i in range(self.end_count):
-            end_name = self.endid[i]["name"]
-            end_name = (end_name.split('/')[1]
-                        if '/' in end_name
-                        else end_name)
+            full_end_name = self.endid[i]["name"]
+            end_name = (full_end_name.split('/')[1]
+                        if '/' in full_end_name
+                        else full_end_name)
             full_end_dest = self.endid[i]["destination"]
             end_dest = (full_end_dest.split('/')[0]
                         if '/' in full_end_dest
                         else full_end_dest)
+            end_dest_tag = (full_end_dest.split('/')[1]
+                        if '/' in full_end_dest
+                        else full_end_dest)
             #value = self.tag(end_name)
             self.end_clients[end_dest] = TestClient(end_dest)
-            reply = self.end_clients[end_dest].send("READ="+end_name)
+            reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
             value = reply[1].rstrip('\x00')
             self.endid[i]["value"] = value
             self.tag(full_end_dest, value)
@@ -213,13 +218,13 @@ class alicantoFederate():
                             if '/' in full_end_dest
                             else full_end_dest)
 
-                # !!need to add something to handle binary points
+
                 if self.types[full_end_name] == 'float' or self.types[full_end_name] == 'double':
                     if not math.isclose(float(self.tag(full_end_name)), float(self.tag(full_end_dest))):
                         self.end_clients[end_dest] = TestClient(end_dest)
                         self.end_clients[end_dest].write_analog_point(end_dest_tag, self.tag(full_end_name))
                         time.sleep(0.5)
-                        reply = self.end_clients[end_dest].send("READ="+end_name)
+                        reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
                         value = reply[1].rstrip('\x00')
                         self.tag(full_end_dest, value)
                 elif self.types[full_end_name] == 'bool':
@@ -227,7 +232,7 @@ class alicantoFederate():
                         self.end_clients[end_dest] = TestClient(end_dest)
                         self.end_clients[end_dest].write_digital_point(end_dest_tag, self.tag(full_end_name))
                         time.sleep(0.5)
-                        reply = self.end_clients[end_dest].send("READ="+end_name)
+                        reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
                         value = reply[1].rstrip('\x00')
                         self.tag(full_end_dest, value)
 
