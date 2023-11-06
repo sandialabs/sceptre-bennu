@@ -60,59 +60,68 @@ in the short-term.
 
 ## CSV files
 Data read from the PMUs is saved to CSV files in the directory specified by the
-`csv-file-path` configuration option, if `csv-enabled` is True.
+csv-file-path configuration option, if csv-enabled is True.
 
 CSV header example:
 ```
-sequence,rtds_time,sceptre_time,freq,dfreq,VA_real,VA_angle,VB_real,VB_angle,VC_real,VC_angle,IA_real,IA_angle,IB_real,IB_angle,IC_real,IC_angle,NA_real,NA_angle,NA_real,NA_angle
+rtds_time,sceptre_time,freq,dfreq,VA_real,VA_angle,VB_real,VB_angle,VC_real,VC_angle,IA_real,IA_angle,IB_real,IB_angle,IC_real,IC_angle,NA_real,NA_angle,NA_real,NA_angle
 ```
 
-CSV filename example: `PMU1_BUS4-1_25-04-2022_23-49-22.csv`
+CSV filename example: PMU1_BUS4-1_25-04-2022_23-49-22.csv
 
 
 ## Elasticsearch
 
 Data read from the PMUs is exported to the Elasticsearch server specified by the
-`elastic-host` configuration option, if `elastic-enabled` is True.
+elastic-host configuration option, if elastic-enabled is True.
 
-Index name: `rtds-<YYYY.MM.DD>` (e.g. `rtds-2022.04.26`)
+Index name: `<basename>-<YYYY.MM.DD>` (e.g. rtds-clean-2023.06.08)
+
+Index name is configurable in power-provider_config.ini using 'elastic-index-basename'.
+By default (if you copy config.ini), it's 'rtds-clean', e.g. 'rtds-clean-2023.06.08'.
+If elastic-index-basename isn't set, then it defaults to 'rtds-default', e.g. 'rtds-default-2023.06.08'.
 
 ### Index mapping
 
 | field                    | type          | example                   | description |
 | ------------------------ | ------------- | ------------------------- | ----------- |
-| @timestamp               | date          | `2022-04-20:11:22:33.000` | Timestamp from RTDS. |
-| rtds_time                | date          | `2022-04-20:11:22:33.000` | Timestamp from RTDS. |
-| sceptre_time             | date          | `2022-04-20:11:22:33.000` | Timestamp from SCEPTRE provider (the `power-provider` VM in the emulation). |
-| event.ingested           | date          | `2022-04-20:11:22:33.000` | Timestamp of when the data was ingested into Elasticsearch. |
-| ecs.version              | keyword       | `8.1.0`                   | [Elastic Common Schema (ECS)](https://www.elastic.co/guide/en/ecs/current/ecs-field-reference.html) version this schema adheres to. |
-| agent.type               | keyword       | `rtds-sceptre-provider`   | Type of system providing the data |
-| agent.version            | keyword       | `4.0.0`                   | Version of the provider |
-| observer.hostname        | keyword       | `power-provider`          | Hostname of the system providing the data. |
-| observer.geo.timezone    | keyword       | `America/Denver`          | Timezone of the system providing the data. |
-| network.protocol         | keyword       | `dnp3`                    | Network protocol used to retrieve the data. Currently, this will be either `dnp3` or `c37.118`. |
-| network.transport        | keyword       | `tcp`                     | Transport layer (Layer 4 of OSI model) protocol used to retrieve the data. Currently, this is usually `tcp`, but it could be `udp` if UDP is used for C37.118 or GTNET-SKT. |
-| pmu.name                 | keyword       | `PMU1`                    | Name of the PMU. |
-| pmu.label                | keyword       | `BUS4-1`                  | Label for the PMU. |
-| pmu.ip                   | ip            | `172.24.9.51`             | IP address of the PMU. |
-| pmu.port                 | integer       | `4714`                    | TCP port of the PMU. |
-| pmu.id                   | long          | `41`                      | PDC ID of the PMU. |
-| measurement.stream       | byte          | `1`                       | Stream ID of this measurement from the PMU. |
-| measurement.status       | keyword       | `ok`                      | Status of this measurement from the PMU. |
-| measurement.sequence     | unsigned_long | `1001`                    | Sequence of this value in reads from the PMU. |
-| measurement.frequency    | float         | `60.06`                   | Nominal system frequency. |
-| measurement.dfreq        | float         | `8.835189510136843e-05`   | Rate of change of frequency (ROCOF). |
-| measurement.channel      | keyword       | `PHASOR CH 1:VA`          | Channel name of this measurement from the PMU. |
-| measurement.phasor.id    | byte          | `0`                       | ID of the phasor. For example, if there are 4 phasors, then the ID of the first phasor will be `0`. |
-| measurement.phasor.real  | float         | `132786.5`                | Phase magnitude? |
-| measurement.phasor.angle | float         | `-1.5519471168518066`     | Phase angle? |
+| @timestamp               | date          | 2022-04-20:11:22:33.000   | Timestamp from RTDS. |
+| rtds_time                | date          | 2022-04-20:11:22:33.000   | Timestamp from RTDS. |
+| sceptre_time             | date          | 2022-04-20:11:22:33.000   | Timestamp from SCEPTRE provider (the power-provider VM in the emulation). |
+| event.ingested           | date          | 2022-04-20:11:22:33.000   | Timestamp of when the data was ingested into Elasticsearch. |
+| ecs.version              | keyword       | 8.8.0                     | [Elastic Common Schema (ECS)](https://www.elastic.co/guide/en/ecs/current/ecs-field-reference.html) version this schema adheres to. |
+| agent.type               | keyword       | rtds-sceptre-provider     | Type of system providing the data |
+| agent.version            | keyword       | 4.0.0                     | Version of the provider |
+| observer.hostname        | keyword       | power-provider            | Hostname of the system providing the data. |
+| observer.geo.timezone    | keyword       | America/Denver            | Timezone of the system providing the data. |
+| network.protocol         | keyword       | dnp3                      | Network protocol used to retrieve the data. Currently, this will be either dnp3 or c37.118. |
+| network.transport        | keyword       | tcp                       | Transport layer (Layer 4 of OSI model) protocol used to retrieve the data. Currently, this is usually tcp, but it could be udp if UDP is used for C37.118 or GTNET-SKT. |
+| pmu.name                 | keyword       | PMU1                      | Name of the PMU. |
+| pmu.label                | keyword       | BUS4-1                    | Label for the PMU. |
+| pmu.ip                   | ip            | 172.24.9.51               | IP address of the PMU. |
+| pmu.port                 | integer       | 4714                      | TCP port of the PMU. |
+| pmu.id                   | long          | 41                        | PDC ID of the PMU. |
+| measurement.stream       | byte          | 1                         | Stream ID of this measurement from the PMU. |
+| measurement.status       | keyword       | ok                        | Status of this measurement from the PMU. |
+| measurement.time         | double        | 1686089097.13333          | Absolute time of when the measurement occurred. This timestamp can be used as a sequence number, and will match across all PMUs from the same RTDS case. |
+| measurement.frequency    | double        | 60.06                     | Nominal system frequency. |
+| measurement.dfreq        | double        | 8.835189510136843e-05     | Rate of change of frequency (ROCOF). |
+| measurement.channel      | keyword       | PHASOR CH 1:VA            | Channel name of this measurement from the PMU. |
+| measurement.phasor.id    | byte          | 0                         | ID of the phasor. For example, if there are 4 phasors, then the ID of the first phasor will be 0. |
+| measurement.phasor.real  | double        | 132786.5                  | Phase magnitude? |
+| measurement.phasor.angle | double        | -1.5519471168518066       | Phase angle? |
 
 ## Notes
+
 NOTE: in the bennu VM, rtds.py is located in dist-packages.
 Just in case you need to modify it on the fly ;)
-``/usr/lib/python3/dist-packages/pybennu/providers/power/solvers/rtds.py``
+/usr/lib/python3/dist-packages/pybennu/providers/power/solvers/rtds.py
 
+If observing C37.118 traffic in Wireshark, configure manual decode for
+each PMU port and set the protocol to "SYNCHROPHASOR" (synphasor).
+Wireshark -> "Analyze..." -> "Decode As..."
 """
+
 import atexit
 import json
 import logging
@@ -123,32 +132,62 @@ import socket
 import struct
 import sys
 import threading
-import traceback
+import queue
+from concurrent.futures import ThreadPoolExecutor
 from configparser import ConfigParser
 from datetime import datetime, timezone
 from io import TextIOWrapper
 from pathlib import Path
+from pprint import pformat
 from time import sleep
 from typing import Any, Dict, List, Optional
 
 from elasticsearch import Elasticsearch, helpers
 
-from pybennu._version import __version__
+# TODO: figure out how to get bennu version after it's fixed
+# Use importlib.metadata?
+# from pybennu._version import __version__
 from pybennu.distributed.provider import Provider
-from pybennu.pypmu.synchrophasor.frame import (CommonFrame, DataFrame,
-                                               HeaderFrame)
+from pybennu.pypmu.synchrophasor.frame import CommonFrame, DataFrame, HeaderFrame
 from pybennu.pypmu.synchrophasor.pdc import Pdc
 
-# TODO: rebuilding PMU connections for some reason results
-# in no data going to elastic (and maybe CSVs?)
 # TODO: support PMU "digital" fields (mm["digital"])
 # TODO: support PMU "analog" fields, current handling is a hack for HARMONIE LDRD
-# TODO: move CSV writing into threads like Elastic is?
-# TODO: push pre-defined type mapping to Elasticsearch when creating index
+# TODO: push state of GTNET-SKT values to Elasticsearch
+# TODO: log most messages to a file with Rotating handler to avoid filling up log (since bennu isn't very smart and won't rotate the file)
+# TODO: add field to Elastic data differentiating which SCEPTRE experiment data is associated with
+
+def str_to_bool(val: str) -> bool:
+    """
+    Convert a string representation of truth to :obj:`True` or :obj:`False`.
+
+    True values are: 'y', 'yes', 't', 'true', 'on', '1', 'enable', 'enabled'
+
+    False values are: 'n', 'no', 'f', 'false', 'off', '0', 'disable', 'disabled'
+
+    Args:
+        val: String to evaluate
+
+    Returns:
+        The boolean representation of the string
+
+    Raises:
+        ValueError: val is anything other than a boolean value
+    """
+    val = val.strip().lower()
+    if val in ("y", "yes", "t", "true", "on", "1", "enable", "enabled"):
+        return True
+    elif val in ("n", "no", "f", "false", "off", "0", "disable", "disabled"):
+        return False
+    else:
+        raise ValueError(f"invalid bool string {val}")
 
 
 class RotatingCSVWriter:
-    """Writes data to CSV files, creating a new file when a limit is reached."""
+    """
+    Writes data to CSV files, creating a new file when a limit is reached.
+    """
+
     def __init__(
         self,
         name: str,
@@ -249,21 +288,20 @@ class PMU:
         self.label = label
 
         # Configure PDC instance (pypmu.synchrophasor.pdc.Pdc)
-        self.pmu = Pdc(self.pdc_id, self.ip, self.port)
-        self.pmu_header = None  # type: Optional[HeaderFrame]
-        self.pmu_config = None  # type: Optional[CommonFrame]
+        self.pdc = Pdc(self.pdc_id, self.ip, self.port)
+        self.pdc_header = None  # type: Optional[HeaderFrame]
+        self.pdc_config = None  # type: Optional[CommonFrame]
         self.channel_names = []  # type: List[str]
-        self.sequence = 0  # type: int
         self.csv_writer = None  # type: Optional[RotatingCSVWriter]
         self.station_name = ""  # type: str
 
         # Configure logging
         self.log = logging.getLogger(f"PMU [{str(self)}]")
         self.log.setLevel(logging.DEBUG)
-        self.pmu.logger = logging.getLogger(f"Pdc [{str(self)}]")
+        self.pdc.logger = logging.getLogger(f"Pdc [{str(self)}]")
         # NOTE: pypmu logs a LOT of stuff at DEBUG, leave at INFO
         # unless you're doing deep debugging of the pypmu code.
-        self.pmu.logger.setLevel(logging.INFO)
+        self.pdc.logger.setLevel(logging.INFO)
         self.log.info(f"Initialized {repr(self)}")
 
     def __repr__(self) -> str:
@@ -279,22 +317,22 @@ class PMU:
 
     def run(self):
         """Connect to PMU."""
-        self.pmu.run()
+        self.pdc.run()
 
         # NOTE (03/30/2022): some SEL PDCs respond to header requests and don't need them
         try:
-            self.pmu_header = self.pmu.get_header()  # Get header message from PMU
-            self.log.debug(f"PMU header: {self.pmu_header.__dict__}")
+            self.pdc_header = self.pdc.get_header()  # Get header message from PMU
+            self.log.debug(f"PMU header: {self.pdc_header.__dict__}")
         except Exception as ex:
             self.log.warning(f"Failed to get header: {ex} (device may be a SEL PDC, or something else happened)")
 
-        self.pmu_config = self.pmu.get_config()  # Get configuration from PMU
-        self.log.debug(f"PMU config: {self.pmu_config.__dict__}")
-        if "_station_name" in self.pmu_config.__dict__:
-            self.station_name = self.pmu_config.__dict__["_station_name"].strip()
+        self.pdc_config = self.pdc.get_config()  # Get configuration from PMU
+        self.log.debug(f"PMU config: {self.pdc_config.__dict__}")
+        if "_station_name" in self.pdc_config.__dict__:
+            self.station_name = self.pdc_config.__dict__["_station_name"].strip()
             self.log.info(f"PMU Station Name: {self.station_name}")
         else:
-            self.log.warning(f"No station_name from PMU, which is a bit odd")
+            self.log.warning("No station_name from PMU, which is a bit odd")
 
         # Raw: ["PHASOR CH 1:VA  ", "PHASOR CH 2:VB  ", "PHASOR CH 3:VC  ",
         #       "PHASOR CH 4:IA  ", "PHASOR CH 5:IB  ", "PHASOR CH 6:IC  "]
@@ -303,7 +341,7 @@ class PMU:
             """Strip 'PHASOR CH *' from channel names, so we get a nice 'VA', 'IA', etc."""
             return re.sub(r"PHASOR CH \d\:", "", cn.strip(), re.IGNORECASE | re.ASCII).strip()
         self.channel_names = []  # type: List[str]
-        for channel in self.pmu_config.__dict__.get("_channel_names", []):
+        for channel in self.pdc_config.__dict__.get("_channel_names", []):
             if isinstance(channel, list):
                 # NOTE (03/30/2022): channel names can be lists of strings instead of strings
                 for n in channel:
@@ -313,11 +351,10 @@ class PMU:
         self.log.debug(f"Channel names: {self.channel_names}")
 
     def start(self):
-        self.pmu.start()
+        self.pdc.start()
 
     def get_data_frame(self) -> Optional[Dict[str, Any]]:
-        data = self.pmu.get()  # Keep receiving data
-
+        data = self.pdc.get()  # Keep receiving data
         if not data:
             self.log.error("Failed to get data from PMU!")
             return None
@@ -335,7 +372,9 @@ class PMU:
 
 
 class RTDS(Provider):
-    """SCEPTRE Provider for the Real-Time Dynamic Simulator (RTDS)."""
+    """
+    SCEPTRE Provider for the Real-Time Dynamic Simulator (RTDS).
+    """
 
     REQUIRED_CONF_KEYS = [  # NOTE: these are checked in ../power_daemon.py
         "server-endpoint", "publish-endpoint", "publish-rate", "rtds-retry-delay", "rtds-rack-ip",
@@ -346,15 +385,22 @@ class RTDS(Provider):
         "elastic-enabled", "elastic-host",
     ]
 
-    def __init__(self, server_endpoint, publish_endpoint, config: ConfigParser, debug: bool = False):
+    def __init__(
+        self,
+        server_endpoint,
+        publish_endpoint,
+        config: ConfigParser,
+        debug: bool = False
+    ):
         Provider.__init__(self, server_endpoint, publish_endpoint)
+
+        # Thread locks
         self.__lock = threading.Lock()
-        self.__es_lock = threading.Lock()
+        self.__gtnet_lock = threading.Lock()
 
         # Load configuration values
         self.config = config  # type: ConfigParser
         self.debug = debug  # type: bool
-
         self.publish_rate = float(self._conf("publish-rate"))  # type: float
 
         # RTDS config
@@ -367,7 +413,7 @@ class RTDS(Provider):
         self.pdc_ids = self._conf("rtds-pdc-ids", is_list=True, convert=int)  # type: List[int]
 
         # CSV config
-        self.csv_enabled = True if self._conf("csv-enabled").lower() == "true" else False  # type: bool
+        self.csv_enabled = str_to_bool(self._conf("csv-enabled"))  # type: bool
         self.csv_path = Path(self._conf("csv-file-path")).expanduser().resolve()  # type: Path
         self.csv_rows_per_file = int(self._conf("csv-rows-per-file"))  # type: int
         self.csv_max_files = int(self._conf("csv-max-files"))  # type: int
@@ -380,13 +426,28 @@ class RTDS(Provider):
         self.gtnet_skt_tag_types = self._conf("gtnet-skt-tag-types", is_list=True, convert=lambda x: x.lower())  # type: List[str]
         self.gtnet_skt_initial_values = self._conf("gtnet-skt-initial-values", is_list=True, convert=lambda x: x.lower())  # type: List[str]
 
+        # backwards compatibility with old topologies
+        if self._has_conf("gtnet-skt-tcp-retry-delay"):
+            self.gtnet_skt_tcp_retry_delay = float(self._conf("gtnet-skt-tcp-retry-delay"))
+        else:
+            self.gtnet_skt_tcp_retry_delay = 1.0
+
+        if self._has_conf("gtnet-skt-udp-write-rate"):
+            self.gtnet_skt_udp_write_rate = int(self._conf("gtnet-skt-udp-write-rate"))
+        else:
+            self.gtnet_skt_udp_write_rate = 30
+
         # Elastic-config
-        self.elastic_enabled = True if self._conf("elastic-enabled").lower() == "true" else False  # type: bool
+        self.elastic_enabled = str_to_bool(self._conf("elastic-enabled"))  # type: bool
         self.elastic_host = self._conf("elastic-host")  # type: str
+        if self._has_conf("elastic-index-basename"):
+            self.elastic_index_basename = self._conf("elastic-index-basename")  # type: str
+        else:
+            self.elastic_index_basename = "rtds-default"
 
         # Validate configuration values
         if self.retry_delay <= 0.0:
-            raise ValueError(f"'rtds-retry-delay' must be a positive float, not {self.retry_delay}")
+            raise ValueError(f"'rtds-retry-delay' value must be a positive float, not {self.retry_delay}")
         if self.rack_ip.count(".") != 3:
             raise ValueError(f"invalid IP for 'rtds-rack-ip': {self.rack_ip}")
         if self.csv_rows_per_file <= 0:
@@ -403,11 +464,15 @@ class RTDS(Provider):
             if self.gtnet_skt_protocol not in ["tcp", "udp"]:
                 raise ValueError(f"invalid protocol '{self.gtnet_skt_protocol}' for 'gtnet_skt_protocol', must be 'tcp' or 'udp'")
             if len(self.gtnet_skt_tag_names) != len(self.gtnet_skt_tag_types):
-                raise ValueError(f"length of 'gtnet-skt-tag-names' doesn't match length of 'gtnet-skt-tag-types'")
+                raise ValueError("length of 'gtnet-skt-tag-names' doesn't match length of 'gtnet-skt-tag-types'")
             if len(self.gtnet_skt_initial_values) != len(self.gtnet_skt_tag_types):
-                raise ValueError(f"length of 'gtnet-skt-initial-values' doesn't match length of 'gtnet-skt-tag-types'")
+                raise ValueError("length of 'gtnet-skt-initial-values' doesn't match length of 'gtnet-skt-tag-types'")
             if any(t not in ["int", "float"] for t in self.gtnet_skt_tag_types):
-                raise ValueError(f"invalid type present in 'gtnet-skt-tag-types', only 'int' or 'float' are allowed")
+                raise ValueError("invalid type present in 'gtnet-skt-tag-types', only 'int' or 'float' are allowed")
+            if self.gtnet_skt_tcp_retry_delay <= 0.0:
+                raise ValueError(f"'gtnet-skt-tcp-retry-delay' value must be a positive float, not {self.gtnet_skt_tcp_retry_delay}")
+            if self.gtnet_skt_udp_write_rate <= 0:
+                raise ValueError(f"'gtnet-skt-udp-write-rate' must be a positive integer, not {self.gtnet_skt_udp_write_rate}")
             if len(self.gtnet_skt_tag_names) > 30:  # max of 30 data points per channel, 10 channels total for GTNET card
                 raise ValueError(f"maximum of 30 points allowed per GTNET-SKT channel, {len(self.gtnet_skt_tag_names)} are defined in config")
 
@@ -420,6 +485,7 @@ class RTDS(Provider):
         )
         self.log = logging.getLogger(self.__class__.__name__)
         self.log.setLevel(logging.DEBUG if self.debug else logging.INFO)
+
         self.log.info(f"Debug: {self.debug}")
         if not self.csv_enabled:
             self.log.warning("CSV output is DISABLED (since the 'csv-enabled' option is False)")
@@ -427,35 +493,22 @@ class RTDS(Provider):
             self.log.warning("No limit set in 'csv-max-files', CSV files won't be cleaned up and could fill all available disk space")
 
         # Elasticsearch setup
-        self.elastic_buffer = []  # buffer for data to push to elastic
+        self._es_index_cache = set()
+        self.es_queue = queue.Queue()  # queue for data to push to elastic
         if self.elastic_enabled:
             logging.getLogger("elastic_transport").setLevel(logging.WARNING)
             logging.getLogger("elasticsearch").setLevel(logging.WARNING)
-            self.log.info(f"Connecting to Elasticsearch host {self.elastic_host}")
-            self.__es = Elasticsearch(self.elastic_host)
-            es_info = self.__es.info()  # cause connection to be created
-            self.log.info(f"Elasticsearch server info: {es_info}")
+            logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
         else:
             self.log.warning("Elasticsearch output is DISABLED (since the 'elastic-enabled' option is False)")
-            self.__es = None
 
         # Create PMU instances: IP, Port, Name, Label, PDC ID
         self.pmus = []
         pmu_info = zip(self.pmu_ips, self.pmu_names, self.pmu_ports, self.pmu_labels, self.pdc_ids)
-        polling_active = False
-        while not polling_active:
-            try:
-                for ip, name, port, label, pdc_id in pmu_info:
-                    pmu = PMU(ip=ip, port=port, pdc_id=pdc_id, name=name, label=label)
-                    pmu.run()
-                    self.pmus.append(pmu)
-            except Exception as ex:
-                self.log.error(f"Failed to connect to PMUs: {ex}\nSleeping for {self.retry_delay} seconds before retrying connection")
-                if self.debug:
-                    self.log.error(f"traceback for connection failure: {traceback.format_exc()}")
-                sleep(self.retry_delay)
-            else:
-                polling_active = True
+        for ip, name, port, label, pdc_id in pmu_info:
+            pmu = PMU(ip=ip, port=port, pdc_id=pdc_id, name=name, label=label)
+            self._rebuild_pmu_connection(pmu)  # build PMU connection, with automatic retry
+            self.pmus.append(pmu)
         self.log.info(f"Instantiated and started {len(self.pmus)} PMUs")
 
         # Current values, keyed by tag name string
@@ -487,20 +540,35 @@ class RTDS(Provider):
         # Allow gtnet-skt fields to be read
         self.current_values.update(self.gtnet_skt_state)
 
+        # Start GTNET-SKT writer thread if using UDP protocol
+        if self.gtnet_skt_protocol == "udp":
+            self.__gtnet_thread = threading.Thread(target=self._gtnet_continuous_write)
+            self.__gtnet_thread.start()
+
+        # Start data writer thread
+        self.frame_queue = queue.Queue()
+        self.__data_thread = threading.Thread(target=self._data_writer)
+        self.__data_thread.start()
+
         # Begin polling PMUs
         self.__pmu_thread = threading.Thread(target=self._start_poll_pmus)
         self.__pmu_thread.start()
 
         # Start Elasticsearch pusher thread
         if self.elastic_enabled:
-            logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
-            self.__es_thread = threading.Thread(target=self._elastic_pusher)
-            self.__es_thread.start()
+            self.__es_executor = ThreadPoolExecutor()
+            for _ in range(3):
+                self.__es_executor.submit(self._elastic_pusher)
 
         self.log.info("RTDS initialization is finished")
 
+    def _has_conf(self, key: str) -> bool:
+        return self.config.has_option("power-solver-service", key)
+
     def _conf(self, key: str, is_list: bool = False, convert=None) -> Any:
-        """Read a value out of the configuration file section for the service."""
+        """
+        Read a value out of the configuration file section for the service.
+        """
         val = self.config.get("power-solver-service", key)
 
         if isinstance(val, str):
@@ -509,19 +577,19 @@ class RTDS(Provider):
         if is_list:
             if not isinstance(val, str):
                 raise ValueError(f"expected comma-separated list for '{key}'")
+
             val = [x.strip() for x in val.split(",") if x.strip()]
+
+            # Type convert each value in the list
             if convert:
                 val = [convert(x) for x in val]
 
         return val
 
     def _start_poll_pmus(self):
-        """Query for data from the PMUs via C37.118 as fast as possible."""
-        self.log.info(f"Sending start request to {len(self.pmus)} PMUs...")
-        for pmu in self.pmus:
-            pmu.sequence = 0
-            pmu.start()  # Request to start sending measurements
-
+        """
+        Query for data from the PMUs via C37.118 as fast as possible.
+        """
         self.log.info(f"Starting polling threads for {len(self.pmus)} PMUs...")
         threads = []
         for pmu in self.pmus:
@@ -533,14 +601,16 @@ class RTDS(Provider):
         metadata = {}
         for pmu in self.pmus:
             # Wait until configs have been pulled to save them
-            while not self.pmus[0].pmu_config:
+            while not self.pmus[0].pdc_config:
                 sleep(1)
-            metadata[str(pmu)] = {"config": pmu.pmu_config.__dict__}
-            if pmu.pmu_header:
-                metadata[str(pmu)]["header"] = pmu.pmu_header.__dict__
+
+            metadata[str(pmu)] = {"config": pmu.pdc_config.__dict__}
+            if pmu.pdc_header:
+                metadata[str(pmu)]["header"] = pmu.pdc_header.__dict__
 
         timestamp = datetime.utcnow().strftime("%d-%m-%Y_%H-%M-%S")
 
+        # Save PMU metadata to JSON file
         meta_path = Path(self.csv_path, f"pmu_metadata_{timestamp}.json")
         if not meta_path.parent.exists():
             meta_path.parent.mkdir(exist_ok=True, parents=True)
@@ -569,25 +639,34 @@ class RTDS(Provider):
         When the simulation restarts, this provider should automatically reconnect
         to the PMUs and start getting data again.
         """
-        if pmu.pmu.pmu_socket:
-            pmu.pmu.quit()
+        if pmu.pdc.pmu_socket:
+            pmu.pdc.quit()
 
-        successful = False
-        while not successful:
+        while True:
             try:
-                pmu.pmu.run()  # attempt to connect
-                pmu.run()  # re-initialize
-                pmu.sequence = 0  # reset sequence number
-                successful = True
+                # Create TCP connection and get header(s)
+                pmu.run()
+
+                # Send start frame to kick off PMU data
+                # NOTE (cegoes, 6/1/2023): this fixed a long-standing bug where
+                # rebuilding connections to PMUs, where connections would be
+                # rebuilt but data wouldn't be updating. This resulted in the
+                # provider having to be manually restarted whenever the
+                # RSCAD case was restarted.
+                pmu.start()
+
+                break
             except Exception as ex:
                 self.log.error(f"Failed to rebuild PMU connection to {str(pmu)} due to error '{ex}', sleeping for {self.retry_delay} seconds before attempting again...")
-                if pmu.pmu.pmu_socket:
-                    pmu.pmu.quit()
+                if pmu.pdc.pmu_socket:
+                    pmu.pdc.quit()
                 sleep(self.retry_delay)
+
+        self.log.debug(f"(re)initialized PMU {str(pmu)}")
 
     def _poll_pmu(self, pmu: PMU):
         """
-        Continually polls for data from a PMU and updates ``self.current_values``.
+        Continually polls for data from a PMU and updates self.current_values.
 
         NOTE: This method is intended to be run in a thread,
         since it's loop that runs forever until killed.
@@ -616,9 +695,22 @@ class RTDS(Provider):
                     sleep(self.retry_delay)
                 continue
 
-            ts_now = datetime.utcnow()
+            self.frame_queue.put((pmu, data_frame))
 
-            for mm in data_frame["measurements"]:
+    def _data_writer(self):
+        """
+        Handles processing of PMU data to avoid blocking the PMU polling thread.
+        """
+        self.log.info("Starting data writer thread")
+
+        while True:
+            # print(f"frame queue: {self.frame_queue.qsize()}")
+
+            # This will block until there is an item to process
+            pmu, frame = self.frame_queue.get()
+            sceptre_ts = datetime.utcnow()
+
+            for mm in frame["measurements"]:
                 if mm["stat"] != "ok":
                     pmu.log.error(f"Bad/unknown PMU status: {mm['stat']}")
                 if mm["stream_id"] != pmu.pdc_id:
@@ -626,9 +718,8 @@ class RTDS(Provider):
 
                 # TODO: support PMU "digital" fields (mm["digital"])
                 line = {
-                    "sequence": pmu.sequence,  # int
                     "stream_id": mm["stream_id"],  # int
-                    "time": data_frame["time"],  # float
+                    "time": frame["time"],  # float
                     "freq": mm["frequency"],  # float
                     "dfreq": mm["rocof"],  # float
                     "phasors": {  # dict of dict, keyed by phasor ID (int)
@@ -638,40 +729,20 @@ class RTDS(Provider):
                     },
                 }
 
-                # Create CSV writer if it doesn't exist
-                if self.csv_enabled and pmu.csv_writer is None:
-                    header = ["sequence", "rtds_time", "sceptre_time", "freq", "dfreq"]
-                    for i, ph in line["phasors"].items():
-                        for k in ph.keys():
-                            # Example: PHASOR CH 1:VA_real
-                            header.append(f"{pmu.channel_names[i]}_{k}")
-                    pmu.csv_writer = RotatingCSVWriter(
-                        name=str(pmu),
-                        csv_dir=self.csv_path / str(pmu),
-                        header=header,
-                        filename_base=f"{str(pmu)}",
-                        rows_per_file=self.csv_rows_per_file,
-                        max_files=self.csv_max_files
-                    )
-
-                # TODO: move CSV writing into threads like Elastic is?
-                # Write data to CSV file
-                if self.csv_enabled:
-                    csv_row = [line["sequence"], line["time"], ts_now.timestamp(), line["freq"], line["dfreq"]]
-                    for ph in line["phasors"].values():
-                        for v in ph.values():
-                            csv_row.append(v)
-                    pmu.csv_writer.write(csv_row)
-
                 # Save data to Elasticsearch
                 if self.elastic_enabled:
-                    rtds_time = datetime.utcfromtimestamp(data_frame["time"])
+                    rtds_datetime = datetime.utcfromtimestamp(frame["time"])
+                    rtds_ts = rtds_datetime.timestamp()
+                    if rtds_ts != frame["time"]:
+                        self.log.error(f"Timestamp {rtds_ts} (from {rtds_datetime}) != frame['time'] of {frame['time']}")
+                        sys.exit(1)
+
                     es_bodies = []
                     for ph_id, phasor in line["phasors"].items():
                         es_body = {
-                            "@timestamp": rtds_time,
-                            "rtds_time": rtds_time,
-                            "sceptre_time": ts_now,
+                            "@timestamp": rtds_datetime,
+                            "rtds_time": rtds_datetime,
+                            "sceptre_time": sceptre_ts,
                             "pmu": {
                                 "name": pmu.name,
                                 "label": pmu.label,
@@ -682,7 +753,7 @@ class RTDS(Provider):
                             "measurement": {
                                 "stream": mm["stream_id"],  # int
                                 "status": mm["stat"],  # str
-                                "sequence": pmu.sequence,  # int
+                                "time": frame["time"],  # float
                                 "frequency": mm["frequency"],  # float
                                 "dfreq": mm["rocof"],  # float
                                 "channel": pmu.channel_names[ph_id],  # str
@@ -694,8 +765,7 @@ class RTDS(Provider):
                             },
                         }
                         es_bodies.append(es_body)
-                    with self.__es_lock:
-                        self.elastic_buffer.extend(es_bodies)
+                    self.es_queue.put(es_bodies)
 
                 # Update global data structure with measurements
                 #
@@ -715,22 +785,48 @@ class RTDS(Provider):
                         for i, analog_value in enumerate(mm["analog"]):
                             self.current_values[f"{pmu.name}_ANALOG_{i+1}.real"] = analog_value
                             self.current_values[f"{pmu.name}_ANALOG_{i+1}.angle"] = analog_value
-                pmu.sequence += 1
+
+                # Create CSV writer if it doesn't exist
+                if self.csv_enabled and pmu.csv_writer is None:
+                    # Build the CSV header
+                    header = ["rtds_time", "sceptre_time", "freq", "dfreq"]
+                    for i, ph in line["phasors"].items():
+                        for k in ph.keys():
+                            # Example: PHASOR CH 1:VA_real
+                            header.append(f"{pmu.channel_names[i]}_{k}")
+
+                    pmu.csv_writer = RotatingCSVWriter(
+                        name=str(pmu),
+                        csv_dir=self.csv_path / str(pmu),
+                        header=header,
+                        filename_base=f"{str(pmu)}",
+                        rows_per_file=self.csv_rows_per_file,
+                        max_files=self.csv_max_files
+                    )
+
+                # Write data to CSV file
+                if self.csv_enabled:
+                    csv_row = [line["time"], sceptre_ts.timestamp(), line["freq"], line["dfreq"]]
+                    for ph in line["phasors"].values():
+                        for v in ph.values():
+                            csv_row.append(v)
+                    pmu.csv_writer.write(csv_row)
 
     def _elastic_pusher(self):
+        """
+        Thread that sends PMU data to Elasticsearch using the Elasticsearch Bulk API.
+        """
         self.log.info("Starting Elasticsearch pusher thread")
-        if not self.__es:
-            raise RuntimeError("self.__es not defined")
 
-        # Only need to create this dict once
+        # Only need to create these fields once, cache and copy into messages
         es_additions = {
-            "event": {},
             "ecs": {
-                "version": "8.1.0"
+                "version": "8.8.0"
             },
             "agent": {
                 "type": "rtds-sceptre-provider",
-                "version": __version__
+                # "version": __version__
+                "version": "0.0.0",
             },
             "observer": {
                 "hostname": platform.node(),
@@ -739,37 +835,122 @@ class RTDS(Provider):
                 }
             },
             "network": {
+                # TODO: if pushing gtnet-skt points to elastic, change these two fields
                 "protocol": "c37.118",
                 "transport": "tcp",
             },
         }
 
+        # Field type mapping for Elasticsearch.
+        # NOTE: the table of fields is in the docstring at the top of this file
+        # https://www.elastic.co/guide/en/elasticsearch/reference/7.9/mapping-types.html
+        # https://www.elastic.co/guide/en/elasticsearch/reference/7.9/number.html
+        es_type_mapping = {
+            "@timestamp": {"type": "date"},
+            "rtds_time": {"type": "date"},
+            "sceptre_time": {"type": "date"},
+            "event": {"properties": {"ingested": {"type": "date"}}},
+            "ecs": {"properties": {"version": {"type": "keyword"}}},
+            "agent": {
+                "properties": {
+                    "type": {"type": "keyword"},
+                    "version": {"type": "keyword"},
+                }
+            },
+            "observer": {
+                "properties": {
+                    "hostname": {"type": "keyword"},
+                    "geo": {"properties": {"timezone": {"type": "keyword"}}},
+                }
+            },
+            "network": {
+                "properties": {
+                    "protocol": {"type": "keyword"},
+                    "transport": {"type": "keyword"},
+                }
+            },
+            "pmu": {
+                "properties": {
+                    "name": {"type": "keyword"},
+                    "label": {"type": "keyword"},
+                    "ip": {"type": "ip"},
+                    "port": {"type": "integer"},
+                    "id": {"type": "long"},
+                }
+            },
+            "measurement": {
+                "properties": {
+                    "stream": {"type": "byte"},
+                    "status": {"type": "keyword"},
+                    "time": {"type": "double"},
+                    "frequency": {"type": "double"},
+                    "dfreq": {"type": "double"},
+                    "channel": {"type": "keyword"},
+                    "phasor": {
+                        "properties": {
+                            "id": {"type": "byte"},
+                            "real": {"type": "double"},
+                            "angle": {"type": "double"},
+                        }
+                    },
+                }
+            }
+        }
+
+        self.log.info(f"Connecting to Elasticsearch host {self.elastic_host}")
+        es = Elasticsearch(self.elastic_host)
+        if not es.ping():  # cause connection to be created
+            raise RuntimeError("failed to connect to Elasticsearch")
+
         while True:
-            sleep(0.1)  # check every 50ms to prevent eating up CPU just spinning
-            if self.elastic_buffer:
-                with self.__es_lock:
-                    messages = list(self.elastic_buffer)
-                    self.elastic_buffer = []
+            # print(f"elastic queue: {self.es_queue.qsize()}")
+            # Batch up messages before sending them all in a single bulk request
+            messages = []
+            while len(messages) < 48:  # 8 PMUs * 6 channels
+                # This blocks until there are messages
+                messages.extend(self.es_queue.get())
 
-                # TODO: push pre-defined type mapping when creating index
-                ts_now = datetime.now()
-                index = f"rtds-{ts_now.strftime('%Y.%m.%d')}"
-                es_additions["event"]["ingested"] = ts_now
+            # TODO: there is potential for docs to be pushed to the wrong
+            # date index at the start or end of a day.
+            ts_now = datetime.utcnow()
+            index = f"{self.elastic_index_basename}-{ts_now.strftime('%Y.%m.%d')}"
 
-                actions = [  # type: List[dict]
-                    {
-                        "_index": index,
-                        "_source": {**es_additions, **message}
+            if index not in self._es_index_cache:
+                # check with elastic, could exist and not be in the cache
+                # if the provider was restarted part way through a day.
+                if not es.indices.exists(index=index):
+                    self.log.info(f"Creating Elasticsearch index '{index}'...")
+                    es.indices.create(index=index, body={
+                        "mappings": {
+                            "properties": es_type_mapping
+                        }
+                    })
+                    self.log.info(f"Created Elasticsearch index '{index}'")
+                self._es_index_cache.add(index)
+
+            # Create list of docs to send using Elasticsearch's bulk API
+            actions = [
+                {
+                    "_index": index,
+                    "_source": {
+                        **es_additions,
+                        **message,
+                        "event": {"ingested": ts_now},
                     }
-                    for message in messages
-                ]
+                }
+                for message in messages
+            ]
 
-                try:
-                    result = helpers.bulk(self.__es, actions, request_timeout=30)
-                    if self.debug and not result:
-                        self.log.error(f"Empty ES bulk result: {result}")
-                except Exception:
-                    self.log.exception("failed ES bulk push")
+            try:
+                result = helpers.bulk(es, actions, request_timeout=10)
+                if not result:
+                    self.log.error(f"Empty Elasticsearch bulk result: {result}")
+            except helpers.BulkIndexError as ex:
+                self.log.exception("Failed Elasticsearch bulk ingest")
+                self.log.error(f"** Errors **\n{pformat(ex.errors)}")
+                raise RuntimeError("errors happened during elastic bulk ingest")
+            except Exception:
+                self.log.exception("Unknown error during Elasticsearch bulk ingest")
 
     def _serialize_value(self, tag: str, value: Any) -> str:
         """
@@ -825,7 +1006,8 @@ class RTDS(Provider):
         else:
             msg = f"ACK={self._serialize_value(tag, self.current_values[tag])}"
 
-        self.log.log(  # Log at DEBUG level, unless there's an error
+        # Log at DEBUG level, unless there's an error
+        self.log.log(
             logging.ERROR if "ERR" in msg else logging.DEBUG,
             f"Read response for tag '{tag}': {msg}"
         )
@@ -882,34 +1064,32 @@ class RTDS(Provider):
 
             # NOTE: don't need to sort incoming values, since they're updating the
             # dict (gtnet_skt_state), which is already in the proper order.
-            self.log.info(f"Updating GTNET-SKT tag '{tag}' to {typecasted_value} "
-                          f"(previous value: {self.gtnet_skt_state[tag]})")
-            self.gtnet_skt_state[tag] = typecasted_value
+            self.log.info(f"Updating GTNET-SKT tag '{tag}' to {typecasted_value} (previous value: {self.gtnet_skt_state[tag]})")
+            with self.__gtnet_lock:
+                self.gtnet_skt_state[tag] = typecasted_value
 
-        # Generate the payload bytes to be sent across the socket
-        # NOTE: see docstring at top of this file for details on GTNET-SKT protocol
-        values = list(self.gtnet_skt_state.values())
-        payload = struct.pack(self.struct_format_string, *values)  # type: bytes
-        self.log.debug(f"Raw payload for {len(tags)} tags: {payload}")
+        # If TCP, build and send, and retry connection if it fails
+        # For UDP, the writer thread will handle sending the updated values
+        if self.gtnet_skt_protocol == "tcp":
+            payload = self._gtnet_build_payload()
 
-        if not self.__gtnet_socket:
-            self._init_gtnet_socket()
+            if self.debug:
+                self.log.debug(f"Raw payload for {len(tags)} tags: {payload}")
 
-        sent = False
-        while not sent:
-            try:
-                # Send the payload via TCP or UDP. No special structure or
-                # tagging, this is a very basic protocol :)
-                if self.gtnet_skt_protocol == "tcp":
+            if not self.__gtnet_socket:
+                self._gtnet_init_socket()
+
+            sent = False
+            while not sent:
+                try:
                     self.__gtnet_socket.send(payload)
-                else:  # UDP
-                    self.__gtnet_socket.sendto(payload, (self.gtnet_skt_ip, self.gtnet_skt_port))
-                sent = True
-            except Exception:
-                self.log.exception(f"GTNET-SKT send failed, resetting connection...")
-                self._init_gtnet_socket()
+                    sent = True
+                except Exception:
+                    self.log.exception("GTNET-SKT send failed, resetting connection...")
+                    self._gtnet_init_socket()
 
         # Update current values so GTNET-SKT points can be read from in addition to written
+        # This is done AFTER sending value to ensure the right values are always available
         with self.__lock:
             self.current_values.update(self.gtnet_skt_state)
 
@@ -918,12 +1098,42 @@ class RTDS(Provider):
 
         return msg
 
-    def _init_gtnet_socket(self):
+    def _gtnet_build_payload(self) -> bytes:
+        """
+        Generate the payload bytes to be sent across the socket.
+        NOTE: see docstring at top of this file for details on GTNET-SKT payload structure.
+        """
+        # mutex to prevent threads from writing while we're reading
+        with self.__gtnet_lock:
+            values = list(self.gtnet_skt_state.values())
+
+        return struct.pack(self.struct_format_string, *values)
+
+    def _gtnet_continuous_write(self):
+        """
+        Continuously write values to RTDS via GTNET-SKT using UDP protocol.
+
+        Rate is configured using 'gtnet-skt-udp-write-rate' in config.ini
+        """
+        sleep_for = 1.0 / float(self.gtnet_skt_udp_write_rate)
+        target = (self.gtnet_skt_ip, self.gtnet_skt_port)
+
+        self.log.info(f"Starting GTNET-SKT UDP writer thread [sleep_for={sleep_for}, target={target}]")
+        self._gtnet_init_socket()
+
+        while True:
+            payload = self._gtnet_build_payload()
+            self.__gtnet_socket.sendto(payload, target)
+            sleep(sleep_for)
+
+    def _gtnet_init_socket(self):
         """
         Initialize TCP or UDP socket, and if TCP connection fails, retry until it's successful.
         """
-        self._reset_gtnet_socket()
+        self._gtnet_reset_socket()
 
+        # TCP socket for synchronous connection.
+        # Connection will fail if RSCAD case isn't running.
         if self.gtnet_skt_protocol == "tcp":
             target = (self.gtnet_skt_ip, self.gtnet_skt_port)
             connected = False
@@ -933,15 +1143,17 @@ class RTDS(Provider):
                     self.__gtnet_socket.connect(target)
                     connected = True
                 except Exception:
-                    self.log.error(f"Failed to connect to GTNET-SKT {target}, sleeping for {self.retry_delay} seconds before retrying")
+                    self.log.error(f"Failed to connect to GTNET-SKT {target}, sleeping for {self.gtnet_skt_tcp_retry_delay} seconds before retrying")
                     if self.debug:  # only log traceback if debugging
                         self.log.exception(f"traceback for GTNET-SKT {target}")
-                    self._reset_gtnet_socket()
-                    sleep(self.retry_delay)
-        else:  # UDP
+                    self._gtnet_reset_socket()
+                    sleep(self.gtnet_skt_tcp_retry_delay)
+
+        # UDP socket for continually spamming data to the RTDS
+        else:
             self.__gtnet_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    def _reset_gtnet_socket(self):
+    def _gtnet_reset_socket(self):
         if self.__gtnet_socket:
             try:
                 self.__gtnet_socket.close()
@@ -962,7 +1174,8 @@ class RTDS(Provider):
         """
         self.log.info(f"Beginning periodic publish (publish rate: {self.publish_rate})")
         while True:
-            with self.__lock:  # mutex to prevent threads from writing while we're reading
+            # mutex to prevent threads from writing while we're reading
+            with self.__lock:
                 tags = [
                     f"{tag}:{self._serialize_value(tag, value)}"
                     for tag, value in self.current_values.items()
@@ -975,7 +1188,4 @@ class RTDS(Provider):
             # Otherwise (if it's non-zero), log the points, and sleep like usual
             if self.publish_rate:
                 # NOTE: to get the raw values, run 'pybennu-test-subscriber' on any RTU
-                # if self.debug:
-                #     self.log.debug(f"Published {len(tags)} points (publish rate: {self.publish_rate})")
-                #     self.log.debug(f"msg: {msg}")
                 sleep(self.publish_rate)
