@@ -71,11 +71,11 @@ RUN apt update \
   && rm -rf /var/lib/apt/lists/*
 
 # setup Go
-ENV GOLANG_VERSION 1.16.5
-RUN wget -O go.tgz https://golang.org/dl/go${GOLANG_VERSION}.linux-amd64.tar.gz \
-  && tar -C /usr/local -xzf go.tgz && rm go.tgz
-ENV GOPATH /go
-ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
+#ENV GOLANG_VERSION 1.16.5
+#RUN wget -O go.tgz https://golang.org/dl/go${GOLANG_VERSION}.linux-amd64.tar.gz \
+#  && tar -C /usr/local -xzf go.tgz && rm go.tgz
+#ENV GOPATH /go
+#ENV PATH $GOPATH/bin:/usr/local/go/bin:$PATH
 
 # copy over custom-built libraries
 COPY --from=pybuilder /usr/local /usr/local
@@ -86,18 +86,18 @@ ADD cmake          /tmp/bennu/cmake
 ADD CMakeLists.txt /tmp/bennu/CMakeLists.txt
 ADD src/bennu      /tmp/bennu/src/bennu
 ADD src/deps       /tmp/bennu/src/deps
-ADD src/gobennu    /tmp/bennu/src/gobennu
+#ADD src/gobennu    /tmp/bennu/src/gobennu
 ADD test           /tmp/bennu/test
 
 #set necessary vars
-ENV GOPROXY "http://proxy.golang.org"
-ENV  GONOSUMDB "proxy.golang.org/*,github.com,github.com/*,gopkg.in,gopkg.in/*,golang.org/*,golang.org"
-ENV  GOPRIVACY "proxy.golang.org/*,github.com,github.com/*,gopkg.in,gopkg.in/*,golang.org/*,golang.org"
-ENV  GOINSECURE "proxy.golang.org/*,github.com,github.com/*,gopkg.in,gopkg.in/*,golang.org/*,golang.org"
+#ENV GOPROXY "http://proxy.golang.org"
+#ENV  GONOSUMDB "proxy.golang.org/*,github.com,github.com/*,gopkg.in,gopkg.in/*,golang.org/*,golang.org"
+#ENV  GOPRIVACY "proxy.golang.org/*,github.com,github.com/*,gopkg.in,gopkg.in/*,golang.org/*,golang.org"
+#ENV  GOINSECURE "proxy.golang.org/*,github.com,github.com/*,gopkg.in,gopkg.in/*,golang.org/*,golang.org"
 
 # install C++ and Golang bennu package
 WORKDIR /tmp/bennu/build
-RUN cmake -D BUILD_GOBENNU=ON ../ && make -j$(nproc) install \
+RUN cmake -D BUILD_GOBENNU=OFF ../ && make -j$(nproc) install \
   && rm -rf /tmp/*
 
 RUN gem install fpm
