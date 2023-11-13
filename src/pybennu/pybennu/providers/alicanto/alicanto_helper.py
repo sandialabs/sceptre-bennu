@@ -221,6 +221,24 @@ class alicantoFederate():
 
                 if self.types[full_end_name] == 'float' or self.types[full_end_name] == 'double':
                     if not math.isclose(float(self.tag(full_end_name)), float(self.tag(full_end_dest))):
+                        #Handle Logic
+                        if self.logic[end_dest_tag] is not None:
+                            expr = self.parser.parse(self.logic[end_dest_tag])
+                            # Assign variables
+                            vars = {}
+                            for var in expr.variables():
+                                vars[var] = self.tag(var)
+                            # Evaluate expression
+                            value = expr.evaluate(vars)
+                            value = str(value).lower()
+                            if value != self.tag(end_dest_tag):
+                                logger.debug(f"\tLOGIC: {end_dest_tag.strip()}={self.logic[end_dest_tag]} ----> {value}")
+                                # Assign new tag value
+                                self._tag(end_dest_tag.strip(), value)
+                            # Skip if value is unchanged
+                            elif value == self.tag(end_dest_tag):
+                                continue
+
                         self.end_clients[end_dest] = TestClient(end_dest)
                         self.end_clients[end_dest].write_analog_point(end_dest_tag, self.tag(full_end_name))
                         time.sleep(0.5)
