@@ -224,31 +224,73 @@ class alicantoFederate():
                         #Handle Logic
                         if self.logic[end_dest_tag] is not None:
                             expr = self.parser.parse(self.logic[end_dest_tag])
+                            '''
                             # Assign variables
                             vars = {}
                             for var in expr.variables():
                                 vars[var] = self.tag(var)
+                            '''
+                            i = 0
+                            # Assign vars not working, so assign token manually
+                            for token in expr.tokens:
+                                for search_tag in self.tags:
+                                    if token.toString() == search_tag:
+                                         expr.tokens[i].number_ = self.tag(token.toString())
+                                i += 1
                             # Evaluate expression
                             value = expr.evaluate(vars)
                             value = str(value).lower()
-                            if value != self.tag(end_dest_tag):
+                            if value != self.tag(full_end_dest):
                                 logger.debug(f"\tLOGIC: {end_dest_tag.strip()}={self.logic[end_dest_tag]} ----> {value}")
                                 # Assign new tag value
-                                self._tag(end_dest_tag.strip(), value)
+                                self._tag(full_end_dest, value)
                             # Skip if value is unchanged
-                            elif value == self.tag(end_dest_tag):
+                            elif value == self.tag(full_end_dest):
                                 continue
 
                         self.end_clients[end_dest] = TestClient(end_dest)
-                        self.end_clients[end_dest].write_analog_point(end_dest_tag, self.tag(full_end_name))
+                        if self.logic[end_dest_tag] is not None:
+                            self.end_clients[end_dest].write_analog_point(end_dest_tag, self.tag(full_end_dest))
+                        else:
+                            self.end_clients[end_dest].write_analog_point(end_dest_tag, self.tag(full_end_name))
                         time.sleep(0.5)
                         reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
                         value = reply[1].rstrip('\x00')
                         self.tag(full_end_dest, value)
                 elif self.types[full_end_name] == 'bool':
                     if str(self.tag(full_end_name)).lower() != str(self.tag(full_end_dest)).lower():
+                        #Handle Logic
+                        if self.logic[end_dest_tag] is not None:
+                            expr = self.parser.parse(self.logic[end_dest_tag])
+                            '''
+                            # Assign variables
+                            vars = {}
+                            for var in expr.variables():
+                                vars[var] = self.tag(var)
+                            '''
+                            i = 0
+                            # Assign vars not working, so assign token manually
+                            for token in expr.tokens:
+                                for search_tag in self.tags:
+                                    if token.toString() == search_tag:
+                                         expr.tokens[i].number_ = bool(self.tag(token.toString()))
+                                i += 1
+                            # Evaluate expression
+                            value = expr.evaluate(vars)
+                            value = str(value)
+                            if value != self.tag(full_end_dest):
+                                logger.debug(f"\tLOGIC: {end_dest_tag.strip()}={self.logic[end_dest_tag]} ----> {value}")
+                                # Assign new tag value
+                                self._tag(full_end_dest, value)
+                            # Skip if value is unchanged
+                            elif value == self.tag(full_end_dest):
+                                continue
+
                         self.end_clients[end_dest] = TestClient(end_dest)
-                        self.end_clients[end_dest].write_digital_point(end_dest_tag, self.tag(full_end_name))
+                        if self.logic[end_dest_tag] is not None:
+                            self.end_clients[end_dest].write_digital_point(end_dest_tag, self.tag(full_end_dest))
+                        else:
+                            self.end_clients[end_dest].write_digital_point(end_dest_tag, self.tag(full_end_name))
                         time.sleep(0.5)
                         reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
                         value = reply[1].rstrip('\x00')
