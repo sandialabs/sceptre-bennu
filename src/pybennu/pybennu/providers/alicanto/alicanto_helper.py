@@ -222,8 +222,8 @@ class alicantoFederate():
                 if self.types[full_end_name] == 'float' or self.types[full_end_name] == 'double':
                     if not math.isclose(float(self.tag(full_end_name)), float(self.tag(full_end_dest))):
                         #Handle Logic
-                        if self.logic[end_dest_tag] is not None:
-                            expr = self.parser.parse(self.logic[end_dest_tag])
+                        if self.logic[full_end_dest] is not None:
+                            expr = self.parser.parse(self.logic[full_end_dest])
                             '''
                             # Assign variables
                             vars = {}
@@ -241,7 +241,7 @@ class alicantoFederate():
                             value = expr.evaluate(vars)
                             value = str(value).lower()
                             if value != self.tag(full_end_dest):
-                                logger.debug(f"\tLOGIC: {end_dest_tag.strip()}={self.logic[end_dest_tag]} ----> {value}")
+                                logger.debug(f"\tLOGIC: {full_end_dest.strip()}={self.logic[full_end_dest]} ----> {value}")
                                 # Assign new tag value
                                 self._tag(full_end_dest, value)
                             # Skip if value is unchanged
@@ -249,7 +249,7 @@ class alicantoFederate():
                                 continue
 
                         self.end_clients[end_dest] = TestClient(end_dest)
-                        if self.logic[end_dest_tag] is not None:
+                        if self.logic[full_end_dest] is not None:
                             self.end_clients[end_dest].write_analog_point(end_dest_tag, self.tag(full_end_dest))
                         else:
                             self.end_clients[end_dest].write_analog_point(end_dest_tag, self.tag(full_end_name))
@@ -260,8 +260,8 @@ class alicantoFederate():
                 elif self.types[full_end_name] == 'bool':
                     if str(self.tag(full_end_name)).lower() != str(self.tag(full_end_dest)).lower():
                         #Handle Logic
-                        if self.logic[end_dest_tag] is not None:
-                            expr = self.parser.parse(self.logic[end_dest_tag])
+                        if self.logic[full_end_dest] is not None:
+                            expr = self.parser.parse(self.logic[full_end_dest])
                             '''
                             # Assign variables
                             vars = {}
@@ -279,7 +279,7 @@ class alicantoFederate():
                             value = expr.evaluate(vars)
                             value = str(value)
                             if value != self.tag(full_end_dest):
-                                logger.debug(f"\tLOGIC: {end_dest_tag.strip()}={self.logic[end_dest_tag]} ----> {value}")
+                                logger.debug(f"\tLOGIC: {full_end_dest.strip()}={self.logic[full_end_dest]} ----> {value}")
                                 # Assign new tag value
                                 self._tag(full_end_dest, value)
                             # Skip if value is unchanged
@@ -287,7 +287,7 @@ class alicantoFederate():
                                 continue
 
                         self.end_clients[end_dest] = TestClient(end_dest)
-                        if self.logic[end_dest_tag] is not None:
+                        if self.logic[full_end_dest] is not None:
                             self.end_clients[end_dest].write_digital_point(end_dest_tag, self.tag(full_end_dest))
                         else:
                             self.end_clients[end_dest].write_digital_point(end_dest_tag, self.tag(full_end_name))
