@@ -159,7 +159,8 @@ class alicantoFederate():
         for end_dest in self.end_dests:
             # Initialize bennu Client
             end_dest = end_dest.split('/')[0]
-            self.end_clients[end_dest] = TestClient(end_dest)
+            #self.end_clients[end_dest] = TestClient(end_dest)
+            self.end_clients[end_dest] = None
         logger.debug(f"\tEnd_clients: {self.end_clients}")
 
     def run(self):
@@ -193,6 +194,7 @@ class alicantoFederate():
             self.end_clients[end_dest] = TestClient(end_dest)
             reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
             #Try to keep up with threads
+            self.end_clients[end_dest].__socket.close()
             self.end_clients[end_dest] = None
             value = reply[1].rstrip('\x00')
             self.endid[i]["value"] = value
@@ -258,6 +260,7 @@ class alicantoFederate():
                         time.sleep(0.5)
                         reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
                         #Try to help thread craziness
+                        self.end_clients[end_dest].__socket.close()
                         self.end_clients[end_dest] = None
                         value = reply[1].rstrip('\x00')
                         self.tag(full_end_dest, value)
@@ -298,6 +301,7 @@ class alicantoFederate():
                         time.sleep(0.5)
                         reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
                         #Try to help thread craziness
+                        self.end_clients[end_dest].__socket.close()
                         self.end_clients[end_dest] = None
                         value = reply[1].rstrip('\x00')
                         self.tag(full_end_dest, value)
@@ -309,13 +313,6 @@ class alicantoFederate():
         for tag in self.tags:
             logger.debug(f"{tag:<30} --- {self.tag(tag):}")
         logger.debug("============================================")
-
-    def action_post_request_time(self):
-        pass
-
-    def send_msg_to_endpoint(self, name, value):
-        endpoint = self.fed.get_endpoint_by_name(name)
-        endpoint.send_data(value.encode(), endpoint.default_destination)
 
     def get_type(self, tag):
         return self.types[tag]
