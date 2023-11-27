@@ -192,6 +192,8 @@ class alicantoFederate():
             #value = self.tag(end_name)
             self.end_clients[end_dest] = TestClient(end_dest)
             reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
+            #Try to keep up with threads
+            self.end_clients[end_dest] = None
             value = reply[1].rstrip('\x00')
             self.endid[i]["value"] = value
             self.tag(full_end_dest, value)
@@ -255,6 +257,8 @@ class alicantoFederate():
                             self.end_clients[end_dest].write_analog_point(end_dest_tag, self.tag(full_end_name))
                         time.sleep(0.5)
                         reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
+                        #Try to help thread craziness
+                        self.end_clients[end_dest] = None
                         value = reply[1].rstrip('\x00')
                         self.tag(full_end_dest, value)
                 elif self.types[full_end_name] == 'bool':
@@ -293,6 +297,8 @@ class alicantoFederate():
                             self.end_clients[end_dest].write_digital_point(end_dest_tag, self.tag(full_end_name))
                         time.sleep(0.5)
                         reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
+                        #Try to help thread craziness
+                        self.end_clients[end_dest] = None
                         value = reply[1].rstrip('\x00')
                         self.tag(full_end_dest, value)
 
