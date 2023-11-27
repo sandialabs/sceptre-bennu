@@ -11,9 +11,6 @@ from setuptools.command.develop import develop
 from setuptools.command.egg_info import egg_info
 from setuptools.command.install import install
 
-# # Get git version
-# import version
-
 """
 BEGIN CUSTOM INSTALL COMMANDS
 These classes are used to hook into setup.py's install process.
@@ -144,13 +141,6 @@ entries = {
 }
 
 
-recommended = {
-    'extras': [
-        'tox'
-    ]
-}
-
-
 setup(
     cmdclass                = {
         'install': CustomInstallCommand,
@@ -163,24 +153,24 @@ setup(
     # https://peps.python.org/pep-0440/
     # TODO: move to pyproject.toml, use setuptools_scm to do version handling
     # https://github.com/pypa/setuptools_scm
-    # version                 = version.get_git_version(),
     version                 = '0.0.0',
     description             = 'bennu python providers and utilities',
     url                     = 'https://github.com/sandialabs/sceptre-bennu.git',
     author                  = 'Sandia National Laboratories',
     author_email            = 'emulytics@sandia.gov',
-    license                 = 'Proprietary',
+    license                 = 'GPLv3',
     platforms               = 'Linux',
     classifiers             = [
         'Development Status :: 5 - Production/Stable',
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Operating System :: POSIX :: Linux',
         'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ],
     python_requires         = '>=3.8',
     entry_points            = entries,
     data_files              = data_files,
     packages                = find_packages(),
     install_requires        = requires,
-    extras_require          = recommended,
     include_package_data    = True,
 )
