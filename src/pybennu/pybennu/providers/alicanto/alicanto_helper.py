@@ -198,6 +198,7 @@ class alicantoFederate():
             self.end_clients[end_dest] = TestClient(end_dest)
             reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
             #Try to keep up with threads
+            sleep(1)
             self.end_clients[end_dest].close()
             self.end_clients[end_dest] = None
             value = reply[1].rstrip('\x00')
@@ -264,6 +265,7 @@ class alicantoFederate():
                         time.sleep(0.5)
                         reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
                         #Try to help thread craziness
+                        sleep(1)
                         self.end_clients[end_dest].close()
                         self.end_clients[end_dest] = None
                         value = reply[1].rstrip('\x00')
@@ -305,6 +307,7 @@ class alicantoFederate():
                         time.sleep(0.5)
                         reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
                         #Try to help thread craziness
+                        sleep(1)
                         self.end_clients[end_dest].close()
                         self.end_clients[end_dest] = None
                         value = reply[1].rstrip('\x00')
