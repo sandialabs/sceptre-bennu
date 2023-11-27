@@ -51,6 +51,10 @@ class TestClient(Client):
 
         return reply
 
+    def close(self):
+        self._Client__socket.close()
+        self._Client__context.term()
+
 class alicantoFederate():
     def __init__(self, config, exit_handler=None):
         exit = exit_handler if exit_handler else self.ctrl_exit_handler
@@ -194,7 +198,7 @@ class alicantoFederate():
             self.end_clients[end_dest] = TestClient(end_dest)
             reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
             #Try to keep up with threads
-            self.end_clients[end_dest].__socket.close()
+            self.end_clients[end_dest].close()
             self.end_clients[end_dest] = None
             value = reply[1].rstrip('\x00')
             self.endid[i]["value"] = value
@@ -260,7 +264,7 @@ class alicantoFederate():
                         time.sleep(0.5)
                         reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
                         #Try to help thread craziness
-                        self.end_clients[end_dest].__socket.close()
+                        self.end_clients[end_dest].close()
                         self.end_clients[end_dest] = None
                         value = reply[1].rstrip('\x00')
                         self.tag(full_end_dest, value)
@@ -301,7 +305,7 @@ class alicantoFederate():
                         time.sleep(0.5)
                         reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
                         #Try to help thread craziness
-                        self.end_clients[end_dest].__socket.close()
+                        self.end_clients[end_dest].close()
                         self.end_clients[end_dest] = None
                         value = reply[1].rstrip('\x00')
                         self.tag(full_end_dest, value)
