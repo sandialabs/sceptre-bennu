@@ -210,16 +210,16 @@ class RotatingCSVWriter:
         rows_per_file: int = 1000000,
         max_files: int = 0
     ):
-        self.name = name
-        self.csv_dir = csv_dir  # type: Path
-        self.header = header  # type: List[str]
-        self.filename_base = filename_base
-        self.max_rows = rows_per_file
-        self.max_files = max_files
-        self.files_written = []  # type: List[Path]
-        self.rows_written = 0
-        self.current_path = None  # type: Optional[Path]
-        self.fp = None  # type: Optional[TextIOWrapper]
+        self.name: str = name
+        self.csv_dir: Path = csv_dir
+        self.header: List[str] = header
+        self.filename_base: str = filename_base
+        self.max_rows: int = rows_per_file
+        self.max_files: int = max_files
+        self.files_written: List[Path] = []
+        self.rows_written: int = 0
+        self.current_path: Optional[Path] = None
+        self.fp: Optional[TextIOWrapper] = None
 
         self.log = logging.getLogger(f"{self.__class__.__name__} [{self.name}]")
         self.log.setLevel(logging.DEBUG)
@@ -294,19 +294,20 @@ class PMU:
     Polls for data using C37.118 protocol, utilizing the pypmu library under-the-hood.
     """
     def __init__(
-        self, ip: str,
+        self,
+        ip: str,
         port: int,
         pdc_id: int,
         name: str = "",
         label: str = "",
         protocol: Literal["tcp", "udp"] = "tcp"
     ):
-        self.ip = ip
-        self.port = port
-        self.pdc_id = pdc_id
-        self.name = name
-        self.label = label
-        self.protocol = protocol
+        self.ip: str = ip
+        self.port: int = port
+        self.pdc_id: int = pdc_id
+        self.name: str = name
+        self.label: str = label
+        self.protocol: Literal["tcp", "udp"] = protocol
 
         # TODO: UDP isn't implemented yet in pyPMU
         if self.protocol not in ["tcp", "udp"]:
@@ -320,11 +321,11 @@ class PMU:
             method=self.protocol
         )
 
-        self.pdc_header = None  # type: Optional[HeaderFrame]
-        self.pdc_config = None  # type: Optional[CommonFrame]
-        self.channel_names = []  # type: List[str]
-        self.csv_writer = None  # type: Optional[RotatingCSVWriter]
-        self.station_name = ""  # type: str
+        self.pdc_header: Optional[HeaderFrame] = None
+        self.pdc_config: Optional[CommonFrame] = None
+        self.channel_names: List[str] = []
+        self.csv_writer: Optional[RotatingCSVWriter] = None
+        self.station_name: str = ""
 
         # Configure logging
         self.log = logging.getLogger(f"PMU [{str(self)}]")
@@ -430,7 +431,7 @@ class RTDS(Provider):
         self.__gtnet_lock = threading.Lock()
 
         # Load configuration values
-        self.config = config  # type: ConfigParser
+        self.config: ConfigParser = config
         self.debug = debug  # type: bool
         self.publish_rate = float(self._conf("publish-rate"))  # type: float
 
