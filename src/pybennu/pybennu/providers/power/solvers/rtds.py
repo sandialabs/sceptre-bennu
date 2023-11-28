@@ -183,6 +183,18 @@ def str_to_bool(val: str) -> bool:
         raise ValueError(f"invalid bool string {val}")
 
 
+# datetime.utcnow() returns a naive datetime objects (no timezone info).
+# when .timestamp() is called on these objects, they get interpreted as
+# local time, not UTC time, which leads to incorrect timestamps.
+# Further reading: https://blog.miguelgrinberg.com/post/it-s-time-for-a-change-datetime-utcnow-is-now-deprecated
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def utc_now_formatted() -> str:
+    return utc_now().strftime("%d-%m-%Y_%H-%M-%S")
+
+
 class RotatingCSVWriter:
     """
     Writes data to CSV files, creating a new file when a limit is reached.
@@ -235,7 +247,7 @@ class RotatingCSVWriter:
             self.log.debug(f"Wrote {self.rows_written} rows and {self.current_path.stat().st_size} bytes to {self.current_path}")
             self.files_written.append(self.current_path)
 
-        timestamp = datetime.utcnow().strftime("%d-%m-%Y_%H-%M-%S")
+        timestamp = utc_now_formatted()
         filename = f"{self.filename_base}_{timestamp}.csv"
         self.current_path = Path(self.csv_dir, filename)
         self.log.info(f"Rotating CSV file to {self.current_path}")
@@ -623,7 +635,7 @@ class RTDS(Provider):
             if pmu.pdc_header:
                 metadata[str(pmu)]["header"] = pmu.pdc_header.__dict__
 
-        timestamp = datetime.utcnow().strftime("%d-%m-%Y_%H-%M-%S")
+        timestamp = utc_now_formatted()
 
         # Save PMU metadata to JSON file
         meta_path = Path(self.csv_path, f"pmu_metadata_{timestamp}.json")
@@ -723,7 +735,7 @@ class RTDS(Provider):
 
             # This will block until there is an item to process
             pmu, frame = self.frame_queue.get()
-            sceptre_ts = datetime.utcnow()
+            sceptre_ts = utc_now()
 
             for mm in frame["measurements"]:
                 if mm["stat"] != "ok":
@@ -746,13 +758,9 @@ class RTDS(Provider):
 
                 # Save data to Elasticsearch
                 if self.elastic_enabled:
-                    rtds_datetime = datetime.utcfromtimestamp(frame["time"])
-                    rtds_ts = rtds_datetime.timestamp()
-                    if rtds_ts != frame["time"]:
-                        self.log.error(f"Timestamp {rtds_ts} (from {rtds_datetime}) != frame['time'] of {frame['time']}")
-                        sys.exit(1)
-
+                    rtds_datetime = datetime.fromtimestamp(frame["time"], timezone.utc)
                     es_bodies = []
+
                     for ph_id, phasor in line["phasors"].items():
                         es_body = {
                             "@timestamp": rtds_datetime,
@@ -840,6 +848,7 @@ class RTDS(Provider):
             },
             "agent": {
                 "type": "rtds-sceptre-provider",
+                # TODO: There is no version for pybennu anymore
                 # "version": __version__
                 "version": "0.0.0",
             },
@@ -927,7 +936,7 @@ class RTDS(Provider):
 
             # TODO: there is potential for docs to be pushed to the wrong
             # date index at the start or end of a day.
-            ts_now = datetime.utcnow()
+            ts_now = utc_now()
             index = f"{self.elastic_index_basename}-{ts_now.strftime('%Y.%m.%d')}"
 
             if index not in self._es_index_cache:
