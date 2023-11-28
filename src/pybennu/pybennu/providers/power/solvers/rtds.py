@@ -139,8 +139,9 @@ from datetime import datetime, timezone
 from io import TextIOWrapper
 from pathlib import Path
 from pprint import pformat
+from subprocess import check_output
 from time import sleep
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Literal
 
 from elasticsearch import Elasticsearch, helpers
 
@@ -292,13 +293,24 @@ class PMU:
 
     Polls for data using C37.118 protocol, utilizing the pypmu library under-the-hood.
     """
-    def __init__(self, ip: str, port: int, pdc_id: int, name: str = "", label: str = "", protocol: str = "tcp"):
+    def __init__(
+        self, ip: str,
+        port: int,
+        pdc_id: int,
+        name: str = "",
+        label: str = "",
+        protocol: Literal["tcp", "udp"] = "tcp"
+    ):
         self.ip = ip
         self.port = port
         self.pdc_id = pdc_id
         self.name = name
         self.label = label
         self.protocol = protocol
+
+        # TODO: UDP isn't implemented yet in pyPMU
+        if self.protocol not in ["tcp", "udp"]:
+            raise ValueError(f"PMU protocol must be 'tcp' or 'udp', got {self.protocol}")
 
         # Configure PDC instance (pypmu.synchrophasor.pdc.Pdc)
         self.pdc = Pdc(
@@ -518,6 +530,14 @@ class RTDS(Provider):
             self.log.warning("CSV output is DISABLED (since the 'csv-enabled' option is False)")
         elif not self.csv_max_files:
             self.log.warning("No limit set in 'csv-max-files', CSV files won't be cleaned up and could fill all available disk space")
+
+        # Get bennu version
+        self.bennu_version = "unknown"
+        try:
+            apt_result = check_output("apt show bennu", shell=True).decode()
+            self.bennu_version = re.search(r"Version: (\w+)\s", apt_result).groups()[0]
+        except Exception as ex:
+            self.log.warning(f"Failed to get bennu version: {ex}")
 
         # Elasticsearch setup
         self._es_index_cache = set()
@@ -766,6 +786,10 @@ class RTDS(Provider):
                             "@timestamp": rtds_datetime,
                             "rtds_time": rtds_datetime,
                             "sceptre_time": sceptre_ts,
+                            "network": {
+                                "protocol": "c37.118",
+                                "transport": pmu.protocol,
+                            },
                             "pmu": {
                                 "name": pmu.name,
                                 "label": pmu.label,
@@ -848,20 +872,13 @@ class RTDS(Provider):
             },
             "agent": {
                 "type": "rtds-sceptre-provider",
-                # TODO: There is no version for pybennu anymore
-                # "version": __version__
-                "version": "0.0.0",
+                "version": self.bennu_version,
             },
             "observer": {
                 "hostname": platform.node(),
                 "geo": {
                     "timezone": str(datetime.now(timezone.utc).astimezone().tzinfo)
                 }
-            },
-            "network": {
-                # TODO: if pushing gtnet-skt points to elastic, change these two fields
-                "protocol": "c37.118",
-                "transport": "tcp",
             },
         }
 
