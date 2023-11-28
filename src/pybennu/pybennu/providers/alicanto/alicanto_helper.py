@@ -7,6 +7,7 @@ import sys
 import time
 import threading
 import math
+import zmq
 
 from distutils.util import strtobool
 from py_expression_eval import Parser
@@ -35,6 +36,7 @@ class TestClient(Client):
     def send(self, message):
         """ Send message to Provider
         """
+        self.connect()
         # send update
         self._Client__socket.send_string(message+'\0') # must include null byte
         # get response
@@ -49,11 +51,10 @@ class TestClient(Client):
         else:
             print("I: ERR -- %s" % msg)
 
-        return reply
-
-    def close(self):
-        #self._Client__socket.close()
+        self._Client__socket.close()
         self._Client__context.term()
+
+        return reply
 
 class alicantoFederate():
     def __init__(self, config, exit_handler=None):
@@ -199,8 +200,6 @@ class alicantoFederate():
             reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
             #Try to keep up with threads
             time.sleep(1)
-            self.end_clients[end_dest].close()
-            self.end_clients[end_dest] = None
             value = reply[1].rstrip('\x00')
             self.endid[i]["value"] = value
             self.tag(full_end_dest, value)
@@ -266,8 +265,6 @@ class alicantoFederate():
                         reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
                         #Try to help thread craziness
                         time.sleep(1)
-                        self.end_clients[end_dest].close()
-                        self.end_clients[end_dest] = None
                         value = reply[1].rstrip('\x00')
                         self.tag(full_end_dest, value)
                 elif self.types[full_end_name] == 'bool':
@@ -308,8 +305,6 @@ class alicantoFederate():
                         reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
                         #Try to help thread craziness
                         time.sleep(1)
-                        self.end_clients[end_dest].close()
-                        self.end_clients[end_dest] = None
                         value = reply[1].rstrip('\x00')
                         self.tag(full_end_dest, value)
 
