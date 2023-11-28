@@ -145,9 +145,6 @@ from typing import Any, Dict, List, Optional, Literal
 
 from elasticsearch import Elasticsearch, helpers
 
-# TODO: figure out how to get bennu version after it's fixed
-# Use importlib.metadata?
-# from pybennu._version import __version__
 from pybennu.distributed.provider import Provider
 from pybennu.pypmu.synchrophasor.frame import CommonFrame, DataFrame, HeaderFrame
 from pybennu.pypmu.synchrophasor.pdc import Pdc
@@ -328,7 +325,7 @@ class PMU:
         self.station_name: str = ""
 
         # Configure logging
-        self.log = logging.getLogger(f"PMU [{str(self)}]")
+        self.log: logging.Logger = logging.getLogger(f"PMU [{str(self)}]")
         self.log.setLevel(logging.DEBUG)
         self.pdc.logger = logging.getLogger(f"Pdc [{str(self)}]")
         # NOTE: pypmu logs a LOT of stuff at DEBUG, leave at INFO
@@ -347,7 +344,7 @@ class PMU:
         else:
             return f"{self.ip}:{self.port}_{self.pdc_id}"
 
-    def run(self):
+    def run(self) -> None:
         """Connect to PMU."""
         self.pdc.run()
 
@@ -382,7 +379,7 @@ class PMU:
                 self.channel_names.append(_process_name(channel))
         self.log.debug(f"Channel names: {self.channel_names}")
 
-    def start(self):
+    def start(self) -> None:
         self.pdc.start()
 
     def get_data_frame(self) -> Optional[Dict[str, Any]]:
@@ -423,7 +420,7 @@ class RTDS(Provider):
         publish_endpoint,
         config: ConfigParser,
         debug: bool = False
-    ):
+    ) -> None:
         Provider.__init__(self, server_endpoint, publish_endpoint)
 
         # Thread locks
@@ -634,7 +631,7 @@ class RTDS(Provider):
 
         return val
 
-    def _start_poll_pmus(self):
+    def _start_poll_pmus(self) -> None:
         """
         Query for data from the PMUs via C37.118 as fast as possible.
         """
@@ -679,7 +676,7 @@ class RTDS(Provider):
         for thread in threads:
             thread.join()
 
-    def _rebuild_pmu_connection(self, pmu: PMU):
+    def _rebuild_pmu_connection(self, pmu: PMU) -> None:
         """
         Rebuild TCP connection to PMU if connection fails.
 
@@ -712,7 +709,7 @@ class RTDS(Provider):
 
         self.log.debug(f"(re)initialized PMU {str(pmu)}")
 
-    def _poll_pmu(self, pmu: PMU):
+    def _poll_pmu(self, pmu: PMU) -> None:
         """
         Continually polls for data from a PMU and updates self.current_values.
 
@@ -745,7 +742,7 @@ class RTDS(Provider):
 
             self.frame_queue.put((pmu, data_frame))
 
-    def _data_writer(self):
+    def _data_writer(self) -> None:
         """
         Handles processing of PMU data to avoid blocking the PMU polling thread.
         """
@@ -860,7 +857,7 @@ class RTDS(Provider):
                             csv_row.append(v)
                     pmu.csv_writer.write(csv_row)
 
-    def _elastic_pusher(self):
+    def _elastic_pusher(self) -> None:
         """
         Thread that sends PMU data to Elasticsearch using the Elasticsearch Bulk API.
         """
@@ -1151,7 +1148,7 @@ class RTDS(Provider):
 
         return struct.pack(self.struct_format_string, *values)
 
-    def _gtnet_continuous_write(self):
+    def _gtnet_continuous_write(self) -> None:
         """
         Continuously write values to RTDS via GTNET-SKT using UDP protocol.
 
@@ -1168,7 +1165,7 @@ class RTDS(Provider):
             self.__gtnet_socket.sendto(payload, target)
             sleep(sleep_for)
 
-    def _gtnet_init_socket(self):
+    def _gtnet_init_socket(self) -> None:
         """
         Initialize TCP or UDP socket, and if TCP connection fails, retry until it's successful.
         """
@@ -1195,7 +1192,7 @@ class RTDS(Provider):
         else:
             self.__gtnet_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    def _gtnet_reset_socket(self):
+    def _gtnet_reset_socket(self) -> None:
         if self.__gtnet_socket:
             try:
                 self.__gtnet_socket.close()
@@ -1203,7 +1200,7 @@ class RTDS(Provider):
                 pass
             self.__gtnet_socket = None
 
-    def periodic_publish(self):
+    def periodic_publish(self) -> None:
         """
         Publish all tags periodically.
 
