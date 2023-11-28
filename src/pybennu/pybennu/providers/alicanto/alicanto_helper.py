@@ -52,7 +52,7 @@ class TestClient(Client):
         return reply
 
     def close(self):
-        self._Client__socket.close()
+        #self._Client__socket.close()
         self._Client__context.term()
 
 class alicantoFederate():
