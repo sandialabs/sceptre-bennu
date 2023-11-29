@@ -19,6 +19,31 @@ import pybennu.distributed.swig._Endpoint as E
 logger = logging.getLogger('alicanto')
 logger.setLevel(logging.INFO)
 
+#Try adding a timeout helper
+import signal
+from contextlib import contextmanager
+
+
+@contextmanager
+def timeout(time):
+    # Register a function to raise a TimeoutError on the signal.
+    signal.signal(signal.SIGALRM, raise_timeout)
+    # Schedule the signal to be sent after ``time``
+    signal.alarm(time)
+
+    try:
+        yield
+    except TimeoutError:
+        pass
+    finally:
+        # Unregister the signal so it won't be triggered
+        # if the timeout is not reached.
+        signal.signal(signal.SIGALRM, signal.SIG_IGN)
+
+
+def raise_timeout(signum, frame):
+    raise TimeoutError
+
 # TestSubscriber used for easy multiple subscribers
 class TestSubscriber(Subscriber):
     def __init__(self, sub_source):
@@ -36,25 +61,26 @@ class TestClient(Client):
     def send(self, message):
         """ Send message to Provider
         """
-        self.connect()
-        # send update
-        self._Client__socket.send_string(message+'\0') # must include null byte
-        # get response
-        msg = self._Client__socket.recv_string()
-        reply = msg.split('=')
-        status = reply[0]
-        data = reply[1]
+        with timeout(10):
+            self.connect()
+            # send update
+            self._Client__socket.send_string(message+'\0') # must include null byte
+            # get response
+            msg = self._Client__socket.recv_string()
+            reply = msg.split('=')
+            status = reply[0]
+            data = reply[1]
 
-        if status == self._Client__kACK:
-            print("I: ACK: "+data)
-            #self.reply_handler(data)
-        else:
-            print("I: ERR -- %s" % msg)
+            if status == self._Client__kACK:
+                print("I: ACK: "+data)
+                #self.reply_handler(data)
+            else:
+                print("I: ERR -- %s" % msg)
 
-        self._Client__socket.close()
-        self._Client__context.term()
+            self._Client__socket.close()
+            self._Client__context.term()
 
-        return reply
+            return reply
 
 class alicantoFederate():
     def __init__(self, config, exit_handler=None):
@@ -164,8 +190,11 @@ class alicantoFederate():
         for end_dest in self.end_dests:
             # Initialize bennu Client
             end_dest = end_dest.split('/')[0]
-            #self.end_clients[end_dest] = TestClient(end_dest)
-            self.end_clients[end_dest] = None
+            try:
+                self.end_clients[end_dest] = TestClient(end_dest)
+            except:
+                logger.error(f"\tError Initializing Client: {self.end_clients}")
+            #self.end_clients[end_dest] = None
         logger.debug(f"\tEnd_clients: {self.end_clients}")
 
     def run(self):
@@ -196,8 +225,12 @@ class alicantoFederate():
                         if '/' in full_end_dest
                         else full_end_dest)
             #value = self.tag(end_name)
-            self.end_clients[end_dest] = TestClient(end_dest)
-            reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
+            try:
+                self.end_clients[end_dest] = TestClient(end_dest)
+                reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
+            except:
+                logger.error(f"\tError Initializing Client: {self.end_clients}")
+                continue
             #Try to keep up with threads
             time.sleep(1)
             value = reply[1].rstrip('\x00')
@@ -255,14 +288,18 @@ class alicantoFederate():
                             # Skip if value is unchanged
                             elif value == self.tag(full_end_dest):
                                 continue
-
-                        self.end_clients[end_dest] = TestClient(end_dest)
-                        if self.logic[full_end_dest] is not None:
-                            self.end_clients[end_dest].write_analog_point(end_dest_tag, self.tag(full_end_dest))
-                        else:
-                            self.end_clients[end_dest].write_analog_point(end_dest_tag, self.tag(full_end_name))
-                        time.sleep(0.5)
-                        reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
+                            
+                        try:
+                            self.end_clients[end_dest] = TestClient(end_dest)
+                            if self.logic[full_end_dest] is not None:
+                                self.end_clients[end_dest].write_analog_point(end_dest_tag, self.tag(full_end_dest))
+                            else:
+                                self.end_clients[end_dest].write_analog_point(end_dest_tag, self.tag(full_end_name))
+                            time.sleep(0.5)
+                            reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
+                        except:
+                            logger.error(f"\tError Initializing Client: {self.end_clients}")
+                            continue
                         #Try to help thread craziness
                         time.sleep(1)
                         value = reply[1].rstrip('\x00')
@@ -295,14 +332,17 @@ class alicantoFederate():
                             # Skip if value is unchanged
                             elif value == self.tag(full_end_dest):
                                 continue
-
-                        self.end_clients[end_dest] = TestClient(end_dest)
-                        if self.logic[full_end_dest] is not None:
-                            self.end_clients[end_dest].write_digital_point(end_dest_tag, self.tag(full_end_dest))
-                        else:
-                            self.end_clients[end_dest].write_digital_point(end_dest_tag, self.tag(full_end_name))
-                        time.sleep(0.5)
-                        reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
+                        try:
+                            self.end_clients[end_dest] = TestClient(end_dest)
+                            if self.logic[full_end_dest] is not None:
+                                self.end_clients[end_dest].write_digital_point(end_dest_tag, self.tag(full_end_dest))
+                            else:
+                                self.end_clients[end_dest].write_digital_point(end_dest_tag, self.tag(full_end_name))
+                            time.sleep(0.5)
+                            reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
+                        except:
+                            logger.error(f"\tError Initializing Client: {self.end_clients}")
+                            continue
                         #Try to help thread craziness
                         time.sleep(1)
                         value = reply[1].rstrip('\x00')
