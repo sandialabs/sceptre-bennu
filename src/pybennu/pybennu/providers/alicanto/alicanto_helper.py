@@ -243,6 +243,8 @@ class alicantoFederate():
 
         ########## Main co-simulation loop ####################################
         # As long as granted time is in the time range to be simulated...
+        #Wait for other sims to start
+        time.sleep(60)
         while True:
             self.print_state()
             time.sleep(1)
