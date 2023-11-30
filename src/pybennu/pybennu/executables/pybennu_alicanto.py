@@ -104,6 +104,9 @@ class alicanto():
         self.dests = {}
         # Tag=>type map
         self.types = {}
+        self.logic = {}
+        # Expression parser for logic
+        self.parser = Parser()
         # Set of all tags 
         self.tags = {}
 
