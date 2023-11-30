@@ -228,22 +228,22 @@ class alicantoFederate():
             try:
                 self.end_clients[end_dest] = TestClient(end_dest)
                 reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
+                #Try to keep up with threads
+                time.sleep(1)
+                value = reply[1].rstrip('\x00')
+                self.endid[i]["value"] = value
+                self.tag(full_end_dest, value)
+                logger.debug(f"Initial Endpoints {end_name} / {end_dest}:{value} ")
+        
             except:
                 logger.error(f"\tError Initializing Client: {self.end_clients}")
                 continue
-            #Try to keep up with threads
-            time.sleep(1)
-            value = reply[1].rstrip('\x00')
-            self.endid[i]["value"] = value
-            self.tag(full_end_dest, value)
-            logger.debug(f"Initial Endpoints {end_name} / {end_dest}:{value} ")
-    
 
 
 
         ########## Main co-simulation loop ####################################
         # As long as granted time is in the time range to be simulated...
-        #Wait for other sims to start
+        #Wait for other sims to
         time.sleep(60)
         while True:
             self.print_state()
@@ -299,13 +299,13 @@ class alicantoFederate():
                                 self.end_clients[end_dest].write_analog_point(end_dest_tag, self.tag(full_end_name))
                             time.sleep(0.5)
                             reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
+                            #Try to help thread craziness
+                            time.sleep(1)
+                            value = reply[1].rstrip('\x00')
+                            self.tag(full_end_dest, value)
                         except:
                             logger.error(f"\tError Initializing Client: {self.end_clients}")
                             continue
-                        #Try to help thread craziness
-                        time.sleep(1)
-                        value = reply[1].rstrip('\x00')
-                        self.tag(full_end_dest, value)
                 elif self.types[full_end_name] == 'bool':
                     if str(self.tag(full_end_name)).lower() != str(self.tag(full_end_dest)).lower():
                         #Handle Logic
@@ -342,13 +342,14 @@ class alicantoFederate():
                                 self.end_clients[end_dest].write_digital_point(end_dest_tag, self.tag(full_end_name))
                             time.sleep(0.5)
                             reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
+                            
+                            #Try to help thread craziness
+                            time.sleep(1)
+                            value = reply[1].rstrip('\x00')
+                            self.tag(full_end_dest, value)
                         except:
                             logger.error(f"\tError Initializing Client: {self.end_clients}")
                             continue
-                        #Try to help thread craziness
-                        time.sleep(1)
-                        value = reply[1].rstrip('\x00')
-                        self.tag(full_end_dest, value)
 
 
 
