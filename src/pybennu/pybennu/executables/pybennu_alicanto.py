@@ -272,7 +272,7 @@ class alicanto():
                             if value != self.tag(full_end_dest):
                                 logger.debug(f"\tLOGIC: {full_end_dest.strip()}={self.logic[full_end_dest]} ----> {value}")
                                 # Assign new tag value
-                                self._tag(full_end_dest, value)
+                                self.tag(full_end_dest, value)
                             # Skip if value is unchanged
                             elif value == self.tag(full_end_dest):
                                 continue
@@ -314,7 +314,7 @@ class alicanto():
                             if value != self.tag(full_end_dest):
                                 logger.debug(f"\tLOGIC: {full_end_dest.strip()}={self.logic[full_end_dest]} ----> {value}")
                                 # Assign new tag value
-                                self._tag(full_end_dest, value)
+                                self.tag(full_end_dest, value)
                             # Skip if value is unchanged
                             elif value == self.tag(full_end_dest):
                                 continue
