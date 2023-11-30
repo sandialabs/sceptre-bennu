@@ -19,6 +19,31 @@ from pybennu.distributed.subscriber import Subscriber
 from pybennu.distributed.client import Client
 import pybennu.distributed.swig._Endpoint as E
 
+#Adding a timeout helper to cause client objects not to feeze program
+import signal
+from contextlib import contextmanager
+
+
+@contextmanager
+def timeout(time):
+    # Register a function to raise a TimeoutError on the signal.
+    signal.signal(signal.SIGALRM, raise_timeout)
+    # Schedule the signal to be sent after ``time``
+    signal.alarm(time)
+
+    try:
+        yield
+    except TimeoutError:
+        pass
+    finally:
+        # Unregister the signal so it won't be triggered
+        # if the timeout is not reached.
+        signal.signal(signal.SIGALRM, signal.SIG_IGN)
+
+
+def raise_timeout(signum, frame):
+    raise TimeoutError
+
 logging.basicConfig(level=logging.DEBUG,format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger('alicanto')
 #logger.addHandler(logging.StreamHandler())
@@ -34,24 +59,31 @@ class alicantoClient(Client):
     def __init__(self, end_dest):
         new_endpoint_dest = E.new_Endpoint()
         E.Endpoint_str_set(new_endpoint_dest, 'tcp://'+str(end_dest))
-        self.endpointName = 'tcp://'+str(end_dest)
         Client.__init__(self, new_endpoint_dest)
-        
+    
     def send(self, message):
         """ Send message to Provider
         """
-        # send update
-        self._Client__socket.send_string(message+'\0') # must include null byte
-        # get response
-        msg = self._Client__socket.recv_string()
-        reply = msg.split('=')
-        status = reply[0]
-        data = reply[1]
+        with timeout(10):
+            self.connect()
+            # send update
+            self._Client__socket.send_string(message+'\0') # must include null byte
+            # get response
+            msg = self._Client__socket.recv_string()
+            reply = msg.split('=')
+            status = reply[0]
+            data = reply[1]
 
-        if status != self._Client__kACK:
-            logger.error(msg)
+            if status == self._Client__kACK:
+                print("I: ACK: "+data)
+                #self.reply_handler(data)
+            else:
+                print("I: ERR -- %s" % msg)
 
-        return reply
+            self._Client__socket.close()
+            self._Client__context.term()
+
+            return reply
 
 class alicanto():
     def __init__(self, config, debug=False, exit_handler=None):
@@ -103,7 +135,7 @@ class alicanto():
             end_name = endpoint["name"]
             end_destination = endpoint["destination"]
             end_type = endpoint["type"]
-            logger.debug(f"Registered endpoint ---> end_name: {end_name} ---> end_destination: {end_destination}")
+            logger.info(f"Registered endpoint ---> end_name: {end_name} ---> end_destination: {end_destination}")
             self.tags.update({end_destination : 0})
             self.end_dests.append(end_destination)
             self.dests[end_name] = end_destination
@@ -124,16 +156,15 @@ class alicanto():
                 sub_info = self.subid[i]["info"] # stores logic for interdependencies
             except:
                 sub_info = None
-            logger.debug(f"Registered subscription ---> sub_name: {sub_name} ---> sub_type: {sub_type} ---> sub_info: {sub_info}")
-            #sub_name = sub_name.split('/')[1] if '/' in sub_name else sub_name
+            logger.info(f"Registered subscription ---> sub_name: {sub_name} ---> sub_type: {sub_type} ---> sub_info: {sub_info}")
             self.tags.update({sub_name : 0 })
             self.types[sub_name] = sub_type
             if sub_info:
-                logger.debug(f"********** LOGIC **********")
+                logger.info(f"********** LOGIC **********")
                 for exp in sub_info.split(';'):
                     lhs, rhs = exp.split('=')
                     self.logic[lhs.strip()] = rhs.strip()
-                    logger.debug(f'{exp.strip()}')
+                    logger.info(f'{exp.strip()}')
         #make sub_sources elements unique
         self.sub_sources = list(set(self.sub_sources))
 
@@ -141,7 +172,7 @@ class alicanto():
             self.state[tag] = False if self.get_type(tag) == 'bool' else 0
         
         for sub_source in self.sub_sources:
-            logger.debug(f"Launching Subscriber Thread ---> subscription: udp://{sub_source}")
+            logger.info(f"Launching Subscriber Thread ---> subscription: udp://{sub_source}")
             subber = alicantoSubscriber(sub_source)
             subber.subscription_handler = self._subscription_handler
             self.__sub_thread = threading.Thread(target=subber.run)
@@ -153,17 +184,51 @@ class alicanto():
         for end_dest in self.end_dests:
             # Initialize bennu Client
             end_dest = end_dest.split('/')[0]
-            self.end_clients[end_dest] = alicantoClient(end_dest)
+            try:
+                self.end_clients[end_dest] = alicantoClient(end_dest)
+            except:
+                logger.error(f"\tError Initializing Client: {self.end_clients}")
         for key in list(self.end_clients.keys()):
-            logger.debug(f"End_client: {key}")
+            logger.info(f"End_client: {key}")
 
     def run(self):
         ##############  Entering Execution Mode  ##############################
         logger.info("Entered alicanto execution mode")
+        # Endpoint initial values to alicanto
+        for i in range(self.end_count):
+            full_end_name = self.endid[i]["name"]
+            end_name = (full_end_name.split('/')[1]
+                        if '/' in full_end_name
+                        else full_end_name)
+            full_end_dest = self.endid[i]["destination"]
+            end_dest = (full_end_dest.split('/')[0]
+                        if '/' in full_end_dest
+                        else full_end_dest)
+            end_dest_tag = (full_end_dest.split('/')[1]
+                        if '/' in full_end_dest
+                        else full_end_dest)
+            #value = self.tag(end_name)
+            try:
+                self.end_clients[end_dest] = alicantoClient(end_dest)
+                reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
+                #Try to keep up with threads
+                #time.sleep(1)
+                value = reply[1].rstrip('\x00')
+                self.endid[i]["value"] = value
+                self.tag(full_end_dest, value)
+                logger.debug(f"Initial Endpoints {end_name} / {end_dest}:{value} ")
+        
+            except:
+                logger.error(f"\tError Initializing Client: {self.end_clients}")
+                continue
+
+        # Wait for other sims to start
+        time.sleep(60)
     
         ########## Main co-simulation loop ####################################
         while True:
             self.publish_state()
+            time.sleep(0.1)
             for key, value in self.endid.items():
                 full_end_name = value["name"]
                 end_name = (full_end_name.split('/')[1]
@@ -180,22 +245,93 @@ class alicanto():
                 # !!need to add something to handle binary points
                 if self.types[full_end_name] == 'float' or self.types[full_end_name] == 'double':
                     if not math.isclose(float(self.tag(full_end_name)), float(self.tag(full_end_dest))):
-                        self.end_clients[end_dest].write_analog_point(end_dest_tag, self.tag(full_end_name))
-                        reply = self.end_clients[end_dest].send("READ="+end_name)
-                        value = reply[1].rstrip('\x00')
-                        self.tag(full_end_dest, value)
+                        #Handle Logic
+                        if self.logic[full_end_dest] is not None:
+                            expr = self.parser.parse(self.logic[full_end_dest])
+                            '''
+                            # Assign variables
+                            vars = {}
+                            for var in expr.variables():
+                                vars[var] = self.tag(var)
+                            '''
+                            i = 0
+                            # Assign vars not working, so assign token manually
+                            for token in expr.tokens:
+                                for search_tag in self.tags:
+                                    if token.toString() == search_tag:
+                                         expr.tokens[i].number_ = self.tag(token.toString())
+                                i += 1
+                            # Evaluate expression
+                            value = expr.evaluate(vars)
+                            value = str(value).lower()
+                            if value != self.tag(full_end_dest):
+                                logger.debug(f"\tLOGIC: {full_end_dest.strip()}={self.logic[full_end_dest]} ----> {value}")
+                                # Assign new tag value
+                                self._tag(full_end_dest, value)
+                            # Skip if value is unchanged
+                            elif value == self.tag(full_end_dest):
+                                continue
+                            
+                        try:
+                            self.end_clients[end_dest] = alicantoClient(end_dest)
+                            if self.logic[full_end_dest] is not None:
+                                self.end_clients[end_dest].write_analog_point(end_dest_tag, self.tag(full_end_dest))
+                            else:
+                                self.end_clients[end_dest].write_analog_point(end_dest_tag, self.tag(full_end_name))
+                            time.sleep(0.5)
+                            reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
+                            value = reply[1].rstrip('\x00')
+                            self.tag(full_end_dest, value)
+                        except:
+                            logger.error(f"\tError Initializing Client: {self.end_clients}")
+                            continue
                 elif self.types[full_end_name] == 'bool':
                     if str(self.tag(full_end_name)).lower() != str(self.tag(full_end_dest)).lower():
-                        self.end_clients[end_dest].write_digital_point(end_dest_tag, self.tag(full_end_name))
-                        reply = self.end_clients[end_dest].send("READ="+end_name)
-                        value = reply[1].rstrip('\x00')
-                        self.tag(full_end_dest, value)
+                        #Handle Logic
+                        if self.logic[full_end_dest] is not None:
+                            expr = self.parser.parse(self.logic[full_end_dest])
+                            '''
+                            # Assign variables
+                            vars = {}
+                            for var in expr.variables():
+                                vars[var] = self.tag(var)
+                            '''
+                            i = 0
+                            # Assign vars not working, so assign token manually
+                            for token in expr.tokens:
+                                for search_tag in self.tags:
+                                    if token.toString() == search_tag:
+                                         expr.tokens[i].number_ = bool(self.tag(token.toString()))
+                                i += 1
+                            # Evaluate expression
+                            value = expr.evaluate(vars)
+                            value = str(value)
+                            if value != self.tag(full_end_dest):
+                                logger.debug(f"\tLOGIC: {full_end_dest.strip()}={self.logic[full_end_dest]} ----> {value}")
+                                # Assign new tag value
+                                self._tag(full_end_dest, value)
+                            # Skip if value is unchanged
+                            elif value == self.tag(full_end_dest):
+                                continue
+                        try:
+                            self.end_clients[end_dest] = alicantoClient(end_dest)
+                            if self.logic[full_end_dest] is not None:
+                                self.end_clients[end_dest].write_digital_point(end_dest_tag, self.tag(full_end_dest))
+                            else:
+                                self.end_clients[end_dest].write_digital_point(end_dest_tag, self.tag(full_end_name))
+                            time.sleep(0.5)
+                            reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
+                            value = reply[1].rstrip('\x00')
+                            self.tag(full_end_dest, value)
+                        except:
+                            logger.error(f"\tError Initializing Client: {self.end_clients}")
+                            continue
 
     def publish_state(self):
-        logger.debug("=================== DATA ===================")
+        logger.info("=================== DATA ===================")
         for tag in self.tags:
-            logger.debug(f"{tag:<30} --- {self.tag(tag):}")
-        logger.debug("============================================")
+            logger.info(f"{tag:<30} --- {self.tag(tag):}")
+        logger.info("============================================")
 
     def get_type(self, tag):
         return self.types[tag]
@@ -249,12 +385,12 @@ class alicanto():
             if field == 'value':
                 if not math.isclose(float(self.tag(full_tag)), value):  
                     self.tag(full_tag, value)
-                    logger.info("UPDATE NOW: "+full_tag)
-                    logger.info("New value: "+str(value))
+                    logger.debug("UPDATE NOW: "+full_tag)
+                    logger.debug("New value: "+str(value))
                 else:
                     continue
             elif field == 'status':
-                logger.info("Cannot handle binary points")
+                logger.debug("Cannot handle binary points")
                 continue
             else:
                 continue
