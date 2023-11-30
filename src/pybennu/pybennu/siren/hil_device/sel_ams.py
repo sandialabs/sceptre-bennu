@@ -170,7 +170,7 @@ class SELAMS(HIL_Device):
         '''
         TODO: Need to rename this function and update the comment since its now
         parsing loads and generators
-        
+
         Build 2 dictionaries, one to hold the buses and another to hold the branches.
 
         These will be used when sending data to the AMS, because Siren needs to keep track
@@ -296,19 +296,19 @@ class SELAMS(HIL_Device):
         '''
         status = {'Type': 'Unknown', 'Raw Message': line}
 
-        if line.startswith('TA') and len(line) is 2:
+        if line.startswith('TA') and len(line) == 2:
             self.logger.debug(f'Receieved \'Test Abort\' message from AMS, {line}')
             status['Type'] = 'Test Aborted'
-        elif line.startswith('TC') and len(line) is 2:
+        elif line.startswith('TC') and len(line) == 2:
             self.logger.debug(f'Receieved \'Test Completed\' message from AMS, {line}')
             status['Type'] = 'Test Completed'
-        elif line[0] is 'T' and len(line) is 15:
+        elif line[0] == 'T' and len(line) == 15:
             self.logger.debug(f'Receieved \'Current State\' message from AMS, {line}')
             status['Type'] = 'Current State'
             status['Test Execution Time (ms)'] = (int(line[1:9], 16)) / 10.0
             status['Inputs'] = bin(int(line[10:12], 16))[2:].zfill(6)[::-1]
             status['State'] = int(line[13:14], 16)
-        elif line[0] is 'C' and len(line) is 18:
+        elif line[0] == 'C' and len(line) == 18:
             self.logger.debug(f'Receieved \'State Change\' message from AMS, {line}')
             status['Type'] = 'State Change'
             status['Previous State'] = int(line[1:3], 16)
@@ -567,7 +567,7 @@ class SELAMS(HIL_Device):
             self.scale = float(scale)
 
             self.bus_angle = None
-            
+
             self.bus_id_1 = ""
             self.bus_id_2 = ""
 

@@ -16,7 +16,7 @@ o_points_a = {'DAC0': 5000, 'DAC1': 5002}
 
 
 class LabJackU6(HIL_Device):
-    """U6 implementation of the HIL_Device base class. 
+    """U6 implementation of the HIL_Device base class.
     Note that there are some minor differences from the U3 Implementation due to slightly different pins.
 
     Attributes:
@@ -56,7 +56,7 @@ class LabJackU6(HIL_Device):
     def read_analog(self, label):
         """This is the analog read method.
         Args:
-             register: AIN pin to read from. 
+             register: AIN pin to read from.
         returns:
              reading: returns a voltage level
 
@@ -69,33 +69,33 @@ class LabJackU6(HIL_Device):
     def write_analog(self, label, value):
         """This is the analog write method.
         Args:
-             register: AIN pin to read from. 
+             register: AIN pin to read from.
              volts: voltage level that is written to the AIN.
 
         """
-	        #default values
+            #default values
         mindata = 0
-	maxdata = 10000
-	minvolt = 0
-	maxvolt = 3.3
+        maxdata = 10000
+        minvolt = 0
+        maxvolt = 3.3
 
         dicttype = type({dict:type})
-	#If the mapping leads to another mapping, then don't use the defaults. Use the substructure.
+        #If the mapping leads to another mapping, then don't use the defaults. Use the substructure.
         if (type(self.label_mapping[label]) == dicttype):
-		mindata = self.label_mapping[label]["min_data"]
-		print("min_data", mindata)
-		maxdata = self.label_mapping[label]["max_data"]
-		print("max_data", maxdata)
-		minvolt = self.label_mapping[label]["min_voltage"]
-		print("min_voltage", minvolt)
-		maxvolt = self.label_mapping[label]["max_voltage"]
-		print("max_voltage", maxvolt)
-		label = self.label_mapping[label]["label"]
-		label = label.encode("ascii")
-		print("label", label)
-        	
-	voltage = virtualsensor(value, mindata, maxdata, minvolt, maxvolt)
-	print("voltage", voltage)
+            mindata = self.label_mapping[label]["min_data"]
+            print("min_data", mindata)
+            maxdata = self.label_mapping[label]["max_data"]
+            print("max_data", maxdata)
+            minvolt = self.label_mapping[label]["min_voltage"]
+            print("min_voltage", minvolt)
+            maxvolt = self.label_mapping[label]["max_voltage"]
+            print("max_voltage", maxvolt)
+            label = self.label_mapping[label]["label"]
+            label = label.encode("ascii")
+            print("label", label)
+
+        voltage = virtualsensor(value, mindata, maxdata, minvolt, maxvolt)
+        print("voltage", voltage)
         self.device.writeRegister(o_points_a[label], voltage)
 
         #self.device.writeRegister(o_points_a[self.label_mapping[label]], value)
@@ -103,7 +103,7 @@ class LabJackU6(HIL_Device):
     def read_digital(self, label):
         """This is the digital read method. Note that in this implementation,       the register is the pin number
         Args:
-             register: FIO pin to write to. 
+             register: FIO pin to write to.
         returns:
              reading: returns a value of 0 or 1
 
@@ -112,7 +112,7 @@ class LabJackU6(HIL_Device):
         return self.device.getDIState(io_point)
 
     def write_digital(self, label, status):
-        """This is the digital write method. Note that in this       implementation, the register is the pin number 
+        """This is the digital write method. Note that in this       implementation, the register is the pin number
         Args:
             pin: The FIO pin to write to.
             state: The desired state that must be written on the pin.
