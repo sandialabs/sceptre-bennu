@@ -362,6 +362,7 @@ class alicanto():
             message (str): published zmq message as a string
         """
         points = message.split(',')
+        points = points[:-1] # remove last element since it might be empty
         sub_source = threading.current_thread().name
         
         for point in points:
