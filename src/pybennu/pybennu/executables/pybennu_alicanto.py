@@ -371,9 +371,12 @@ class alicanto():
             if point == "":
                 continue
 
-            tag = point.split(':')[0]
-            full_tag = sub_source + '/' + tag
-            value = point.split(':')[1]
+            try:
+                tag = point.split(':')[0]
+                full_tag = sub_source + '/' + tag
+                value = point.split(':')[1]
+            except:
+                continue
             
             if full_tag not in self.tags:
                 continue
