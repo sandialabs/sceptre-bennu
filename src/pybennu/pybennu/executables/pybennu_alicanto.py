@@ -381,12 +381,13 @@ class alicanto():
             if full_tag not in self.tags:
                 continue
 
-            if value.lower() == 'false':
-                value = False
-                field = 'status'
-            elif value.lower() == 'true':
-                value = True
-                field = 'status'
+            if self.types[full_tag] == 'bool':
+                if value.lower() == 'false' or value == '0':
+                    value = False
+                    field = 'status'
+                elif value.lower() == 'true' or value == '1':
+                    value = True
+                    field = 'status'
             else:
                 value = float(value)
                 field = 'value'
