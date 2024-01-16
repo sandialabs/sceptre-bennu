@@ -399,8 +399,12 @@ class alicanto():
                 else:
                     continue
             elif field == 'status':
-                logger.debug("Cannot handle binary points")
-                continue
+                if self.tag(full_tag) != value:  
+                    self.tag(full_tag, value)
+                    logger.debug("UPDATE NOW: "+full_tag)
+                    logger.debug("New value: "+str(value))
+                else:
+                    continue
             else:
                 continue
             
