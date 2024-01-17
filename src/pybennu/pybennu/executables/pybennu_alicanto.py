@@ -227,8 +227,8 @@ class alicanto():
                 logger.error(f"\tError Initializing Client: {self.end_clients}")
                 continue
 
-        # Wait for other sims to start
-        time.sleep(60)
+        # Wait for other sims to start, not sure if needed
+        #time.sleep(5)
     
         ########## Main co-simulation loop ####################################
         while True:
