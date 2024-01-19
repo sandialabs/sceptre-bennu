@@ -73,9 +73,6 @@ class Client:
             tag: String name of tag to update.
             value: Value that the tag will be updated to.
         """
-        if value.lower() == "false" or value == "0":
-            val = "false"
-        else:
-            val = "true"
+        val = "true" if value else "false"
         update = "WRITE=" + tag + ":" + val
         self.send(update)
