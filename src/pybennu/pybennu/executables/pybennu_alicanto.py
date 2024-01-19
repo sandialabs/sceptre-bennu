@@ -321,9 +321,9 @@ class alicanto():
                         try:
                             self.end_clients[end_dest] = alicantoClient(end_dest)
                             if self.logic[full_end_dest] is not None:
-                                self.end_clients[end_dest].write_digital_point(end_dest_tag, self.tag(full_end_dest))
+                                self.end_clients[end_dest].write_digital_point(end_dest_tag, bool(self.tag(full_end_dest)))
                             else:
-                                self.end_clients[end_dest].write_digital_point(end_dest_tag, self.tag(full_end_name))
+                                self.end_clients[end_dest].write_digital_point(end_dest_tag, bool(self.tag(full_end_name)))
                             time.sleep(0.5)
                             reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
                             value = reply[1].rstrip('\x00')
