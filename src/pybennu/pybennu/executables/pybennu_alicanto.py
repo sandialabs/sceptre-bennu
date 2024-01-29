@@ -212,12 +212,9 @@ class alicanto():
             end_dest_tag = (full_end_dest.split('/')[1]
                         if '/' in full_end_dest
                         else full_end_dest)
-            #value = self.tag(end_name)
             try:
                 self.end_clients[end_dest] = alicantoClient(end_dest)
                 reply = self.end_clients[end_dest].send("READ="+end_dest_tag)
-                #Try to keep up with threads
-                #time.sleep(1)
                 value = reply[1].rstrip('\x00')
                 self.endid[i]["value"] = value
                 self.tag(full_end_dest, value)
@@ -226,9 +223,6 @@ class alicanto():
             except:
                 logger.error(f"\tError Initializing Client: {self.end_clients}")
                 continue
-
-        # Wait for other sims to start, not sure if needed
-        #time.sleep(5)
     
         ########## Main co-simulation loop ####################################
         while True:
@@ -247,7 +241,6 @@ class alicanto():
                             if '/' in full_end_dest
                             else full_end_dest)
 
-                # !!need to add something to handle binary points
                 if self.types[full_end_name] == 'float' or self.types[full_end_name] == 'double':
                     if not math.isclose(float(self.tag(full_end_name)), float(self.tag(full_end_dest))):
                         #Handle Logic
