@@ -6,6 +6,6 @@ Alicanto runs as a Subscriber and Client object. It takes in a json file which d
  - Endpoints tell Alicanto where to corelate that subscribed point to a server-endpoint
 
 Usage:
-`pybennu-power-solver -c alicanto.json -d DEBUG`
+`pybennu-alicanto -c alicanto.json -d DEBUG`
 
 Please update this README as Alicanto is used more 
