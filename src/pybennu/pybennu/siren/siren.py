@@ -264,6 +264,7 @@ class siren(Subscriber, Client):
                         if data is not None:
                             if _filter in self.to_endpoint_states and self.to_endpoint_states[_filter] != data:
                                 self.to_endpoint_states[_filter] = data
+                                self.device.logger.log(LEVELS['debug'], f'TO PROVIDER {label}:{data}')
                                 with contextlib.redirect_stdout(None):
                                     self.write_analog_point(_filter, data)
                     elif 'digital' in label:
@@ -271,6 +272,7 @@ class siren(Subscriber, Client):
                         if data is not None:
                             if _filter in self.to_endpoint_states and self.to_endpoint_states[_filter] != data:
                                 self.to_endpoint_states[_filter] = data
+                                self.device.logger.log(LEVELS['debug'], f'TO PROVIDER {label}:{data}')
                                 with contextlib.redirect_stdout(None):
                                     self.write_digital_point(_filter, data)
                     elif 'flip_flop' in label:
@@ -278,12 +280,13 @@ class siren(Subscriber, Client):
                         if data is not None:
                             if _filter in self.to_endpoint_states and self.to_endpoint_states[_filter] != data:
                                 self.to_endpoint_states[_filter] = data
+                                self.device.logger.log(LEVELS['debug'], f'TO PROVIDER {label}:{data}')
                                 with contextlib.redirect_stdout(None):
                                     self.write_digital_point(_filter, data)
                     else:
                         raise NotImplementedError
 
-            self.device.logger.log(LEVELS['debug'], f'TO PROVIDER {label}:{data}')
+                    
             sleep(self.device_config.polling_time)
 
 
