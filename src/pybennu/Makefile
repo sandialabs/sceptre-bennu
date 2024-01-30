@@ -108,6 +108,23 @@ clean-pyc:
 
 deb: packagetools
 	@mkdir -p $(DIST_DIR)
+	@echo 'printf "\n--- RUNNING PYBENNU AFTER INSTALL SCRIPT ---\n\n"' > $(POST)
+	@echo 'mv /root/libzmq* /usr/lib/x86_64-linux-gnu' >> $(POST)
+	@echo 'printf "\n\tINSTALLING ZMQ WITH DRAFT SUPPORT...\n\n"' >> $(POST)
+	@echo 'wget --no-check-certificate https://raw.githubusercontent.com/zeromq/pyzmq/main/examples/draft/install.sh' >> $(POST)
+	@echo 'sed -i -e "s/wget/wget --no-check-certificate/g" install.sh' >> $(POST)
+	@echo 'sed -i -e "s/make -j/make -j $(nproc)/g" install.sh' >> $(POST)
+	@echo 'sed -i -e "s/pip install/pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org -I/g" install.sh' >> $(POST)
+	@echo 'chmod +x install.sh' >> $(POST)
+	@echo './install.sh' >> $(POST)
+	@echo 'printf "\n\tINSTALLING HELICS/PYHELICS...\n\n"' >> $(POST)
+	@echo 'wget --no-check-certificate -O pyhelics.tgz https://github.com/GMLC-TDC/pyhelics/releases/download/v2.7.1/helics-2.7.1.tar.gz' >> $(POST)
+	@echo 'mkdir -p /tmp/pyhelics && tar -C /tmp/pyhelics -xzf pyhelics.tgz && rm pyhelics.tgz' >> $(POST)
+	@echo 'cd /tmp/pyhelics/helics-2.7.1 && sed -i "s/helics-apps/helics-apps~=2.7.1/" /tmp/pyhelics/helics-2.7.1/setup.py' >> $(POST)
+	@echo 'pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org /tmp/pyhelics/helics-2.7.1/' >> $(POST)
+	@echo 'printf "\n\tINSTALLING PYBENNU PIP DEPENDENCIES...\n\n"' >> $(POST)
+	@echo 'pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org bitarray elasticsearch>=5.3.0 helics~=2.7.1 matplotlib>=1.5.3 networkx>=1.11 numpy>=1.11.2 opendssdirect.py~=0.6.1 py-expression-eval~=0.3.14 PYPOWER>=5.0.1 pyserial>=3.4 pyyaml>=3.12 requests>=2.20 scipy>=0.18.1 labjack-ljm~=1.23.0 sysv_ipc' >> $(POST)
+	@echo 'printf "\nDONE!!\n\n"' >> $(POST)
 	@$(FPM) \
 		--verbose \
 		-f \
