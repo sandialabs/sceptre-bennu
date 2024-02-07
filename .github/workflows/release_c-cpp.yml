@@ -1,0 +1,20 @@
+name: C/C++ CI
+
+on:
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+    - name: checkout the repo 
+      uses: actions/checkout@v4
+    - name: release bennu and pybennu
+      run: |
+        #cp build/*.deb build/bennu.deb
+        #cp src/pybennu/dist/*.deb src/pybennu/dist/pybennu.deb
+        #curl -F package=@build/bennu.deb https://${{ secrets.GEMFURY }}@push.fury.io/sceptre/
+        #curl -F package=@src/pybennu/dist/pybennu.deb https://${{ secrets.GEMFURY }}@push.fury.io/sceptre/
+        curl -F package=@bennu.deb https://${{ secrets.GEMFURY }}@push.fury.io/sceptre/
+        curl -F package=@pybennu.deb https://${{ secrets.GEMFURY }}@push.fury.io/sceptre/
