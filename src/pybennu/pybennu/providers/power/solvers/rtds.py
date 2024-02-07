@@ -91,11 +91,11 @@ If elastic-index-basename isn't set, then it defaults to 'rtds-default', e.g. 'r
 | event.ingested           | date          | 2022-04-20:11:22:33.000   | Timestamp of when the data was ingested into Elasticsearch. |
 | ecs.version              | keyword       | 8.8.0                     | [Elastic Common Schema (ECS)](https://www.elastic.co/guide/en/ecs/current/ecs-field-reference.html) version this schema adheres to. |
 | agent.type               | keyword       | rtds-sceptre-provider     | Type of system providing the data |
-| agent.version            | keyword       | 4.0.0                     | Version of the provider |
+| agent.version            | keyword       | e28642b                   | Version of the provider. This is the version of bennu, which is usually the commit short sha. If not able to be determined, this will be `"unknown"`. |
 | observer.hostname        | keyword       | power-provider            | Hostname of the system providing the data. |
 | observer.geo.timezone    | keyword       | America/Denver            | Timezone of the system providing the data. |
 | network.protocol         | keyword       | dnp3                      | Network protocol used to retrieve the data. Currently, this will be either dnp3 or c37.118. |
-| network.transport        | keyword       | tcp                       | Transport layer (Layer 4 of OSI model) protocol used to retrieve the data. Currently, this is usually tcp, but it could be udp if UDP is used for C37.118 or GTNET-SKT. |
+| network.transport        | keyword       | tcp                       | Transport layer (Layer 4 of OSI model) protocol used to retrieve the data. Currently, this is usually `tcp`, but it could be udp if UDP is used for C37.118 or GTNET-SKT. |
 | pmu.name                 | keyword       | PMU1                      | Name of the PMU. |
 | pmu.label                | keyword       | BUS4-1                    | Label for the PMU. |
 | pmu.ip                   | ip            | 172.24.9.51               | IP address of the PMU. |
@@ -206,7 +206,7 @@ class RotatingCSVWriter:
         filename_base: str = "rtds_pmu_data",
         rows_per_file: int = 1000000,
         max_files: int = 0
-    ):
+    ) -> None:
         self.name: str = name
         self.csv_dir: Path = csv_dir
         self.header: List[str] = header
@@ -233,13 +233,13 @@ class RotatingCSVWriter:
         # initial file rotation
         self.rotate()
 
-    def _close_file(self):
+    def _close_file(self) -> None:
         if self.fp and not self.fp.closed:
             self.fp.flush()
             os.fsync(self.fp.fileno())  # ensure data is written to disk
             self.fp.close()
 
-    def rotate(self):
+    def rotate(self) -> None:
         self._close_file()  # close current CSV before starting new one
         if self.current_path:
             self.log.debug(f"Wrote {self.rows_written} rows and {self.current_path.stat().st_size} bytes to {self.current_path}")
@@ -263,7 +263,7 @@ class RotatingCSVWriter:
             self.log.info(f"Removing CSV file {oldest}")
             oldest.unlink()  # delete the file
 
-    def _emit(self, data: list):
+    def _emit(self, data: list) -> None:
         """Write comma-separated list of values."""
         for i, column in enumerate(data):
             self.fp.write(str(column))
@@ -271,7 +271,7 @@ class RotatingCSVWriter:
                 self.fp.write(",")
         self.fp.write("\n")
 
-    def write(self, data: list):
+    def write(self, data: list) -> None:
         """Write data to CSV file."""
         if self.rows_written == self.max_rows:
             self.rotate()
@@ -298,7 +298,7 @@ class PMU:
         name: str = "",
         label: str = "",
         protocol: Literal["tcp", "udp"] = "tcp"
-    ):
+    ) -> None:
         self.ip: str = ip
         self.port: int = port
         self.pdc_id: int = pdc_id
