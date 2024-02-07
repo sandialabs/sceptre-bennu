@@ -76,6 +76,6 @@ jobs:
       run: |
         cp build/*.deb build/bennu.deb
         cp src/pybennu/dist/*.deb src/pybennu/dist/pybennu.deb
-        curl -F package=@build/bennu.deb https://mdKP0-NaTZ7EX8SeYwlFRPr3EwKnhYPg@push.fury.io/sceptre/
-        curl -F package=@src/pybennu/dist/pybennu.deb https://mdKP0-NaTZ7EX8SeYwlFRPr3EwKnhYPg@push.fury.io/sceptre/
+        curl -F package=@build/bennu.deb https://${{ secrets.GEMFURY }}@push.fury.io/sceptre/
+        curl -F package=@src/pybennu/dist/pybennu.deb https://${{ secrets.GEMFURY }}@push.fury.io/sceptre/
 
