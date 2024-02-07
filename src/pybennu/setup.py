@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Python setup module for pybennu."""
 import itertools
 import os
@@ -9,9 +10,6 @@ from setuptools import setup, find_packages
 from setuptools.command.develop import develop
 from setuptools.command.egg_info import egg_info
 from setuptools.command.install import install
-
-# Get git version
-import version
 
 """
 BEGIN CUSTOM INSTALL COMMANDS
@@ -137,14 +135,8 @@ entries = {
         'pybennu-test-ep-server-helics    = pybennu.executables.pybennu_test_ep_server_helics:main',
         'pybennu-test-subscriber          = pybennu.executables.pybennu_test_subscriber:main',
         'pybennu-probe                    = pybennu.executables.pybennu_probe:main',
+        'pybennu-alicanto                 = pybennu.executables.pybennu_alicanto:main',
         'pybennu-siren                    = pybennu.siren.siren:main'
-    ]
-}
-
-
-recommended = {
-    'extras': [
-        'tox'
     ]
 }
 
@@ -156,24 +148,29 @@ setup(
         'egg_info': CustomEggInfoCommand,
     },
     name                    = 'pybennu',
-    version                 = version.get_git_version(),
+    # NOTE: as of setuptools 66, "version" must be PEP 440-compliant string.
+    # In other words, a git commit hash is not valid for "version" anymore.
+    # https://peps.python.org/pep-0440/
+    # TODO: move to pyproject.toml, use setuptools_scm to do version handling
+    # https://github.com/pypa/setuptools_scm
+    version                 = '0.0.0',
     description             = 'bennu python providers and utilities',
-    url                     = 'http://www.sandia.gov/emulytics/',
+    url                     = 'https://github.com/sandialabs/sceptre-bennu.git',
     author                  = 'Sandia National Laboratories',
     author_email            = 'emulytics@sandia.gov',
-    license                 = 'Proprietary',
+    license                 = 'GPLv3',
     platforms               = 'Linux',
     classifiers             = [
         'Development Status :: 5 - Production/Stable',
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         'Operating System :: POSIX :: Linux',
-        'Programming Language :: Python :: 3.6',
-        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
     ],
-    python_requires         = '>=3.6',
+    python_requires         = '>=3.8',
     entry_points            = entries,
     data_files              = data_files,
     packages                = find_packages(),
     install_requires        = requires,
-    extras_require          = recommended,
     include_package_data    = True,
 )

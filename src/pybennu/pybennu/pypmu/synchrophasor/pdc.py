@@ -79,6 +79,7 @@ class Pdc(object):
             except Exception as e:
                 self.logger.error("[%d] - Error while connecting to (%s:%d)", self.pdc_id, self.pmu_ip, self.pmu_port)
                 self.logger.error(str(e))
+                raise e from None
 
 
     def start(self):
