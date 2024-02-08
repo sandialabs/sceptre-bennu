@@ -16,9 +16,9 @@ jobs:
       uses: actions/checkout@v4
     - name: Install build dependencies
       run: |
-        sudo apt-get update
-        sudo apt-get install --no-install-recommends -y build-essential cmake g++ gcc libasio-dev libboost-date-time-dev libboost-filesystem-dev libboost-program-options-dev libboost-system-dev libboost-thread-dev libfreetype6-dev libssl-dev libzmq5-dev python3-pip python3-wheel
-        sudo gem install fpm
+        apt-get update
+        apt-get install --no-install-recommends -y build-essential cmake g++ gcc libasio-dev libboost-date-time-dev libboost-filesystem-dev libboost-program-options-dev libboost-system-dev libboost-thread-dev libfreetype6-dev libssl-dev libzmq5-dev python3-pip python3-wheel
+        gem install fpm
     - name: configure bennu
       run: |
         mkdir build
@@ -31,8 +31,8 @@ jobs:
     - name: test bennu
       run: |
         cd build/
-        sudo make install
-        sudo ldconfig
+        make install
+        ldconfig
         bennu-test-ep-server --d 1 >ep.out 2>&1 &
         bennu-field-device --f ../data/configs/ep/dnp3-server.xml >fd-server.out 2>&1 &
         bennu-field-device --f ../data/configs/ep/dnp3-client.xml >fd-client.out 2>&1 &
@@ -57,16 +57,27 @@ jobs:
         grep "load-power:999" probe.out
         echo -e "help\nexit" | bennu-brash >brash.out 2>&1
         grep "SCEPTRE Field-Device" brash.out
+        bennu-watcherd --help
+        bennu-simulink-provider --help
+        bennu-field-deviced --help
+        bennu-simulink-provider-helics --help
     - name: build deb for bennu
       run: |
         cd build/
-        sudo make package
+        make package
         cp ./*.deb ../bennu.deb
     - name: build deb for pybennu
       run: |
         cd src/pybennu
         make deb
         cp ./dist/*.deb ../../pybennu.deb
+    - name: check deb files
+      run: |
+        echo $(whoami)
+        dpkg-deb --info ./bennu.deb
+        dpkg-deb --info ./pybennu.deb
+        dpkg -i bennu.deb
+        dpkg -i pybennu.deb
     - name: archive deb artifacts
       uses: actions/upload-artifact@v4
       with:
