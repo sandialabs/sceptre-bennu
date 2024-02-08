@@ -71,13 +71,6 @@ jobs:
         cd src/pybennu
         sudo make deb
         cp ./dist/*.deb ../../pybennu.deb
-    - name: check deb files
-      run: |
-        echo $(whoami)
-        dpkg-deb --info ./bennu.deb
-        dpkg-deb --info ./pybennu.deb
-        sudo dpkg -i bennu.deb
-        sudo dpkg -i pybennu.deb
     - name: archive deb artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -86,6 +79,16 @@ jobs:
         path: |
           bennu.deb
           pybennu.deb
+    - name: deb file metadata
+      run: |
+        dpkg-deb --info ./bennu.deb
+        dpkg-deb --info ./pybennu.deb
+    - name: check bennu deb installs
+      run: |
+        sudo dpkg -i bennu.deb
+    - name: check pybennu deb installs
+      run: |
+        sudo dpkg -i pybennu.deb
     - name: release debs to apt repo
       if: (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true) || (github.event_name == 'push' && github.ref == 'refs/heads/main')
       run: |
