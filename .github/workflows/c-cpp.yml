@@ -1,8 +1,12 @@
-name: C/C++ CI
+name: Build and test C++ bennu and deb for pybennu
 
 on:
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
+  push:
+    branches:
+      - main
 
 jobs:
   build:
@@ -10,10 +14,13 @@ jobs:
     steps:
     - name: checkout the repo 
       uses: actions/checkout@v4
-    - name: configure bennu
+    - name: Install build dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install --no-install-recommends -y build-essential cmake g++ gcc libasio-dev libboost-date-time-dev libboost-filesystem-dev libboost-program-options-dev libboost-system-dev libboost-thread-dev libfreetype6-dev libssl-dev libzmq5-dev
+        sudo apt-get install --no-install-recommends -y build-essential cmake g++ gcc libasio-dev libboost-date-time-dev libboost-filesystem-dev libboost-program-options-dev libboost-system-dev libboost-thread-dev libfreetype6-dev libssl-dev libzmq5-dev python3-pip python3-wheel
+        sudo gem install fpm
+    - name: configure bennu
+      run: |
         mkdir build
         cd build/
         cmake ../
@@ -54,17 +61,12 @@ jobs:
       run: |
         cd build/
         sudo make package
-        cp build/*.deb bennu.deb
+        cp ./*.deb ../bennu.deb
     - name: build deb for pybennu
       run: |
-        sudo apt-get install --no-install-recommends -y python3-pip python3-wheel
-        sudo gem install fpm
-        pushd src/pybennu
+        cd src/pybennu
         make deb
-        popd
-        cp src/pybennu/dist/*.deb pybennu.deb
-        #make deb > deb.log 2>&1
-        #make dist > dist.log 2>&1
+        cp ./dist/*.deb ../../pybennu.deb
     - name: archive deb artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -73,3 +75,8 @@ jobs:
         path: |
           bennu.deb
           pybennu.deb
+    - name: release debs to apt repo
+      if: (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true) || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+      run: |
+        curl -F package=@bennu.deb https://${{ secrets.GEMFURY }}@push.fury.io/sceptre/
+        curl -F package=@pybennu.deb https://${{ secrets.GEMFURY }}@push.fury.io/sceptre/
