@@ -1,8 +1,16 @@
 set -ex
 
 printf "\n--- RUNNING PYBENNU AFTER INSTALL SCRIPT ---\n\n"
-mv /root/libzmq* /usr/lib/x86_64-linux-gnu
+if [[ ! -f /usr/lib/x86_64-linux-gnu/libzmq.a ]]; then
+    mv /root/libzmq.a /usr/lib/x86_64-linux-gnu/
+fi
+if [[ ! -f /usr/lib/x86_64-linux-gnu/libzmq.so.5.1.5 ]]; then
+    mv /root/libzmq.so.5.1.5 /usr/lib/x86_64-linux-gnu/
+fi
+# mv /root/libzmq* /usr/lib/x86_64-linux-gnu
 
+# TODO: we should statically include our own version of install.sh
+# instead of downloading it every build and running sed on it
 printf "\n\tINSTALLING ZMQ WITH DRAFT SUPPORT...\n\n"
 wget --no-check-certificate https://raw.githubusercontent.com/zeromq/pyzmq/main/examples/draft/install.sh
 sed -i -e "s/wget/wget --no-check-certificate/g" install.sh
