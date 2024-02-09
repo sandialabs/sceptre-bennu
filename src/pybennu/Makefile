@@ -37,7 +37,7 @@ define PACKAGE_DESCRIPTION
 Modeling and simulation application for SCADA/ICS.
 endef
 PACKAGE_SECTION = python
-PACKAGE_PRIORITY = extra
+PACKAGE_PRIORITY = optional
 PACKAGE_COMPRESSION = bzip2
 # 6.0.1707507794.8a88a442
 PACKAGE_FULL_VERSION := 6.0.$(shell date +%s).$(shell git rev-parse --short HEAD)
@@ -46,7 +46,7 @@ PACKAGE_FILENAME = $(PACKAGE_NAME)_$(PACKAGE_FULL_VERSION)_amd64.deb
 PACKAGE_VENDOR = SNL
 PACKAGE_MAINTAINER = Sandia National Laboratories <emulytics@sandia.gov>
 PACKAGE_LICENSE = GPLv3
-PACKAGE_URL = https://github.com/sandialabs/sceptre-bennu.git
+PACKAGE_URL = https://github.com/sandialabs/sceptre-bennu
 PACKAGE_ARCHITECTURE = amd64
 
 ##
