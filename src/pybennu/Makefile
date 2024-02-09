@@ -107,7 +107,7 @@ clean-pyc:
 	@find . -name ".cache" -exec rm -rfv {} +
 
 deb: packagetools
-	@mkdir -p dist/
+	@mkdir -p $(DIST_DIR)
 	@$(FPM) \
 		--verbose \
 		-f \
