@@ -63,7 +63,7 @@ endef
 ##
 # Targets
 ##
-.PHONY: dist test docs
+.PHONY: packagetools pytools root clean clean-build clean-pyc deb dist sdist install install-dev uninstall wheelhouse bull
 
 help:
 	@echo "clean		- Remove python and build file artifacts."
@@ -113,7 +113,6 @@ deb: packagetools
 	@echo 'printf "\n\tINSTALLING ZMQ WITH DRAFT SUPPORT...\n\n"' >> $(POST)
 	@echo 'wget --no-check-certificate https://raw.githubusercontent.com/zeromq/pyzmq/main/examples/draft/install.sh' >> $(POST)
 	@echo 'sed -i -e "s/wget/wget --no-check-certificate/g" install.sh' >> $(POST)
-	@echo 'sed -i -e "s/make -j/make -j $(nproc)/g" install.sh' >> $(POST)
 	@echo 'sed -i -e "s/pip install/pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org -I/g" install.sh' >> $(POST)
 	@echo 'chmod +x install.sh' >> $(POST)
 	@echo './install.sh' >> $(POST)
