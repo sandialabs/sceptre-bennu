@@ -153,7 +153,7 @@ setup(
     # https://peps.python.org/pep-0440/
     # TODO: move to pyproject.toml, use setuptools_scm to do version handling
     # https://github.com/pypa/setuptools_scm
-    version                 = '0.0.0',
+    version                 = '6.0.0',
     description             = 'bennu python providers and utilities',
     url                     = 'https://github.com/sandialabs/sceptre-bennu.git',
     author                  = 'Sandia National Laboratories',
