@@ -8,12 +8,16 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
+# unix timestamp
+string(TIMESTAMP BUILD_TIMESTAMP "%s")
+
 # CMake requires semantic versions with integer components
 # Set it to something static so stuff works
-set(bennu_VERSION "6.0.0")
+# Example: 6.0.1707507861
+set(bennu_VERSION "6.0.${BUILD_TIMESTAMP}")
 
 # Add commit hash to the version for use by the Deb package builder
-# Example: 6.0.0.f7055755
+# Example: 6.0.1707507861.94edd945
 set(bennu_VERSION_WITH_COMMIT "${bennu_VERSION}.${bennu_SHORT_HASH}")
 
 project(bennu

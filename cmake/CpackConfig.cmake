@@ -17,7 +17,7 @@ set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Sandia National Laboratories <emulytics@san
 set(CPACK_DEBIAN_PACKAGE_DEPENDS "libasio-dev, libboost-date-time-dev, libboost-filesystem-dev, libboost-program-options-dev, libboost-system-dev")
 set(CPACK_DEBIAN_PACKAGE_SECTION misc)
 set(CPACK_DEBIAN_PACKAGE_DESCRIPTION ${CMAKE_PROJECT_DESCRIPTION})
-set(CPACK_PACKAGE_FILE_NAME "bennu-${CPACK_DEBIAN_PACKAGE_VERSION}_amd64_${timestamp}")
+set(CPACK_PACKAGE_FILE_NAME "bennu-${CPACK_DEBIAN_PACKAGE_VERSION}_amd64")
 set(CPACK_DEBIAN_PACKAGE_HOMEPAGE ${CMAKE_PROJECT_HOMEPAGE_URL})
 
 include(CPack)

@@ -155,7 +155,7 @@ setup(
     # https://github.com/pypa/setuptools_scm
     version                 = '6.0.0',
     description             = 'bennu python providers and utilities',
-    url                     = 'https://github.com/sandialabs/sceptre-bennu.git',
+    url                     = 'https://github.com/sandialabs/sceptre-bennu',
     author                  = 'Sandia National Laboratories',
     author_email            = 'emulytics@sandia.gov',
     license                 = 'GPLv3',
