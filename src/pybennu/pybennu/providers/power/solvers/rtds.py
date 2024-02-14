@@ -85,7 +85,7 @@ If elastic-index-basename isn't set, then it defaults to 'rtds-default', e.g. 'r
 
 | field                    | type          | example                   | description |
 | ------------------------ | ------------- | ------------------------- | ----------- |
-| @timestamp               | date          | 2022-04-20:11:22:33.000   | Timestamp from RTDS. |
+| @timestamp               | date          | 2022-04-20:11:22:33.000   | Timestamp from SCEPTRE. This should match the value of sceptre_time. |
 | rtds_time                | date          | 2022-04-20:11:22:33.000   | Timestamp from RTDS. |
 | sceptre_time             | date          | 2022-04-20:11:22:33.000   | Timestamp from SCEPTRE provider (the power-provider VM in the emulation). |
 | event.ingested           | date          | 2022-04-20:11:22:33.000   | Timestamp of when the data was ingested into Elasticsearch. |
@@ -781,7 +781,7 @@ class RTDS(Provider):
 
                     for ph_id, phasor in line["phasors"].items():
                         es_body = {
-                            "@timestamp": rtds_datetime,
+                            "@timestamp": sceptre_ts,
                             "rtds_time": rtds_datetime,
                             "sceptre_time": sceptre_ts,
                             "network": {
