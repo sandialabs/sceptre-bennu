@@ -27,7 +27,7 @@ endif
 
 BUILD_DIR = $(CURDIR)/build
 DIST_DIR = $(CURDIR)/dist
-POST = $(CURDIR)/dist/postinst
+POST = $(CURDIR)/postinst
 
 ##
 # Packaging
@@ -36,17 +36,17 @@ POST = $(CURDIR)/dist/postinst
 define PACKAGE_DESCRIPTION
 Modeling and simulation application for SCADA/ICS.
 endef
-TIMESTAMP = $(shell date +%Y%m%d_%H-%M-%S)
 PACKAGE_SECTION = python
-PACKAGE_PRIORITY = extra
+PACKAGE_PRIORITY = optional
 PACKAGE_COMPRESSION = bzip2
-PACKAGE_FULL_VERSION:=$(shell git rev-parse --short HEAD)
+# 6.0.1707507794.8a88a442
+PACKAGE_FULL_VERSION := 6.0.$(shell date +%s).$(shell git rev-parse --short HEAD)
 PACKAGE_NAME = pybennu
-PACKAGE_FILENAME = $(PACKAGE_NAME)_$(PACKAGE_FULL_VERSION)_amd64_$(TIMESTAMP).deb
+PACKAGE_FILENAME = $(PACKAGE_NAME)_$(PACKAGE_FULL_VERSION)_amd64.deb
 PACKAGE_VENDOR = SNL
 PACKAGE_MAINTAINER = Sandia National Laboratories <emulytics@sandia.gov>
 PACKAGE_LICENSE = GPLv3
-PACKAGE_URL = https://github.com/sandialabs/sceptre-bennu.git
+PACKAGE_URL = https://github.com/sandialabs/sceptre-bennu
 PACKAGE_ARCHITECTURE = amd64
 
 ##
@@ -63,7 +63,7 @@ endef
 ##
 # Targets
 ##
-.PHONY: dist test docs
+.PHONY: packagetools pytools root clean clean-build clean-pyc deb dist sdist install install-dev uninstall wheelhouse bull
 
 help:
 	@echo "clean		- Remove python and build file artifacts."
@@ -107,24 +107,7 @@ clean-pyc:
 	@find . -name ".cache" -exec rm -rfv {} +
 
 deb: packagetools
-	@mkdir -p dist/
-	@echo 'printf "\n--- RUNNING PYBENNU AFTER INSTALL SCRIPT ---\n\n"' > $(POST)
-	@echo 'mv /root/libzmq* /usr/lib/x86_64-linux-gnu' >> $(POST)
-	@echo 'printf "\n\tINSTALLING ZMQ WITH DRAFT SUPPORT...\n\n"' >> $(POST)
-	@echo 'wget --no-check-certificate https://raw.githubusercontent.com/zeromq/pyzmq/main/examples/draft/install.sh' >> $(POST)
-	@echo 'sed -i -e "s/wget/wget --no-check-certificate/g" install.sh' >> $(POST)
-	@echo 'sed -i -e "s/make -j/make -j $(nproc)/g" install.sh' >> $(POST)
-	@echo 'sed -i -e "s/pip install/pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org -I/g" install.sh' >> $(POST)
-	@echo 'chmod +x install.sh' >> $(POST)
-	@echo './install.sh' >> $(POST)
-	@echo 'printf "\n\tINSTALLING HELICS/PYHELICS...\n\n"' >> $(POST)
-	@echo 'wget --no-check-certificate -O pyhelics.tgz https://github.com/GMLC-TDC/pyhelics/releases/download/v2.7.1/helics-2.7.1.tar.gz' >> $(POST)
-	@echo 'mkdir -p /tmp/pyhelics && tar -C /tmp/pyhelics -xzf pyhelics.tgz && rm pyhelics.tgz' >> $(POST)
-	@echo 'cd /tmp/pyhelics/helics-2.7.1 && sed -i "s/helics-apps/helics-apps~=2.7.1/" /tmp/pyhelics/helics-2.7.1/setup.py' >> $(POST)
-	@echo 'pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org /tmp/pyhelics/helics-2.7.1/' >> $(POST)
-	@echo 'printf "\n\tINSTALLING PYBENNU PIP DEPENDENCIES...\n\n"' >> $(POST)
-	@echo 'pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org bitarray elasticsearch>=5.3.0 helics~=2.7.1 matplotlib>=1.5.3 networkx>=1.11 numpy>=1.11.2 opendssdirect.py~=0.6.1 py-expression-eval~=0.3.14 PYPOWER>=5.0.1 pyserial>=3.4 pyyaml>=3.12 requests>=2.20 scipy>=0.18.1 sysv_ipc' >> $(POST)
-	@echo 'printf "\nDONE!!\n\n"' >> $(POST)
+	@mkdir -p $(DIST_DIR)
 	@$(FPM) \
 		--verbose \
 		-f \
