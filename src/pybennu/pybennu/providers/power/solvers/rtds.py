@@ -88,10 +88,11 @@ If elastic-index-basename isn't set, then it defaults to 'rtds-default', e.g. 'r
 | @timestamp               | date          | 2022-04-20:11:22:33.000   | Timestamp from SCEPTRE. This should match the value of sceptre_time. |
 | rtds_time                | date          | 2022-04-20:11:22:33.000   | Timestamp from RTDS. |
 | sceptre_time             | date          | 2022-04-20:11:22:33.000   | Timestamp from SCEPTRE provider (the power-provider VM in the emulation). |
+| time_drift               | float         | 433.3                     | The difference in milliseconds in times between the RTDS and SCEPTRE (the "drift" between the two systems). This value will always be positive, even if the RTDS is ahead of SCEPTRE. This is calculated as abs(sceptre_time - rtds_time) * 1000. |
 | event.ingested           | date          | 2022-04-20:11:22:33.000   | Timestamp of when the data was ingested into Elasticsearch. |
 | ecs.version              | keyword       | 8.8.0                     | [Elastic Common Schema (ECS)](https://www.elastic.co/guide/en/ecs/current/ecs-field-reference.html) version this schema adheres to. |
-| agent.type               | keyword       | rtds-sceptre-provider     | Type of system providing the data |
-| agent.version            | keyword       | e28642b                   | Version of the provider. This is the version of bennu, which is usually the commit short sha. If not able to be determined, this will be `"unknown"`. |
+| agent.type               | keyword       | rtds-sceptre-provider     | Type of system providing the data. |
+| agent.version            | keyword       | unknown                   | Version of the provider. |
 | observer.hostname        | keyword       | power-provider            | Hostname of the system providing the data. |
 | observer.geo.timezone    | keyword       | America/Denver            | Timezone of the system providing the data. |
 | network.protocol         | keyword       | dnp3                      | Network protocol used to retrieve the data. Currently, this will be either dnp3 or c37.118. |
@@ -749,8 +750,6 @@ class RTDS(Provider):
         self.log.info("Starting data writer thread")
 
         while True:
-            # print(f"frame queue: {self.frame_queue.qsize()}")
-
             # This will block until there is an item to process
             pmu, frame = self.frame_queue.get()
             sceptre_ts = utc_now()
@@ -777,6 +776,8 @@ class RTDS(Provider):
                 # Save data to Elasticsearch
                 if self.elastic_enabled:
                     rtds_datetime = datetime.fromtimestamp(frame["time"], timezone.utc)
+                    drift = abs((sceptre_ts - rtds_datetime).total_seconds()) * 1000.0  # float
+
                     es_bodies = []
 
                     for ph_id, phasor in line["phasors"].items():
@@ -784,6 +785,7 @@ class RTDS(Provider):
                             "@timestamp": sceptre_ts,
                             "rtds_time": rtds_datetime,
                             "sceptre_time": sceptre_ts,
+                            "time_drift": drift,
                             "network": {
                                 "protocol": "c37.118",
                                 "transport": pmu.protocol,
