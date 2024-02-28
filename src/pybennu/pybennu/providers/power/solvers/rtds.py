@@ -88,7 +88,7 @@ If elastic-index-basename isn't set, then it defaults to 'rtds-default', e.g. 'r
 | @timestamp               | date          | 2022-04-20:11:22:33.000   | Timestamp from SCEPTRE. This should match the value of sceptre_time. |
 | rtds_time                | date          | 2022-04-20:11:22:33.000   | Timestamp from RTDS. |
 | sceptre_time             | date          | 2022-04-20:11:22:33.000   | Timestamp from SCEPTRE provider (the power-provider VM in the emulation). |
-| time_drift               | float         | 433.3                     | The difference in milliseconds in times between the RTDS and SCEPTRE (the "drift" between the two systems). This value will always be positive, even if the RTDS is ahead of SCEPTRE. This is calculated as abs(sceptre_time - rtds_time) * 1000. |
+| time_drift               | double        | 433.3                     | The difference in milliseconds in times between the RTDS and SCEPTRE (the "drift" between the two systems). This value will always be positive, even if the RTDS is ahead of SCEPTRE. This is calculated as abs(sceptre_time - rtds_time) * 1000. |
 | event.ingested           | date          | 2022-04-20:11:22:33.000   | Timestamp of when the data was ingested into Elasticsearch. |
 | ecs.version              | keyword       | 8.8.0                     | [Elastic Common Schema (ECS)](https://www.elastic.co/guide/en/ecs/current/ecs-field-reference.html) version this schema adheres to. |
 | agent.type               | keyword       | rtds-sceptre-provider     | Type of system providing the data. |
@@ -104,7 +104,7 @@ If elastic-index-basename isn't set, then it defaults to 'rtds-default', e.g. 'r
 | pmu.id                   | long          | 41                        | PDC ID of the PMU. |
 | measurement.stream       | byte          | 1                         | Stream ID of this measurement from the PMU. |
 | measurement.status       | keyword       | ok                        | Status of this measurement from the PMU. |
-| measurement.time         | double        | 1686089097.13333          | Absolute time of when the measurement occurred. This timestamp can be used as a sequence number, and will match across all PMUs from the same RTDS case. |
+| measurement.time         | double        | 1686089097.13333          | Absolute time of when the measurement occurred. This timestamp can be used as a sequence number, and will match across all PMUs from the same RTDS case. It should match `rtds_time`, after being converted to a date. |
 | measurement.frequency    | double        | 60.06                     | Nominal system frequency. |
 | measurement.dfreq        | double        | 8.835189510136843e-05     | Rate of change of frequency (ROCOF). |
 | measurement.channel      | keyword       | PHASOR CH 1:VA            | Channel name of this measurement from the PMU. |
@@ -154,7 +154,9 @@ from pybennu.pypmu.synchrophasor.pdc import Pdc
 # TODO: support PMU "analog" fields, current handling is a hack for HARMONIE LDRD
 # TODO: push state of GTNET-SKT values to Elasticsearch
 # TODO: log most messages to a file with Rotating handler to avoid filling up log (since bennu isn't very smart and won't rotate the file)
+# Save CSV log messages to their own file? Save PMU logger messages to their own file?
 # TODO: add field to Elastic data differentiating which SCEPTRE experiment data is associated with
+# TODO: split out utility functions into a "utils" file: str_to_bool, utc_now, utc_now_formatted, RotatingCSVWriter
 
 def str_to_bool(val: str) -> bool:
     """
@@ -890,6 +892,7 @@ class RTDS(Provider):
             "@timestamp": {"type": "date"},
             "rtds_time": {"type": "date"},
             "sceptre_time": {"type": "date"},
+            "time_drift": {"type": "double"},
             "event": {"properties": {"ingested": {"type": "date"}}},
             "ecs": {"properties": {"version": {"type": "keyword"}}},
             "agent": {
