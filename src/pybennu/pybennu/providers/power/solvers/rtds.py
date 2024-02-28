@@ -90,7 +90,7 @@ If elastic-index-basename isn't set, then it defaults to 'rtds-default', e.g. 'r
 | sceptre_time             | date          | 2022-04-20:11:22:33.000   | Timestamp from SCEPTRE provider (the power-provider VM in the emulation). |
 | time_drift               | double        | 433.3                     | The difference in milliseconds in times between the RTDS and SCEPTRE (the "drift" between the two systems). This value will always be positive, even if the RTDS is ahead of SCEPTRE. This is calculated as abs(sceptre_time - rtds_time) * 1000. |
 | event.ingested           | date          | 2022-04-20:11:22:33.000   | Timestamp of when the data was ingested into Elasticsearch. |
-| ecs.version              | keyword       | 8.8.0                     | [Elastic Common Schema (ECS)](https://www.elastic.co/guide/en/ecs/current/ecs-field-reference.html) version this schema adheres to. |
+| ecs.version              | keyword       | 8.11.0                     | [Elastic Common Schema (ECS)](https://www.elastic.co/guide/en/ecs/current/ecs-field-reference.html) version this schema adheres to. |
 | agent.type               | keyword       | rtds-sceptre-provider     | Type of system providing the data. |
 | agent.version            | keyword       | unknown                   | Version of the provider. |
 | observer.hostname        | keyword       | power-provider            | Hostname of the system providing the data. |
@@ -816,7 +816,8 @@ class RTDS(Provider):
                         es_bodies.append(es_body)
                     self.es_queue.put(es_bodies)
 
-                # Update global data structure with measurements
+                # Update global data structure with measurements.
+                # These are the values that get published to SCEPTRE.
                 #
                 # NOTE: since there are usually multiple threads querying from multiple PMUs
                 # simultaneously, a lock mutex is used to ensure self.current_values doesn't
@@ -870,7 +871,7 @@ class RTDS(Provider):
         # Only need to create these fields once, cache and copy into messages
         es_additions = {
             "ecs": {
-                "version": "8.8.0"
+                "version": "8.11.0",
             },
             "agent": {
                 "type": "rtds-sceptre-provider",
@@ -880,7 +881,7 @@ class RTDS(Provider):
                 "hostname": platform.node(),
                 "geo": {
                     "timezone": str(datetime.now(timezone.utc).astimezone().tzinfo)
-                }
+                },
             },
         }
 
