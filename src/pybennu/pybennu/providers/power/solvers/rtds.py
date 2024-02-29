@@ -955,27 +955,28 @@ class RTDS(Provider):
                 # This blocks until there are messages
                 messages.extend(self.es_queue.get())
 
-            # TODO: there is potential for docs to be pushed to the wrong
-            # date index at the start or end of a day.
-            ts_now = utc_now()
-            index = f"{self.elastic_index_basename}-{ts_now.strftime('%Y.%m.%d')}"
-
-            if index not in self._es_index_cache:
-                # check with elastic, could exist and not be in the cache
-                # if the provider was restarted part way through a day.
-                if not es.indices.exists(index=index):
-                    self.log.info(f"Creating Elasticsearch index '{index}'...")
-                    es.indices.create(index=index, body={
-                        "mappings": {
-                            "properties": es_type_mapping
-                        }
-                    })
-                    self.log.info(f"Created Elasticsearch index '{index}'")
-                self._es_index_cache.add(index)
-
             # Create list of docs to send using Elasticsearch's bulk API
-            actions = [
-                {
+            ts_now = utc_now()
+            actions = []
+            for message in messages:
+                # Use the message's timestamp to generate the index name.
+                # This ensures docs at start/end of a day get into the correct index.
+                index = f"{self.elastic_index_basename}-{message['@timestamp'].strftime('%Y.%m.%d')}"
+
+                if index not in self._es_index_cache:
+                    # check with elastic, could exist and not be in the cache
+                    # if the provider was restarted part way through a day.
+                    if not es.indices.exists(index=index):
+                        self.log.info(f"Creating Elasticsearch index '{index}'...")
+                        es.indices.create(index=index, body={
+                            "mappings": {
+                                "properties": es_type_mapping
+                            }
+                        })
+                        self.log.info(f"Created Elasticsearch index '{index}'")
+                    self._es_index_cache.add(index)
+
+                action = {
                     "_index": index,
                     "_source": {
                         **es_additions,
@@ -983,8 +984,8 @@ class RTDS(Provider):
                         "event": {"ingested": ts_now},
                     }
                 }
-                for message in messages
-            ]
+
+                actions.append(action)
 
             try:
                 result = helpers.bulk(es, actions, request_timeout=10)
