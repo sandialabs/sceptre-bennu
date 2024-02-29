@@ -533,6 +533,7 @@ class RTDS(Provider):
             self.log.warning("No limit set in 'csv-max-files', CSV files won't be cleaned up and could fill all available disk space")
 
         # Get bennu version
+        # TODO: this is broken
         self.bennu_version = "unknown"
         try:
             apt_result = check_output("apt show bennu", shell=True).decode()
@@ -587,6 +588,10 @@ class RTDS(Provider):
 
         # Allow gtnet-skt fields to be read
         self.current_values.update(self.gtnet_skt_state)
+
+        # !! Hack !!
+        # TODO: rotate out values to keep this from eating up memory if running for a long time
+        self.time_map = {}
 
         # Start GTNET-SKT writer thread if using UDP protocol
         if self.gtnet_skt_protocol == "udp":
@@ -754,7 +759,18 @@ class RTDS(Provider):
         while True:
             # This will block until there is an item to process
             pmu, frame = self.frame_queue.get()
-            sceptre_ts = utc_now()
+
+            # This is an epic hack to workaround a nasty time syncronization issue.
+            # Extensive documentation about this is on the wiki.
+            # tl;dr: due the 8 PMU connections being handled in independant threads,
+            # the sceptre_time will differ between the 8 PMUs for the same rtds_time.
+            with self.__lock:
+                if frame["time"] not in self.time_map:
+                    self.time_map[frame["time"]] = utc_now()
+                sceptre_ts = self.time_map[frame["time"]]
+
+            rtds_datetime = datetime.fromtimestamp(frame["time"], timezone.utc)
+            drift = abs((sceptre_ts - rtds_datetime).total_seconds()) * 1000.0  # float
 
             for mm in frame["measurements"]:
                 if mm["stat"] != "ok":
@@ -777,9 +793,6 @@ class RTDS(Provider):
 
                 # Save data to Elasticsearch
                 if self.elastic_enabled:
-                    rtds_datetime = datetime.fromtimestamp(frame["time"], timezone.utc)
-                    drift = abs((sceptre_ts - rtds_datetime).total_seconds()) * 1000.0  # float
-
                     es_bodies = []
 
                     for ph_id, phasor in line["phasors"].items():
@@ -948,7 +961,6 @@ class RTDS(Provider):
             raise RuntimeError("failed to connect to Elasticsearch")
 
         while True:
-            # print(f"elastic queue: {self.es_queue.qsize()}")
             # Batch up messages before sending them all in a single bulk request
             messages = []
             while len(messages) < 48:  # 8 PMUs * 6 channels
