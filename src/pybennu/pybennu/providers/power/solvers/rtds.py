@@ -536,8 +536,8 @@ class RTDS(Provider):
         # TODO: this is broken
         self.bennu_version = "unknown"
         try:
-            apt_result = check_output("apt show bennu", shell=True).decode()
-            self.bennu_version = re.search(r"Version: (\w+)\s", apt_result).groups()[0]
+            apt_result = check_output("apt-cache show bennu", shell=True).decode()
+            self.bennu_version = re.search(r"Version: ([\w\.]+)\s", apt_result).groups()[0]
         except Exception as ex:
             self.log.warning(f"Failed to get bennu version: {ex}")
 
