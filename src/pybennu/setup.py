@@ -107,6 +107,7 @@ requires = [
     'PyYAML>=3.12',  # pyyaml>=3.12  ==5.4.1
     'requests>=2.20',  # ~=2.26.0
     'scipy>=0.18.1',  # ~=1.7.1
+    'labjack-ljm~=1.23.0',
 ]
 
 if 'linux' in sys.platform:

@@ -4,28 +4,32 @@
         "min_data":0,
         "max_data":60,
         "min_volt":1,
-        "max_volt":5
+        "max_volt":5,
+        "deadband":0.5
     },
     "analog_input_2":{
         "pin":"AIN1",
         "min_data":0,
         "max_data":60,
         "min_volt":1,
-        "max_volt":5
+        "max_volt":5,
+        "deadband":0.5
     },
     "analog_input_3":{
         "pin":"AIN2",
         "min_data":0,
         "max_data":60,
         "min_volt":1,
-        "max_volt":5
+        "max_volt":5,
+        "deadband":0.5
      },
     "analog_input_4":{
         "pin":"AIN3",
         "min_data":0,
         "max_data":60,
         "min_volt":1,
-        "max_volt":5
+        "max_volt":5,
+        "deadband":0.5
     },
     "analog_output_1":{
         "pin":"DAC0",
