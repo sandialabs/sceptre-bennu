@@ -2,6 +2,8 @@
 .vscode
 .idea
 
+bennu.deb
+pybennu.deb
 build
 *.autosave
 #*.pyc

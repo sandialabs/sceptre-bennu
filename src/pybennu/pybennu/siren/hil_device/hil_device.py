@@ -107,11 +107,19 @@ class HIL_Device(abc.ABC):
 
     def linear_scale(self, m, r_min, r_max, t_min, t_max):
         '''Linearly scales m in [r_min, r_max] to a value in [t_min, t_max].
+        Ensures value is always within [t_min, t_max]
 
         For an explanation, see:
         https://stats.stackexchange.com/questions/281162/scale-a-number-between-a-range
         '''
-        return min((m - r_min) / (r_max - r_min) * (t_max - t_min) + t_min, t_max)
+        scaled = (m - r_min) / (r_max - r_min) * (t_max - t_min) + t_min
+
+        if scaled <= t_min:
+            return t_min
+        if scaled >= t_max:
+            return t_max
+
+        return scaled
 
 
 class MsgType(enum.Enum):

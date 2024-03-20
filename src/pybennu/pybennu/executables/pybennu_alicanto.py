@@ -1,5 +1,3 @@
-# Edits by Jamie Thorpe and Meg Sahakian 3/14/2024
-
 """Alicanto is a new feature made to be a more simple co-simulation tool than HELICS.
 
 The code is similar to the bennu HELICS code but stripped down.
@@ -379,6 +377,7 @@ class alicanto():
             message (str): published zmq message as a string
         """
         points = message.split(',')
+        points = points[:-1] # remove last element since it might be empty
         sub_source = threading.current_thread().name
         
         for point in points:

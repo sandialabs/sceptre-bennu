@@ -1,22 +1,31 @@
-cmake_minimum_required (VERSION 3.8.0 FATAL_ERROR)
+cmake_minimum_required (VERSION 3.12.0 FATAL_ERROR)
 
-# Get the latest tag of the working branch
-execute_process(
-  COMMAND git describe --abbrev=0
-  WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-  OUTPUT_VARIABLE bennu_TAG
-  OUTPUT_STRIP_TRAILING_WHITESPACE
-)
-
-# Get the latest tag and abbreviated commit hash of the working branch
+# Get the abbreviated commit hash of the working branch
 execute_process(
   COMMAND git rev-parse --short HEAD
   WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
-  OUTPUT_VARIABLE bennu_TAG_HASH
+  OUTPUT_VARIABLE bennu_SHORT_HASH
   OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-project(bennu VERSION ${bennu_TAG} LANGUAGES C CXX)
+# unix timestamp
+string(TIMESTAMP BUILD_TIMESTAMP "%s")
+
+# CMake requires semantic versions with integer components
+# Set it to something static so stuff works
+# Example: 6.0.1707507861
+set(bennu_VERSION "6.0.${BUILD_TIMESTAMP}")
+
+# Add commit hash to the version for use by the Deb package builder
+# Example: 6.0.1707507861.94edd945
+set(bennu_VERSION_WITH_COMMIT "${bennu_VERSION}.${bennu_SHORT_HASH}")
+
+project(bennu
+  VERSION "${bennu_VERSION}"
+  DESCRIPTION "SCEPTRE ICS Modeling and Simulation Package"
+  HOMEPAGE_URL "https://github.com/sandialabs/sceptre-bennu"
+  LANGUAGES C CXX
+)
 
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   message(STATUS "Setting build type to 'Release' as none was specified.")

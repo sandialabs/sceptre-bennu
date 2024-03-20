@@ -1,22 +1,26 @@
-name: C/C++ CI
+name: Build and test C++ bennu and deb for pybennu
 
 on:
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
+  push:
+    branches:
+      - main
 
 jobs:
   build:
-
     runs-on: ubuntu-20.04
-
     steps:
     - name: checkout the repo 
-      uses: actions/checkout@v3
-    - name: get tags
-      run: git fetch --tags
+      uses: actions/checkout@v4
+    - name: Install build dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install --no-install-recommends -y build-essential cmake g++ gcc libasio-dev libboost-date-time-dev libboost-filesystem-dev libboost-program-options-dev libboost-python-dev libboost-system-dev libboost-thread-dev libfreetype6-dev libssl-dev libzmq5-dev python3-pip python3-wheel
+        sudo gem install fpm
     - name: configure bennu
       run: |
-        sudo apt-get update && sudo apt-get install --no-install-recommends -y build-essential cmake g++ gcc libasio-dev libboost-date-time-dev libboost-filesystem-dev libboost-program-options-dev libboost-system-dev libboost-thread-dev libfreetype6-dev libssl-dev libzmq5-dev
         mkdir build
         cd build/
         cmake ../
@@ -53,29 +57,40 @@ jobs:
         grep "load-power:999" probe.out
         echo -e "help\nexit" | bennu-brash >brash.out 2>&1
         grep "SCEPTRE Field-Device" brash.out
-    - name: package bennu
+        bennu-watcherd --help
+        bennu-simulink-provider --help
+        bennu-field-deviced --help
+        bennu-simulink-provider-helics --help
+    - name: build deb for bennu
       run: |
         cd build/
         sudo make package
-    - name: package pybennu
+        cp ./*.deb ../bennu.deb
+    - name: build deb for pybennu
       run: |
-        sudo apt-get install --no-install-recommends -y python3-pip python3-wheel
-        sudo gem install fpm
         cd src/pybennu
-        make deb > deb.log 2>&1
-        #make dist > dist.log 2>&1
-    - name: archive artifacts
-      uses: actions/upload-artifact@v3
+        sudo make deb
+        cp ./dist/*.deb ../../pybennu.deb
+    - name: archive deb artifacts
+      uses: actions/upload-artifact@v4
       with:
-        name: bennu artifacts
+        name: bennu-deb-artifacts
+        if-no-files-found: error
         path: |
-          *.log
-          build/*.deb
-          src/pybennu/dist/*
-    - name: release bennu and pybennu
+          bennu.deb
+          pybennu.deb
+    - name: deb file metadata
       run: |
-        cp build/*.deb build/bennu.deb
-        cp src/pybennu/dist/*.deb src/pybennu/dist/pybennu.deb
-        curl -F package=@build/bennu.deb https://mdKP0-NaTZ7EX8SeYwlFRPr3EwKnhYPg@push.fury.io/sceptre/
-        curl -F package=@src/pybennu/dist/pybennu.deb https://mdKP0-NaTZ7EX8SeYwlFRPr3EwKnhYPg@push.fury.io/sceptre/
-
+        dpkg-deb --info ./bennu.deb
+        dpkg-deb --info ./pybennu.deb
+    - name: check bennu deb installs
+      run: |
+        sudo dpkg -i bennu.deb
+    - name: check pybennu deb installs
+      run: |
+        sudo dpkg -i pybennu.deb
+    - name: release debs to apt repo
+      if: (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true) || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+      run: |
+        curl -F package=@bennu.deb https://${{ secrets.GEMFURY }}@push.fury.io/sceptre/
+        curl -F package=@pybennu.deb https://${{ secrets.GEMFURY }}@push.fury.io/sceptre/
