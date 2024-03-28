@@ -9,6 +9,8 @@
 #include "bennu/devices/field-device/DataManager.hpp"
 #include "bennu/devices/modules/comms/base/CommsModule.hpp"
 #include "bennu/devices/modules/comms/iec60870-5/protocol/src/inc/api/cs104_slave.h"
+#include "bennu/devices/modules/comms/iec60870-5/protocol/src/inc/api/cs101_information_objects.h"
+#include "bennu/devices/modules/comms/iec60870-5/protocol/src/hal/inc/hal_time.h"
 #include "bennu/utility/DirectLoggable.hpp"
 
 namespace bennu {
@@ -51,7 +53,7 @@ public:
 
     bool addAnalogOutput(const uint16_t address, const std::string& tag);
 
-    void writeBinary(uint16_t address, bool value);
+    void writeBinary(uint16_t address, int value);
 
     void writeAnalog(uint16_t address, float value);
 
@@ -62,6 +64,10 @@ public:
     static bool connectionRequestHandler(void* parameter, const char* ipAddress);
     static void connectionEventHandler(void* parameter, IMasterConnection con, CS104_PeerConnectionEvent event);
 
+    static DoublePointValue convertBoolToDPValue(bool status);
+    static DoublePointValue convertIntToDPValue(int status);
+    static void sendSpontaneousUpdate(IMasterConnection connection, int ioa, DoublePointValue value);
+
 private:
     bool mConnected;
     uint32_t mReversePollRate;                              // Server reverse-poll rate
@@ -69,6 +75,7 @@ private:
     std::shared_ptr<std::thread> pServerPollThread;			// Server reverse-poll thread
     std::map<uint16_t, std::pair<std::string, PointType>> mBinaryPoints;
     std::map<uint16_t, std::pair<std::string, PointType>> mAnalogPoints;
+
 
 };
 
