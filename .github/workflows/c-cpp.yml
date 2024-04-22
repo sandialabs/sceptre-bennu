@@ -17,7 +17,7 @@ jobs:
     - name: Install build dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install --no-install-recommends -y build-essential cmake g++ gcc libasio-dev libboost-date-time-dev libboost-filesystem-dev libboost-program-options-dev libboost-system-dev libboost-thread-dev libfreetype6-dev libssl-dev libzmq5-dev python3-pip python3-wheel
+        sudo apt-get install --no-install-recommends -y build-essential cmake g++ gcc libasio-dev libboost-date-time-dev libboost-filesystem-dev libboost-program-options-dev libboost-python-dev libboost-system-dev libboost-thread-dev libfreetype6-dev libssl-dev libzmq5-dev python3-pip python3-wheel
         sudo gem install fpm
     - name: configure bennu
       run: |

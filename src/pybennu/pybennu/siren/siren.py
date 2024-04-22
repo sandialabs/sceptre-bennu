@@ -201,6 +201,16 @@ class siren(Subscriber, Client):
                     self.device_config.id)
                 break
 
+    def _is_outside_deadband(self, old_value, new_value, deadband):
+        """Check if a new value is outside of a deadband threshold from and old value
+        Returns true  if the difference between new_value and old_value are 
+        greater than the deadband, or if the old_value is None.
+        """
+        if old_value is None:
+            return True
+
+        return abs(new_value - old_value) > deadband
+
     def _subscription_handler(self, message):
         """Receive Subscription message
         This method gets called by the Subscriber base class in its run()
@@ -261,9 +271,15 @@ class siren(Subscriber, Client):
                     label = self.device_config.to_endpoint[_filter]
                     if 'analog' in label:
                         data = self.device.read_analog(label)
+                        # set deadband if given in label mapping
+                        deadband = self.device.label_mapping[label].get("deadband", 0.0)
                         if data is not None:
-                            if _filter in self.to_endpoint_states and self.to_endpoint_states[_filter] != data:
+                            if (
+                                _filter in self.to_endpoint_states
+                                and self._is_outside_deadband(self.to_endpoint_states[_filter], data, deadband)
+                            ):
                                 self.to_endpoint_states[_filter] = data
+                                self.device.logger.log(LEVELS['debug'], f'TO PROVIDER {label}:{data}')
                                 with contextlib.redirect_stdout(None):
                                     self.write_analog_point(_filter, data)
                     elif 'digital' in label:
@@ -271,6 +287,7 @@ class siren(Subscriber, Client):
                         if data is not None:
                             if _filter in self.to_endpoint_states and self.to_endpoint_states[_filter] != data:
                                 self.to_endpoint_states[_filter] = data
+                                self.device.logger.log(LEVELS['debug'], f'TO PROVIDER {label}:{data}')
                                 with contextlib.redirect_stdout(None):
                                     self.write_digital_point(_filter, data)
                     elif 'flip_flop' in label:
@@ -278,12 +295,13 @@ class siren(Subscriber, Client):
                         if data is not None:
                             if _filter in self.to_endpoint_states and self.to_endpoint_states[_filter] != data:
                                 self.to_endpoint_states[_filter] = data
+                                self.device.logger.log(LEVELS['debug'], f'TO PROVIDER {label}:{data}')
                                 with contextlib.redirect_stdout(None):
                                     self.write_digital_point(_filter, data)
                     else:
                         raise NotImplementedError
 
-            self.device.logger.log(LEVELS['debug'], f'TO PROVIDER {label}:{data}')
+                    
             sleep(self.device_config.polling_time)
 
 

@@ -12,7 +12,7 @@ fi
 # TODO: we should statically include our own version of install.sh
 # instead of downloading it every build and running sed on it
 printf "\n\tINSTALLING ZMQ WITH DRAFT SUPPORT...\n\n"
-wget --no-check-certificate https://raw.githubusercontent.com/zeromq/pyzmq/main/examples/draft/install.sh
+wget --no-check-certificate -O install.sh https://raw.githubusercontent.com/zeromq/pyzmq/main/examples/draft/install.sh
 sed -i -e "s/wget/wget --no-check-certificate/g" install.sh
 sed -i -e "s/pip install/pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org -I/g" install.sh
 chmod +x install.sh
@@ -29,6 +29,6 @@ sed -i "s/helics-apps/helics-apps~=2.7.1/" /tmp/pyhelics/helics-2.7.1/setup.py
 pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org /tmp/pyhelics/helics-2.7.1/
 
 printf "\n\tINSTALLING PYBENNU PIP DEPENDENCIES...\n\n"
-pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org bitarray 'elasticsearch>=5.3.0' 'helics~=2.7.1' 'matplotlib>=1.5.3' 'networkx>=1.11' 'numpy>=1.11.2' 'opendssdirect.py~=0.6.1' 'py-expression-eval~=0.3.14' 'PYPOWER>=5.0.1' 'pyserial>=3.4' 'pyyaml>=3.12' 'requests>=2.20' 'scipy>=0.18.1' sysv_ipc
+pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org bitarray 'elasticsearch>=5.3.0' 'helics~=2.7.1' 'matplotlib>=1.5.3' 'networkx>=1.11' 'numpy>=1.11.2' 'opendssdirect.py~=0.6.1' 'py-expression-eval~=0.3.14' 'PYPOWER>=5.0.1' 'pyserial>=3.4' 'pyyaml>=3.12' 'requests>=2.20' 'scipy>=0.18.1' sysv_ipc labjack-ljm~=1.23.0
 
 printf "\nDONE!!\n\n"
