@@ -109,7 +109,10 @@ RUN cmake -j$(nproc) -D BUILD_GOBENNU=OFF ../ \
   && make -j$(nproc) install \
   && rm -rf /tmp/*
 
+# Gem install failures: https://github.com/jordansissel/fpm/issues/2048
+# For now, manually install dotenv 2.8.1
 RUN gem install dotenv -v 2.8.1 && gem install fpm -v 1.15.1
+
 RUN python3 -m pip install --no-cache-dir --upgrade aptly-ctl pip setuptools twine wheel
 
 WORKDIR /root
