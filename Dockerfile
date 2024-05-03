@@ -1,12 +1,18 @@
+ARG REGISTRY_IMAGE="ubuntu:20.04"
+ARG PIP_INDEX="https://pypi.org/"
+ARG PIP_INDEX_URL="https://pypi.org/simple"
+
 # create python build image
-FROM ubuntu:20.04 AS pybuilder
+FROM ${REGISTRY_IMAGE} AS pybuilder
 
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND="noninteractive" \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
-RUN apt update \
-  && apt install -y \
+RUN apt-get update \
+  && apt-get install -y \
     build-essential cmake git wget python3-dev python3-pip \
     libfreetype6-dev liblapack-dev libboost-dev \
+  && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
 # setup ZMQ
@@ -26,10 +32,10 @@ RUN wget -O helics.tgz https://github.com/GMLC-TDC/HELICS/releases/download/v${H
   && tar -C /tmp/helics -xzf helics.tgz \
   && rm helics.tgz \
   && mkdir -p /tmp/helics/build && cd /tmp/helics/build \
-  && cmake -D HELICS_USE_SYSTEM_ZEROMQ_ONLY=ON .. \
+  && cmake -j$(nproc) -D HELICS_USE_SYSTEM_ZEROMQ_ONLY=ON .. \
   && make -j$(nproc) install
 
-RUN python3 -m pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org pyzmq~=20.0.0 --install-option=--enable-drafts
+RUN python3 -m pip install --no-cache-dir pyzmq~=20.0.0 --install-option=--enable-drafts
 
 RUN wget -O pyhelics.tgz https://github.com/GMLC-TDC/pyhelics/releases/download/v${HELICS_VERSION}/helics-${HELICS_VERSION}.tar.gz \
   && mkdir -p /tmp/pyhelics \
@@ -37,25 +43,26 @@ RUN wget -O pyhelics.tgz https://github.com/GMLC-TDC/pyhelics/releases/download/
   && rm pyhelics.tgz \
   && cd /tmp/pyhelics/helics-${HELICS_VERSION} \
   && sed -i 's/helics-apps/helics-apps~=2.7.1/' setup.py \
-  && python3 -m pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org .
+  && python3 -m pip install --no-cache-dir .
 
 #DEBUG build
 #ADD docker/vendor /tmp/bennu/vendor
 #WORKDIR /tmp/bennu/vendor/helics-helper
-#RUN python3 -m pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org .
+#RUN python3 -m pip install .
 
 # install Python bennu package
 ADD src/pybennu /tmp/bennu/src/pybennu
 WORKDIR /tmp/bennu/src/pybennu
-RUN python3 -m pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org .
+RUN python3 -m pip install --no-cache-dir .
 
 # create final image
-FROM ubuntu:20.04
+FROM ${REGISTRY_IMAGE}
 
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND="noninteractive" \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
-RUN apt update \
-  && apt install -y \
+RUN apt-get update \
+  && apt-get install -y \
     # bennu
     build-essential ca-certificates cmake cmake-curses-gui \
     git wget pkg-config libasio-dev libsodium-dev \
@@ -68,6 +75,7 @@ RUN apt update \
     libffi-dev ruby-dev ruby-ffi \
     # python
     python3-dev python3-pip python3-setuptools python3-wheel \
+  && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
 # setup Go
@@ -97,7 +105,8 @@ ADD test           /tmp/bennu/test
 
 # install C++ and Golang bennu package
 WORKDIR /tmp/bennu/build
-RUN cmake -D BUILD_GOBENNU=OFF ../ && make -j$(nproc) install \
+RUN cmake -j$(nproc) -D BUILD_GOBENNU=OFF ../ \
+  && make -j$(nproc) install \
   && rm -rf /tmp/*
 
 RUN gem install dotenv -v 2.8.1 && gem install fpm -v 1.15.1
