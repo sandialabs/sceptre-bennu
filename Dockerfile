@@ -100,8 +100,8 @@ WORKDIR /tmp/bennu/build
 RUN cmake -D BUILD_GOBENNU=OFF ../ && make -j$(nproc) install \
   && rm -rf /tmp/*
 
-RUN gem install fpm
-RUN pip3 install --trusted-host pypy.org --trusted-host files.pythonhosted.org -U aptly-ctl pip setuptools twine wheel
+RUN gem install dotenv -v 2.8.1 && gem install fpm -v 1.15.1
+RUN python3 -m pip install --no-cache-dir --upgrade aptly-ctl pip setuptools twine wheel
 
 WORKDIR /root
 CMD /bin/bash
