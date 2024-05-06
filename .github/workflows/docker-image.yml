@@ -5,12 +5,11 @@ on:
     branches: [ "main", "**" ]
 
 jobs:
-
   build:
-
+    name: Build Docker image
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v3
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag sceptre-bennu:$(date +%s)
+      - name: Check out the repo
+        uses: actions/checkout@v4
+      - name: Build the Docker image
+        run: docker build --pull --file Dockerfile --tag sceptre-bennu:$(date +%s) .
