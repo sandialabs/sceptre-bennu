@@ -53,6 +53,7 @@ void DataHandler::parseServerTree(std::shared_ptr<Server> server, const ptree& t
         std::string endpoint = tree.get<std::string>("endpoint");
         std::string log = tree.get<std::string>("event-logging", "iec60870-5-104-server.log");
         server->configureEventLogging(log);
+        std::string subtype = tree.get<std::string>("subtype");
         auto binaryInputs = tree.equal_range("binary-input");
         for (auto iter = binaryInputs.first; iter != binaryInputs.second; ++iter)
         {
@@ -88,7 +89,7 @@ void DataHandler::parseServerTree(std::shared_ptr<Server> server, const ptree& t
         // Initialize and start 104 server
         //   - Pass server pointer to Server::start() so Server::gServer can be set statically
         //     and used inside static 104 handlers
-        server->start(endpoint, server, rPollRate);
+        server->start(endpoint, server, rPollRate, subtype);
     }
     catch (ptree_bad_path& e)
     {

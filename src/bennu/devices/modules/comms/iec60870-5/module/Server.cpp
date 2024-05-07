@@ -17,7 +17,7 @@ Server::Server(std::shared_ptr<field_device::DataManager> dm) :
     setDataManager(dm);
 }
 
-void Server::start(const std::string& endpoint, std::shared_ptr<Server> server, const uint32_t rPollRate)
+void Server::start(const std::string& endpoint, std::shared_ptr<Server> server, const uint32_t rPollRate, std::string subtype)
 {
     // Set server reverse-poll rate
     mReversePollRate = rPollRate;
@@ -45,7 +45,14 @@ void Server::start(const std::string& endpoint, std::shared_ptr<Server> server, 
         CS104_Slave_setServerMode(slave, CS104_MODE_SINGLE_REDUNDANCY_GROUP);
 
         // Set the callback handler for the interrogation command
-        CS104_Slave_setInterrogationHandler(slave, interrogationHandler, NULL);
+        if (subtype.find("double") != std::string::npos)
+        {
+            CS104_Slave_setInterrogationHandler(slave, interrogationHandlerDoublePoint, NULL);
+        }
+        else
+        {
+            CS104_Slave_setInterrogationHandler(slave, interrogationHandlerSinglePoint, NULL);
+        }
         // Set handler for other message types
         CS104_Slave_setASDUHandler(slave, asduHandler, NULL);
         // Set handler to handle connection requests (optional)
@@ -67,7 +74,14 @@ void Server::start(const std::string& endpoint, std::shared_ptr<Server> server, 
         else
         {
             // Start server reverse-polling thread
-            pServerPollThread.reset(new std::thread(std::bind(&Server::reversePoll, this)));
+            if (subtype.find("double") != std::string::npos)
+            {
+                pServerPollThread.reset(new std::thread(std::bind(&Server::reversePollDoublePoint, this)));
+            }
+            else
+            {
+                pServerPollThread.reset(new std::thread(std::bind(&Server::reversePollSinglePoint, this)));
+            }
         }
 
     }
@@ -132,9 +146,98 @@ void Server::sendSpontaneousUpdate(IMasterConnection connection, int ioa, Double
 
 /*
  * Reverse poll loop that sends local bennu datastore data to
- * connected clients.
+ * connected clients. Sends indications as single point values
  */
-void Server::reversePoll()
+void Server::reversePollSinglePoint()
+{
+    while (1)
+    {
+        if (mConnected)
+        {
+            CS101_AppLayerParameters alParams = IMasterConnection_getApplicationLayerParameters(mConnection);
+
+            // Send binary values
+            CS101_ASDU newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_PERIODIC, 0, 1, false, false);
+            // kv = {<address>: {<tag>, eInput}}
+            for (const auto &kv : gServer->mBinaryPoints)
+            {
+                const std::string tag = kv.second.first;
+                if (CS101_ASDU_getPayloadSize(newAsdu) < MAX_ASDU_PAYLOAD_SIZE)
+                {
+                    if (gServer->mDataManager->hasTag(tag))
+                    {
+                        auto status = gServer->mDataManager->getDataByTag<bool>(tag);
+                        InformationObject io = (InformationObject)SinglePointInformation_create(NULL, kv.first, status, IEC60870_QUALITY_GOOD);
+                        CS101_ASDU_addInformationObject(newAsdu, io);
+                        InformationObject_destroy(io);
+                    }
+                }
+                else
+                {
+                    // Send current ASDU and create a new one for the remaining values
+                    IMasterConnection_sendASDU(mConnection, newAsdu);
+                    CS101_ASDU_destroy(newAsdu);
+                    newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_PERIODIC, 0, 1, false, false);
+                    if (gServer->mDataManager->hasTag(tag))
+                    {
+                        auto status = gServer->mDataManager->getDataByTag<bool>(tag);
+                        InformationObject io = (InformationObject)SinglePointInformation_create(NULL, kv.first, status, IEC60870_QUALITY_GOOD);
+                        CS101_ASDU_addInformationObject(newAsdu, io);
+                        InformationObject_destroy(io);
+                    }
+                }
+            }
+            IMasterConnection_sendASDU(mConnection, newAsdu);
+            CS101_ASDU_destroy(newAsdu);
+
+            // Send analog values
+            newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_PERIODIC, 0, 1, false, false);
+            // kv = {<address>: {<tag>, eInput}}
+            for (const auto &kv : gServer->mAnalogPoints)
+            {
+                const std::string tag = kv.second.first;
+                if (CS101_ASDU_getPayloadSize(newAsdu) < MAX_ASDU_PAYLOAD_SIZE)
+                {
+                    if (gServer->mDataManager->hasTag(tag))
+                    {
+                        auto val = gServer->mDataManager->getDataByTag<double>(tag);
+                        InformationObject io = (InformationObject)MeasuredValueShort_create(NULL, kv.first, val, IEC60870_QUALITY_GOOD);
+                        CS101_ASDU_addInformationObject(newAsdu, io);
+                        InformationObject_destroy(io);
+                    }
+                }
+                else
+                {
+                    // Send current ASDU and create a new one for the remaining values
+                    IMasterConnection_sendASDU(mConnection, newAsdu);
+                    CS101_ASDU_destroy(newAsdu);
+                    newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_PERIODIC, 0, 1, false, false);
+                    if (gServer->mDataManager->hasTag(tag))
+                    {
+                        auto val = gServer->mDataManager->getDataByTag<double>(tag);
+                        InformationObject io = (InformationObject)MeasuredValueShort_create(NULL, kv.first, val, IEC60870_QUALITY_GOOD);
+                        CS101_ASDU_addInformationObject(newAsdu, io);
+                        InformationObject_destroy(io);
+                    }
+                }
+            }
+            IMasterConnection_sendASDU(mConnection, newAsdu);
+            CS101_ASDU_destroy(newAsdu);
+            std::this_thread::sleep_for(std::chrono::seconds(mReversePollRate));
+        }
+        else
+        {
+            // Wait until connected to client
+            while (!mConnected) { std::this_thread::sleep_for(std::chrono::seconds(1)); }
+        }
+    }
+}
+
+/*
+ * Reverse poll loop that sends local bennu datastore data to
+ * connected clients. Sends indications as double point values
+ */
+void Server::reversePollDoublePoint()
 {
     while (1)
     {
@@ -213,9 +316,98 @@ void Server::rawMessageHandler(void *parameter, IMasterConnection con, uint8_t *
 }
 
 /*
-* Callback handler for interrogation messages
+* Callback handler for interrogation messages that reports indications as single point values
 */
-bool Server::interrogationHandler(void *parameter, IMasterConnection connection, CS101_ASDU asdu, uint8_t qoi)
+bool Server::interrogationHandlerSinglePoint(void *parameter, IMasterConnection connection, CS101_ASDU asdu, uint8_t qoi)
+{
+    printf("Received interrogation for group %i\n", qoi);
+
+    if (qoi == 20) /* only handle station interrogation */
+    {
+        CS101_AppLayerParameters alParams = IMasterConnection_getApplicationLayerParameters(connection);
+        IMasterConnection_sendACT_CON(connection, asdu, false);
+
+        // Send binary values
+        CS101_ASDU newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_INTERROGATED_BY_STATION, 0, 1, false, false);
+        // kv = {<address>: {<tag>, eInput}}
+        for (const auto &kv : gServer->mBinaryPoints)
+        {
+            const std::string tag = kv.second.first;
+            if (CS101_ASDU_getPayloadSize(newAsdu) < MAX_ASDU_PAYLOAD_SIZE)
+            {
+                if (gServer->mDataManager->hasTag(tag))
+                {
+                    auto status = gServer->mDataManager->getDataByTag<bool>(tag);
+                    InformationObject io = (InformationObject)SinglePointInformation_create(NULL, kv.first, status, IEC60870_QUALITY_GOOD);
+                    CS101_ASDU_addInformationObject(newAsdu, io);
+                    InformationObject_destroy(io);
+                }
+            }
+            else
+            {
+                // Send current ASDU and create a new one for the remaining values
+                IMasterConnection_sendASDU(connection, newAsdu);
+                CS101_ASDU_destroy(newAsdu);
+                newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_INTERROGATED_BY_STATION, 0, 1, false, false);
+                if (gServer->mDataManager->hasTag(tag))
+                {
+                    auto status = gServer->mDataManager->getDataByTag<bool>(tag);
+                    InformationObject io = (InformationObject)SinglePointInformation_create(NULL, kv.first, status, IEC60870_QUALITY_GOOD);
+                    CS101_ASDU_addInformationObject(newAsdu, io);
+                    InformationObject_destroy(io);
+                }
+            }
+        }
+        IMasterConnection_sendASDU(connection, newAsdu);
+        CS101_ASDU_destroy(newAsdu);
+
+        // Send analog values
+        newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_INTERROGATED_BY_STATION, 0, 1, false, false);
+        // kv = {<address>: {<tag>, eInput}}
+        for (const auto &kv : gServer->mAnalogPoints)
+        {
+            const std::string tag = kv.second.first;
+            if (CS101_ASDU_getPayloadSize(newAsdu) < MAX_ASDU_PAYLOAD_SIZE)
+            {
+                if (gServer->mDataManager->hasTag(tag))
+                {
+                    auto val = gServer->mDataManager->getDataByTag<double>(tag);
+                    InformationObject io = (InformationObject)MeasuredValueShort_create(NULL, kv.first, val, IEC60870_QUALITY_GOOD);
+                    CS101_ASDU_addInformationObject(newAsdu, io);
+                    InformationObject_destroy(io);
+                }
+            }
+            else
+            {
+                // Send current ASDU and create a new one for the remaining values
+                IMasterConnection_sendASDU(connection, newAsdu);
+                CS101_ASDU_destroy(newAsdu);
+                newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_INTERROGATED_BY_STATION, 0, 1, false, false);
+                if (gServer->mDataManager->hasTag(tag))
+                {
+                    auto val = gServer->mDataManager->getDataByTag<double>(tag);
+                    InformationObject io = (InformationObject)MeasuredValueShort_create(NULL, kv.first, val, IEC60870_QUALITY_GOOD);
+                    CS101_ASDU_addInformationObject(newAsdu, io);
+                    InformationObject_destroy(io);
+                }
+            }
+        }
+        IMasterConnection_sendASDU(connection, newAsdu);
+        CS101_ASDU_destroy(newAsdu);
+        IMasterConnection_sendACT_TERM(connection, asdu);
+    }
+    else
+    {
+        IMasterConnection_sendACT_CON(connection, asdu, true);
+    }
+
+    return true;
+}
+
+/*
+* Callback handler for interrogation messages that reports indications as double point values
+*/
+bool Server::interrogationHandlerDoublePoint(void *parameter, IMasterConnection connection, CS101_ASDU asdu, uint8_t qoi)
 {
     printf("Received interrogation for group %i\n", qoi);
 
@@ -303,7 +495,38 @@ bool Server::interrogationHandler(void *parameter, IMasterConnection connection,
 
 bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_ASDU asdu)
 {
-    if (CS101_ASDU_getTypeID(asdu) == C_DC_NA_1)
+    if (CS101_ASDU_getTypeID(asdu) == C_SC_NA_1)
+    {
+        printf("received single command\n");
+
+        if (CS101_ASDU_getCOT(asdu) == CS101_COT_ACTIVATION)
+        {
+            InformationObject io = CS101_ASDU_getElement(asdu, 0);
+
+            if (io)
+            {
+                SingleCommand sc = (SingleCommand)io;
+                uint16_t addr = InformationObject_getObjectAddress(io);
+                bool state = SingleCommand_getState(sc);
+                printf("IOA: %i switch to %i\n", addr, state);
+                gServer->writeBinary(addr, state);
+                CS101_ASDU_setCOT(asdu, CS101_COT_ACTIVATION_CON);
+                InformationObject_destroy(io);
+            }
+            else
+            {
+                printf("ERROR: message has no valid information object\n");
+                return true;
+            }
+        }
+        else
+            CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_COT);
+
+        IMasterConnection_sendASDU(connection, asdu);
+
+        return true;
+    }
+    else if (CS101_ASDU_getTypeID(asdu) == C_DC_NA_1)
     {
         printf("received double command\n");
 
@@ -403,7 +626,29 @@ void Server::connectionEventHandler(void *parameter, IMasterConnection con, CS10
 }
 
 /*
-* Write binary value to datastore.
+* Write binary value to datastore. Note this variant takes a bool argument (for single point indications)
+*/
+void Server::writeBinary(std::uint16_t address, bool value)
+{
+    std::ostringstream log_stream;
+    log_stream << "Binary point command at address " << address << " with value " << value << ".";
+    logEvent("iec60870-5-104 Server writeBinary", "info", log_stream.str());
+    auto iter = mBinaryPoints.find(address);
+    if (iter == mBinaryPoints.end())
+    {
+        log_stream.str("");
+        log_stream << "Invalid binary point command request address: " << address;
+        logEvent("binary point command", "error", log_stream.str());
+        return;
+    }
+    mDataManager->addUpdatedBinaryTag(iter->second.first, value);
+    log_stream.str("");
+    log_stream << "Data successfully written.";
+    logEvent("write binary", "info", log_stream.str());
+}
+
+/*
+* Write binary value to datastore. Note this variant takes an int argument (for double point indications)
 */
 void Server::writeBinary(std::uint16_t address, int value)
 {
