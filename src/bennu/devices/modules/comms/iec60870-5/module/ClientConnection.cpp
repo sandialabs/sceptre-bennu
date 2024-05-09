@@ -60,6 +60,14 @@ void ClientConnection::start(std::shared_ptr<ClientConnection> clientConnection)
     }
 }
 
+int ClientConnection::convertBoolToDPValue(bool value)
+{
+    if (value == 0)
+        return IEC60870_DOUBLE_POINT_OFF;
+    else
+        return IEC60870_DOUBLE_POINT_ON;
+}
+
 StatusMessage ClientConnection::readRegisterByTag(const std::string& tag, comms::RegisterDescriptor& rd)
 {
     auto status = getRegisterDescriptorByTag(tag, rd) ? STATUS_SUCCESS : STATUS_FAIL;
@@ -73,7 +81,7 @@ StatusMessage ClientConnection::readRegisterByTag(const std::string& tag, comms:
     return sm;
 }
 
-StatusMessage ClientConnection::writeBinary(const std::string& tag, bool value)
+StatusMessage ClientConnection::writeBinary(const std::string& tag, bool bvalue)
 {
     StatusMessage sm = STATUS_INIT;
     comms::RegisterDescriptor rd;
@@ -86,15 +94,18 @@ StatusMessage ClientConnection::writeBinary(const std::string& tag, bool value)
         return sm;
     }
 
-    // Write boolean using protocol
-    std::cout << "Send single command C_SC_NA_1: " << tag << " -- " << value << std::endl;
-    InformationObject sc = (InformationObject)
-            SingleCommand_create(NULL, rd.mRegisterAddress, value, true, 0);
-    CS104_Connection_sendProcessCommandEx(mConnection, CS101_COT_ACTIVATION, 1, sc);
-    InformationObject_destroy(sc);
+    // Convert boolean to double point value
+    int value = ClientConnection::convertBoolToDPValue(bvalue);
 
-    // Update local data so we don't have to wait until the next poll
-    updateBinary(rd.mRegisterAddress, value);
+    // Write double point using protocol
+    std::cout << "Send double command C_DC_NA_1: " << tag << " -- " << bvalue << std::endl;
+    InformationObject dc = (InformationObject)
+            DoubleCommand_create(NULL, rd.mRegisterAddress, value, true, 0);
+    CS104_Connection_sendProcessCommandEx(mConnection, CS101_COT_ACTIVATION, 1, dc);
+    InformationObject_destroy(dc);
+
+    // Update local data so we don't have to wait until the next poll; save boolean to datastore
+    updateBinary(rd.mRegisterAddress, bvalue);
     return sm;
 }
 
@@ -194,28 +205,44 @@ bool ClientConnection::asduReceivedHandler(void* parameter, int address, CS101_A
         }
     }
     // Binary values
-    else if (CS101_ASDU_getTypeID(asdu) == M_SP_NA_1) {
-        printf("  single point information:\n");
+    else if (CS101_ASDU_getTypeID(asdu) == M_DP_NA_1) {
+        printf("  double point information:\n");
 
         int i;
 
         for (i = 0; i < CS101_ASDU_getNumberOfElements(asdu); i++) {
 
-            SinglePointInformation io =
-                    (SinglePointInformation) CS101_ASDU_getElement(asdu, i);
+            DoublePointInformation io =
+                    (DoublePointInformation) CS101_ASDU_getElement(asdu, i);
 
             uint16_t addr = InformationObject_getObjectAddress((InformationObject) io);
-            bool status = SinglePointInformation_getValue((SinglePointInformation) io);
+            DoublePointValue dp_value = DoublePointInformation_getValue((DoublePointInformation) io);
+
+            bool status = 0;
+            if (dp_value == IEC60870_DOUBLE_POINT_OFF)
+            {
+                status = 0;
+            }
+            else if (dp_value == IEC60870_DOUBLE_POINT_ON)
+            {
+                status = 1;
+            }
+            else
+            {
+                printf("IOA: %i- Double point value is in indeterminate state..defaulting to 0\n", addr);
+                status = 0;
+            }
             printf("    IOA: %i value: %i\n", addr, status);
 
             gClientConnection->updateBinary(addr, status);
 
-            SinglePointInformation_destroy(io);
+            DoublePointInformation_destroy(io);
         }
     }
 
     return true;
 }
+
 
 } // namespace iec60870
 } // namespace comms

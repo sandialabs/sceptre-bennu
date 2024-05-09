@@ -9,6 +9,7 @@
 
 #include "bennu/devices/modules/comms/base/Common.hpp"
 #include "bennu/devices/modules/comms/iec60870-5/protocol/src/inc/api/cs104_connection.h"
+#include "bennu/devices/modules/comms/iec60870-5/protocol/src/inc/api/cs101_information_objects.h"
 
 
 namespace bennu {
@@ -74,6 +75,8 @@ public:
     static void connectionHandler(void* parameter, CS104_Connection connection, CS104_ConnectionEvent event);
     static bool asduReceivedHandler(void* parameter, int address, CS101_ASDU asdu);
 
+    static int convertBoolToDPValue(bool value);
+
 private:
     bool mRunning;
     std::string mRtuEndpoint;                   // IP/Port or DevName of remote RTU
@@ -81,6 +84,7 @@ private:
     std::map<std::uint16_t, std::string> mBinaryAddressToTagMapping;
     std::map<std::uint16_t, std::string> mAnalogAddressToTagMapping;
     std::map<std::string, comms::RegisterDescriptor> mRegisters;
+    
 
 };
 

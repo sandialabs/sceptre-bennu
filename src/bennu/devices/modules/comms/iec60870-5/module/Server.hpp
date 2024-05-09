@@ -9,6 +9,8 @@
 #include "bennu/devices/field-device/DataManager.hpp"
 #include "bennu/devices/modules/comms/base/CommsModule.hpp"
 #include "bennu/devices/modules/comms/iec60870-5/protocol/src/inc/api/cs104_slave.h"
+#include "bennu/devices/modules/comms/iec60870-5/protocol/src/inc/api/cs101_information_objects.h"
+#include "bennu/devices/modules/comms/iec60870-5/protocol/src/hal/inc/hal_time.h"
 #include "bennu/utility/DirectLoggable.hpp"
 
 namespace bennu {
@@ -39,9 +41,11 @@ class Server : public CommsModule, public utility::DirectLoggable, public std::e
 public:
     Server(std::shared_ptr<field_device::DataManager> dm);
 
-    void start(const std::string& endpoint, std::shared_ptr<Server> server, const uint32_t rPollRate);
+    void start(const std::string& endpoint, std::shared_ptr<Server> server, const uint32_t rPollRate, std::string subtype);
 
-    void reversePoll();
+    void reversePollSinglePoint();
+
+    void reversePollDoublePoint();
 
     bool addBinaryInput(const uint16_t address, const std::string& tag);
 
@@ -53,14 +57,21 @@ public:
 
     void writeBinary(uint16_t address, bool value);
 
+    void writeBinary(uint16_t address, int value);
+
     void writeAnalog(uint16_t address, float value);
 
     // IEC60870-5-104 message callback handlers
     static void rawMessageHandler(void* parameter, IMasterConnection con, uint8_t* msg, int msgSize, bool sent);
-    static bool interrogationHandler(void* parameter, IMasterConnection connection, CS101_ASDU asdu, uint8_t qoi);
+    static bool interrogationHandlerSinglePoint(void* parameter, IMasterConnection connection, CS101_ASDU asdu, uint8_t qoi);
+    static bool interrogationHandlerDoublePoint(void* parameter, IMasterConnection connection, CS101_ASDU asdu, uint8_t qoi);
     static bool asduHandler(void* parameter, IMasterConnection connection, CS101_ASDU asdu);
     static bool connectionRequestHandler(void* parameter, const char* ipAddress);
     static void connectionEventHandler(void* parameter, IMasterConnection con, CS104_PeerConnectionEvent event);
+
+    static DoublePointValue convertBoolToDPValue(bool status);
+    static DoublePointValue convertIntToDPValue(int status);
+    static void sendSpontaneousUpdate(IMasterConnection connection, int ioa, DoublePointValue value);
 
 private:
     bool mConnected;
@@ -69,6 +80,7 @@ private:
     std::shared_ptr<std::thread> pServerPollThread;			// Server reverse-poll thread
     std::map<uint16_t, std::pair<std::string, PointType>> mBinaryPoints;
     std::map<uint16_t, std::pair<std::string, PointType>> mAnalogPoints;
+
 
 };
 
