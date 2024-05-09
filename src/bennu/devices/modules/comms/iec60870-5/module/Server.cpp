@@ -113,16 +113,12 @@ DoublePointValue Server::convertIntToDPValue(int value)
     {
         case 0:
             return IEC60870_DOUBLE_POINT_INTERMEDIATE;
-            break;
         case 1:
             return IEC60870_DOUBLE_POINT_OFF;
-            break;
         case 2:
             return IEC60870_DOUBLE_POINT_ON;
-            break;
         case 3:
             return IEC60870_DOUBLE_POINT_INDETERMINATE;
-            break;
         default:
             return IEC60870_DOUBLE_POINT_INTERMEDIATE;
     }
@@ -162,29 +158,20 @@ void Server::reversePollSinglePoint()
             for (const auto &kv : gServer->mBinaryPoints)
             {
                 const std::string tag = kv.second.first;
-                if (CS101_ASDU_getPayloadSize(newAsdu) < MAX_ASDU_PAYLOAD_SIZE)
-                {
-                    if (gServer->mDataManager->hasTag(tag))
-                    {
-                        auto status = gServer->mDataManager->getDataByTag<bool>(tag);
-                        InformationObject io = (InformationObject)SinglePointInformation_create(NULL, kv.first, status, IEC60870_QUALITY_GOOD);
-                        CS101_ASDU_addInformationObject(newAsdu, io);
-                        InformationObject_destroy(io);
-                    }
-                }
-                else
+                if (CS101_ASDU_getPayloadSize(newAsdu) >= MAX_ASDU_PAYLOAD_SIZE)
                 {
                     // Send current ASDU and create a new one for the remaining values
                     IMasterConnection_sendASDU(mConnection, newAsdu);
                     CS101_ASDU_destroy(newAsdu);
                     newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_PERIODIC, 0, 1, false, false);
-                    if (gServer->mDataManager->hasTag(tag))
-                    {
-                        auto status = gServer->mDataManager->getDataByTag<bool>(tag);
-                        InformationObject io = (InformationObject)SinglePointInformation_create(NULL, kv.first, status, IEC60870_QUALITY_GOOD);
-                        CS101_ASDU_addInformationObject(newAsdu, io);
-                        InformationObject_destroy(io);
-                    }
+                }
+
+                if (gServer->mDataManager->hasTag(tag))
+                {
+                    auto status = gServer->mDataManager->getDataByTag<bool>(tag);
+                    InformationObject io = (InformationObject)SinglePointInformation_create(NULL, kv.first, status, IEC60870_QUALITY_GOOD);
+                    CS101_ASDU_addInformationObject(newAsdu, io);
+                    InformationObject_destroy(io);
                 }
             }
             IMasterConnection_sendASDU(mConnection, newAsdu);
@@ -196,29 +183,20 @@ void Server::reversePollSinglePoint()
             for (const auto &kv : gServer->mAnalogPoints)
             {
                 const std::string tag = kv.second.first;
-                if (CS101_ASDU_getPayloadSize(newAsdu) < MAX_ASDU_PAYLOAD_SIZE)
-                {
-                    if (gServer->mDataManager->hasTag(tag))
-                    {
-                        auto val = gServer->mDataManager->getDataByTag<double>(tag);
-                        InformationObject io = (InformationObject)MeasuredValueShort_create(NULL, kv.first, val, IEC60870_QUALITY_GOOD);
-                        CS101_ASDU_addInformationObject(newAsdu, io);
-                        InformationObject_destroy(io);
-                    }
-                }
-                else
+                if (CS101_ASDU_getPayloadSize(newAsdu) >= MAX_ASDU_PAYLOAD_SIZE)
                 {
                     // Send current ASDU and create a new one for the remaining values
                     IMasterConnection_sendASDU(mConnection, newAsdu);
                     CS101_ASDU_destroy(newAsdu);
                     newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_PERIODIC, 0, 1, false, false);
-                    if (gServer->mDataManager->hasTag(tag))
-                    {
-                        auto val = gServer->mDataManager->getDataByTag<double>(tag);
-                        InformationObject io = (InformationObject)MeasuredValueShort_create(NULL, kv.first, val, IEC60870_QUALITY_GOOD);
-                        CS101_ASDU_addInformationObject(newAsdu, io);
-                        InformationObject_destroy(io);
-                    }
+                }
+
+                if (gServer->mDataManager->hasTag(tag))
+                {
+                    auto val = gServer->mDataManager->getDataByTag<double>(tag);
+                    InformationObject io = (InformationObject)MeasuredValueShort_create(NULL, kv.first, val, IEC60870_QUALITY_GOOD);
+                    CS101_ASDU_addInformationObject(newAsdu, io);
+                    InformationObject_destroy(io);
                 }
             }
             IMasterConnection_sendASDU(mConnection, newAsdu);
@@ -259,29 +237,20 @@ void Server::reversePollDoublePoint()
             for (const auto &kv : gServer->mAnalogPoints)
             {
                 const std::string tag = kv.second.first;
-                if (CS101_ASDU_getPayloadSize(newAsdu) < MAX_ASDU_PAYLOAD_SIZE)
-                {
-                    if (gServer->mDataManager->hasTag(tag))
-                    {
-                        auto val = gServer->mDataManager->getDataByTag<double>(tag);
-                        InformationObject io = (InformationObject)MeasuredValueShort_create(NULL, kv.first, val, IEC60870_QUALITY_GOOD);
-                        CS101_ASDU_addInformationObject(newAsdu, io);
-                        InformationObject_destroy(io);
-                    }
-                }
-                else
+                if (CS101_ASDU_getPayloadSize(newAsdu) >= MAX_ASDU_PAYLOAD_SIZE)
                 {
                     // Send current ASDU and create a new one for the remaining values
                     IMasterConnection_sendASDU(mConnection, newAsdu);
                     CS101_ASDU_destroy(newAsdu);
                     newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_PERIODIC, 0, 1, false, false);
-                    if (gServer->mDataManager->hasTag(tag))
-                    {
-                        auto val = gServer->mDataManager->getDataByTag<double>(tag);
-                        InformationObject io = (InformationObject)MeasuredValueShort_create(NULL, kv.first, val, IEC60870_QUALITY_GOOD);
-                        CS101_ASDU_addInformationObject(newAsdu, io);
-                        InformationObject_destroy(io);
-                    }
+                }
+
+                if (gServer->mDataManager->hasTag(tag))
+                {
+                    auto val = gServer->mDataManager->getDataByTag<double>(tag);
+                    InformationObject io = (InformationObject)MeasuredValueShort_create(NULL, kv.first, val, IEC60870_QUALITY_GOOD);
+                    CS101_ASDU_addInformationObject(newAsdu, io);
+                    InformationObject_destroy(io);
                 }
             }
             IMasterConnection_sendASDU(mConnection, newAsdu);
@@ -320,7 +289,7 @@ void Server::rawMessageHandler(void *parameter, IMasterConnection con, uint8_t *
 */
 bool Server::interrogationHandlerSinglePoint(void *parameter, IMasterConnection connection, CS101_ASDU asdu, uint8_t qoi)
 {
-    printf("Received interrogation for group %i\n", qoi);
+    std::cout << "Received interrogation for group " << static_cast<int16_t>(qoi) << std::endl;
 
     if (qoi == 20) /* only handle station interrogation */
     {
@@ -333,29 +302,20 @@ bool Server::interrogationHandlerSinglePoint(void *parameter, IMasterConnection 
         for (const auto &kv : gServer->mBinaryPoints)
         {
             const std::string tag = kv.second.first;
-            if (CS101_ASDU_getPayloadSize(newAsdu) < MAX_ASDU_PAYLOAD_SIZE)
-            {
-                if (gServer->mDataManager->hasTag(tag))
-                {
-                    auto status = gServer->mDataManager->getDataByTag<bool>(tag);
-                    InformationObject io = (InformationObject)SinglePointInformation_create(NULL, kv.first, status, IEC60870_QUALITY_GOOD);
-                    CS101_ASDU_addInformationObject(newAsdu, io);
-                    InformationObject_destroy(io);
-                }
-            }
-            else
+            if (CS101_ASDU_getPayloadSize(newAsdu) >= MAX_ASDU_PAYLOAD_SIZE)
             {
                 // Send current ASDU and create a new one for the remaining values
                 IMasterConnection_sendASDU(connection, newAsdu);
                 CS101_ASDU_destroy(newAsdu);
                 newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_INTERROGATED_BY_STATION, 0, 1, false, false);
-                if (gServer->mDataManager->hasTag(tag))
-                {
-                    auto status = gServer->mDataManager->getDataByTag<bool>(tag);
-                    InformationObject io = (InformationObject)SinglePointInformation_create(NULL, kv.first, status, IEC60870_QUALITY_GOOD);
-                    CS101_ASDU_addInformationObject(newAsdu, io);
-                    InformationObject_destroy(io);
-                }
+            }
+
+            if (gServer->mDataManager->hasTag(tag))
+            {
+                auto status = gServer->mDataManager->getDataByTag<bool>(tag);
+                InformationObject io = (InformationObject)SinglePointInformation_create(NULL, kv.first, status, IEC60870_QUALITY_GOOD);
+                CS101_ASDU_addInformationObject(newAsdu, io);
+                InformationObject_destroy(io);
             }
         }
         IMasterConnection_sendASDU(connection, newAsdu);
@@ -367,29 +327,20 @@ bool Server::interrogationHandlerSinglePoint(void *parameter, IMasterConnection 
         for (const auto &kv : gServer->mAnalogPoints)
         {
             const std::string tag = kv.second.first;
-            if (CS101_ASDU_getPayloadSize(newAsdu) < MAX_ASDU_PAYLOAD_SIZE)
-            {
-                if (gServer->mDataManager->hasTag(tag))
-                {
-                    auto val = gServer->mDataManager->getDataByTag<double>(tag);
-                    InformationObject io = (InformationObject)MeasuredValueShort_create(NULL, kv.first, val, IEC60870_QUALITY_GOOD);
-                    CS101_ASDU_addInformationObject(newAsdu, io);
-                    InformationObject_destroy(io);
-                }
-            }
-            else
+            if (CS101_ASDU_getPayloadSize(newAsdu) >= MAX_ASDU_PAYLOAD_SIZE)
             {
                 // Send current ASDU and create a new one for the remaining values
                 IMasterConnection_sendASDU(connection, newAsdu);
                 CS101_ASDU_destroy(newAsdu);
                 newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_INTERROGATED_BY_STATION, 0, 1, false, false);
-                if (gServer->mDataManager->hasTag(tag))
-                {
-                    auto val = gServer->mDataManager->getDataByTag<double>(tag);
-                    InformationObject io = (InformationObject)MeasuredValueShort_create(NULL, kv.first, val, IEC60870_QUALITY_GOOD);
-                    CS101_ASDU_addInformationObject(newAsdu, io);
-                    InformationObject_destroy(io);
-                }
+            }
+
+            if (gServer->mDataManager->hasTag(tag))
+            {
+                auto val = gServer->mDataManager->getDataByTag<double>(tag);
+                InformationObject io = (InformationObject)MeasuredValueShort_create(NULL, kv.first, val, IEC60870_QUALITY_GOOD);
+                CS101_ASDU_addInformationObject(newAsdu, io);
+                InformationObject_destroy(io);
             }
         }
         IMasterConnection_sendASDU(connection, newAsdu);
@@ -409,7 +360,7 @@ bool Server::interrogationHandlerSinglePoint(void *parameter, IMasterConnection 
 */
 bool Server::interrogationHandlerDoublePoint(void *parameter, IMasterConnection connection, CS101_ASDU asdu, uint8_t qoi)
 {
-    printf("Received interrogation for group %i\n", qoi);
+    std::cout << "Received interrogation for group " << static_cast<int16_t>(qoi) << std::endl;
 
     if (qoi == 20) /* only handle station interrogation */
     {
@@ -422,29 +373,20 @@ bool Server::interrogationHandlerDoublePoint(void *parameter, IMasterConnection 
         for (const auto &kv : gServer->mBinaryPoints)
         {
             const std::string tag = kv.second.first;
-            if (CS101_ASDU_getPayloadSize(newAsdu) < MAX_ASDU_PAYLOAD_SIZE)
-            {
-                if (gServer->mDataManager->hasTag(tag))
-                {
-                    auto status = Server::convertBoolToDPValue(gServer->mDataManager->getDataByTag<bool>(tag));
-                    InformationObject io = (InformationObject)DoublePointInformation_create(NULL, kv.first, status, IEC60870_QUALITY_GOOD);
-                    CS101_ASDU_addInformationObject(newAsdu, io);
-                    InformationObject_destroy(io);
-                }
-            }
-            else
+            if (CS101_ASDU_getPayloadSize(newAsdu) >= MAX_ASDU_PAYLOAD_SIZE)
             {
                 // Send current ASDU and create a new one for the remaining values
                 IMasterConnection_sendASDU(connection, newAsdu);
                 CS101_ASDU_destroy(newAsdu);
                 newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_INTERROGATED_BY_STATION, 0, 1, false, false);
-                if (gServer->mDataManager->hasTag(tag))
-                {
-                    auto status = Server::convertBoolToDPValue(gServer->mDataManager->getDataByTag<bool>(tag));
-                    InformationObject io = (InformationObject)DoublePointInformation_create(NULL, kv.first, status, IEC60870_QUALITY_GOOD);
-                    CS101_ASDU_addInformationObject(newAsdu, io);
-                    InformationObject_destroy(io);
-                }
+            }
+
+            if (gServer->mDataManager->hasTag(tag))
+            {
+                auto status = Server::convertBoolToDPValue(gServer->mDataManager->getDataByTag<bool>(tag));
+                InformationObject io = (InformationObject)DoublePointInformation_create(NULL, kv.first, status, IEC60870_QUALITY_GOOD);
+                CS101_ASDU_addInformationObject(newAsdu, io);
+                InformationObject_destroy(io);
             }
         }
         IMasterConnection_sendASDU(connection, newAsdu);
@@ -456,29 +398,20 @@ bool Server::interrogationHandlerDoublePoint(void *parameter, IMasterConnection 
         for (const auto &kv : gServer->mAnalogPoints)
         {
             const std::string tag = kv.second.first;
-            if (CS101_ASDU_getPayloadSize(newAsdu) < MAX_ASDU_PAYLOAD_SIZE)
-            {
-                if (gServer->mDataManager->hasTag(tag))
-                {
-                    auto val = gServer->mDataManager->getDataByTag<double>(tag);
-                    InformationObject io = (InformationObject)MeasuredValueShort_create(NULL, kv.first, val, IEC60870_QUALITY_GOOD);
-                    CS101_ASDU_addInformationObject(newAsdu, io);
-                    InformationObject_destroy(io);
-                }
-            }
-            else
+            if (CS101_ASDU_getPayloadSize(newAsdu) >= MAX_ASDU_PAYLOAD_SIZE)
             {
                 // Send current ASDU and create a new one for the remaining values
                 IMasterConnection_sendASDU(connection, newAsdu);
                 CS101_ASDU_destroy(newAsdu);
                 newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_INTERROGATED_BY_STATION, 0, 1, false, false);
-                if (gServer->mDataManager->hasTag(tag))
-                {
-                    auto val = gServer->mDataManager->getDataByTag<double>(tag);
-                    InformationObject io = (InformationObject)MeasuredValueShort_create(NULL, kv.first, val, IEC60870_QUALITY_GOOD);
-                    CS101_ASDU_addInformationObject(newAsdu, io);
-                    InformationObject_destroy(io);
-                }
+            }
+
+            if (gServer->mDataManager->hasTag(tag))
+            {
+                auto val = gServer->mDataManager->getDataByTag<double>(tag);
+                InformationObject io = (InformationObject)MeasuredValueShort_create(NULL, kv.first, val, IEC60870_QUALITY_GOOD);
+                CS101_ASDU_addInformationObject(newAsdu, io);
+                InformationObject_destroy(io);
             }
         }
         IMasterConnection_sendASDU(connection, newAsdu);
@@ -497,7 +430,7 @@ bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_AS
 {
     if (CS101_ASDU_getTypeID(asdu) == C_SC_NA_1)
     {
-        printf("received single command\n");
+        std::cout << "received single command" << std::endl;
 
         if (CS101_ASDU_getCOT(asdu) == CS101_COT_ACTIVATION)
         {
@@ -515,8 +448,8 @@ bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_AS
             }
             else
             {
-                printf("ERROR: message has no valid information object\n");
-                return true;
+                std::cout << "ERROR: message has no valid information object" << std::endl;
+                return false;
             }
         }
         else
@@ -528,7 +461,7 @@ bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_AS
     }
     else if (CS101_ASDU_getTypeID(asdu) == C_DC_NA_1)
     {
-        printf("received double command\n");
+        std::cout << "received double command" << std::endl;
 
         if (CS101_ASDU_getCOT(asdu) == CS101_COT_ACTIVATION)
         {
@@ -550,12 +483,14 @@ bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_AS
             }
             else
             {
-                printf("ERROR: message has no valid information object\n");
-                return true;
+                std::cout << "ERROR: message has no valid information object" << std::endl;
+                return false;
             }
         }
         else
+        {
             CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_COT);
+        }
 
         IMasterConnection_sendASDU(connection, asdu);
 

@@ -229,7 +229,7 @@ bool ClientConnection::asduReceivedHandler(void* parameter, int address, CS101_A
             }
             else
             {
-                printf("IOA: %i- Double point value is in indetrminate state..defaulting to 0\n", addr);
+                printf("IOA: %i- Double point value is in indeterminate state..defaulting to 0\n", addr);
                 status = 0;
             }
             printf("    IOA: %i value: %i\n", addr, status);
