@@ -117,7 +117,7 @@ struct Dto
     }
 };
 
-    constexpr auto durationToDuration(const float time_s)
+constexpr auto durationToDuration(const float time_s)
 {
     using namespace std::chrono;
     using fsec = duration<float>;
