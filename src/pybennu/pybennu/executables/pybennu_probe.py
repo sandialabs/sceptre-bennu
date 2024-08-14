@@ -57,7 +57,7 @@ def main():
     endpoint = E.new_Endpoint()
     E.Endpoint_str_set(endpoint, args.endpoint)
     probe = client.Client(endpoint)
-    probe.handler = handler
+    probe.reply_handler = handler
 
     msg = ""
     if args.command == 'query':
