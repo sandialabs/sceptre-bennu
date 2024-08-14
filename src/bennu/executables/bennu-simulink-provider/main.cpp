@@ -117,15 +117,24 @@ struct Dto
     }
 };
 
+constexpr auto durationToDuration(const float time_s)
+{
+    using namespace std::chrono;
+    using fsec = duration<float>;
+    return round<nanoseconds>(fsec{time_s});
+}
 
 class BennuSimulinkProvider : public Provider
 {
 public:
-    BennuSimulinkProvider(const Endpoint& serverEndpoint, const Endpoint& publishEndpoint, bool debug) :
+    double publishRate_setting;
+    
+    BennuSimulinkProvider(const Endpoint& serverEndpoint, const Endpoint& publishEndpoint, bool debug, double publishRate) :
         Provider(serverEndpoint, publishEndpoint),
         mLock(),
         mDebug(debug)
     {
+        publishRate_setting = publishRate;
         mPublishSemaphore = sem_open(PUBLISH_SEM, O_CREAT, 0644, 0);
         if(SEM_FAILED == mPublishSemaphore)
         {
@@ -284,7 +293,7 @@ public:
         {
             publishData();
             std::cout << std::flush;
-            std::this_thread::sleep_for(std::chrono::seconds(1));
+            std::this_thread::sleep_for(durationToDuration(this->publishRate_setting));
         }
     }
 
@@ -333,6 +342,7 @@ int main(int argc, char** argv)
         ("debug", po::bool_switch(&debug), "print debugging information")
         ("server-endpoint", po::value<std::string>()->default_value("tcp://127.0.0.1:5555"), "server listening endpoint")
         ("publish-endpoint", po::value<std::string>()->default_value("udp://239.0.0.1:40000"), "publishing endpoint");
+        ("publish-rate", po::value<double>()->default_value(0.1), "rate at which updates are published from the provider to the simulation");
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -347,7 +357,8 @@ int main(int argc, char** argv)
     Endpoint sEndpoint, pEndpoint;
     sEndpoint.str = vm["server-endpoint"].as<std::string>();
     pEndpoint.str = vm["publish-endpoint"].as<std::string>();
-    BennuSimulinkProvider bsp(sEndpoint, pEndpoint, debug);
+    double publishRate = vm["publish-rate"].as<double>();
+    BennuSimulinkProvider bsp(sEndpoint, pEndpoint, debug, publishRate);
     bsp.run();
     return 0;
 }
