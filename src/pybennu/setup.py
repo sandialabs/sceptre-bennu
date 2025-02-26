@@ -102,7 +102,7 @@ requires = [
     'numpy>=1.11.2',  # >=1.11.2  ~=1.21.2
     'opendssdirect.py~=0.6.1',
     'py-expression-eval~=0.3.14',
-    'PYPOWER>=5.1.16',  # ==5.1.15
+    'PYPOWER==5.1.16',  # ==5.1.15
     'pyserial>=3.4',  # >=3.4
     'PyYAML>=3.12',  # pyyaml>=3.12  ==5.4.1
     'requests>=2.20',  # ~=2.26.0
