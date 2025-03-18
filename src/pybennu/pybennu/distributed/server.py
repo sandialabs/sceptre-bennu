@@ -20,7 +20,14 @@ class Server:
     def __init__(self, endpoint):
         """ Initialize connection environment.
         """
-        self.__endpoint = endpoint
+
+        if isinstance(endpoint, str):
+            # if using a DynamicSimulatorSettings class, endpoint needs to be converted to an actual endpoint
+            self.__endpoint = E.new_Endpoint()
+            E.Endpoint_str_set(self.__endpoint, endpoint)
+        else:
+            self.__endpoint = endpoint
+
         self.request_handler = self.__defaultHandler
         self.bind()
 
@@ -37,7 +44,7 @@ class Server:
     def run(self):
         """ Listen for requests and reply to them.
         """
-        while (True):
+        while True:
             request = self.__socket.recv_string()
             print("Server ---- Received request: {}".format(request))
             reply = self.request_handler(request.strip('\x00'))
