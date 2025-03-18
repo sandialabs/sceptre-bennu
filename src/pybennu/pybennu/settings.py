@@ -1,0 +1,445 @@
+"""
+TODO: better documentation
+
+Order of precedence:
+- Environment variables
+- Value read from a .env file
+- Values from YAML file (or whatever is used to initialize)
+
+Values from the YAML file can be overridden by environment variables.
+The environment variables start with "bennu_".
+Nested variables are separated with "__", e.g. "bennu_elastic__enabled"
+Empty environment variables are ignored.
+
+For example:
+
+    export bennu_publish_rate=2.5
+    pybennu-power-solver -e pybennu -c /etc/sceptre/config.ini -d restart
+
+Some other examples:
+
+    export bennu_debug=true
+    export bennu_elastic__enabled=false
+"""
+
+from typing import List, Literal, Tuple, Type, Union
+from ipaddress import IPv4Address
+from pathlib import Path
+
+import yaml
+from pydantic import (
+    AnyUrl,
+    BaseModel,
+    Field,
+    HttpUrl,
+    ValidationInfo,
+    field_validator,
+)
+from pydantic_settings import (
+    BaseSettings,
+    PydanticBaseSettingsSource,
+    SettingsConfigDict,
+)
+
+
+class GtnetSktTag(BaseModel):
+    name: str = Field(
+        description='SCEPTRE/Bennu requires tag names with a format "<name>.<thing>"\n- boolean fields (int):  ".closed" ("G3CB3.closed")\n- analog fields (float): ".value"  ("DL5shed.value")',
+    )
+    type: Literal["int", "float"]
+    initial_value: Union[int, float] = Field(
+        description="Initial value to set in internal state when provider starts.",
+        examples=["0", "1", "0.0", "60.0", "1.0"],
+    )
+
+    @field_validator("name")
+    @classmethod
+    def validate_gtnet_skt_name(cls, v: str) -> str:
+        if not any(v.endswith(x) for x in [".closed", ".value"]):
+            raise ValueError("name must end with one of '.closed' or '.value'")
+        return v
+
+
+class GtnetSktSettings(BaseModel):
+    """
+    Configuration for connecting to the GTNET-SKT interface on the RTDS.
+    NOTE: this applies to GTNET-SKT channel 1 ONLY. Multiple GTNET-SKT channels are not supported yet.
+    """
+    enabled: bool = False
+    ip: IPv4Address = IPv4Address("0.0.0.0")
+    port: int = Field(default=7000, gt=0)
+    protocol: Literal["udp", "tcp"] = Field(default="udp")
+    tcp_retry_delay: float = Field(
+        default=1.0,
+        gt=0.0,
+        title="TCP Retry Delay",
+        description="Rate at which TCP connection will be attempted to rebuilt if lost.",
+    )
+    udp_write_rate: int = Field(
+        default=30,
+        gt=0,
+        title="UDP Write Rate",
+        description="How many writes per second for UDP. Default is 30hz (30 times a second).",
+    )
+    # TODO: validate that number of tags <= 30 (maximum of 30 points are allowed per GTNET-SKT channel)
+    tags: List[GtnetSktTag] = Field(
+        default_factory=list,
+        title="GTNET-SKT Tags",
+        description="IMPORTANT: The order of this list matters! It determines the order in which values are serialized on the wire in packets, which determines how they're read by the RTDS. See docstring in rtds.py for details.",
+    )
+
+
+class PmuDevice(BaseModel):
+    """
+    PMU device that will be polled regularly for values over C37.118 protocol.
+
+    SCEPTRE Tag format for PMU data:
+        {pmu-label}_{channel}.real
+        {pmu-label}_{channel}.angle
+
+    Tag examples for PMU data:
+        BUS6_VA.real
+        BUS6_VA.angle
+    """
+    name: str = Field(
+        title="PMU Name",
+        description="Name of the PMU.",
+        examples=["PMU1", "PMU8"],
+        coerce_numbers_to_str=True,
+    )
+    label: str = Field(
+        description="Label used to generate the SCEPTRE tags for the PMUs values.",
+        examples=["BUS6", "BUS5-1"],
+        coerce_numbers_to_str=True
+    )
+    pdc_id: int = Field(gt=0, title="PDC ID")
+    port: int = Field(gt=0)
+    ip: IPv4Address
+    protocol: Literal["tcp", "udp", "multicast"]
+
+
+class PmuSettings(BaseModel):
+    """
+    Active polling of PMUs. This is where the provider regularly queries
+    one or more PMUs on the simulator rack over C37.118 protocol.
+
+    For the RTDS, there are up to 8 PMUs that can be configured. These will share
+    the same IP address, but different TCP/UDP ports. Therefore, this configuration
+    requires each PMU to be configured individually, even if they all have the
+    same IP address.
+    """
+    enabled: bool = False
+    retry_delay: float = Field(
+        default=5.0,
+        gt=0.0,
+        title="Retry Delay",
+        description="How often to retry connections or requests to PMUs if TCP connections fail (for TCP protocol) or if there is no data in frame.",
+    )
+    retry_attempts: int = Field(
+        default=3,
+        title="Retry Attempts",
+        description="Number of times to retry querying for data before either rebuilding the TCP connection (for TCP protocol) or exiting with an error (for UDP). Note that TCP connection retries will continue until a connection is established, this config option merely sets the number of failures allowed."
+    )
+    bind_ip: IPv4Address = Field(
+        default="0.0.0.0",
+        title="Bind IP",
+        description="IPv4 address to listen on for UDP-based PMU communications.",
+    )
+    pmus: List[PmuDevice] = Field(
+        default_factory=list,
+    )
+
+
+class ModbusRegister(BaseModel):
+    """
+    Modbus registers.
+    """
+    num: int = Field(
+        gt=0,
+        title="Register Number",
+        description="The Modbus Register ID. This should be unique for a given device."
+    )
+    name: str = Field(
+        description="Descriptive name for the register",
+        examples=["grid_voltage", "battery_current", "battery_soc"],
+    )
+    reg_type: Literal["holding", "coil", "discrete", "input"] = Field(
+        title="Register Type",
+    )
+    access: Literal["r", "w", "rw"] = Field(
+        description="Access permissions for the register, Read-only, Write-only, or Read-Write.",
+    )
+    data_type: Literal["float32", "bool"] = Field(
+        title="Data Type",
+        description="Data type for the register, also determines width (32 bits will be two registers wide)."
+    )
+    unit_type: str = Field(
+        title="Unit Type",
+        description="Human-readable unit for the measurement. This will be appended after the value when humanized.",
+        examples=["kW", "%", "A", "V"],
+    )
+    description: str = Field(
+        description="Human-readable description of the register's purpose.",
+        examples=["Bus Power, Bidirectional", "Read-only version of some_reg", "Genset Voltage", "Battery SOC (State of Charge)"],
+    )
+    sceptre_tag: str = Field(
+        default="",
+        validate_default=True,
+        title="SCEPTRE Tag",
+        description="The corresponding SCEPTRE tag, e.g. 'reg1.closed' for a register named 'reg1'. This is automatically set via a Pydantic validator, using the 'name' field.",
+    )
+
+    # === Validators ===
+    @field_validator("sceptre_tag")
+    @classmethod
+    def append_sceptre_suffix(cls, v: str, info: ValidationInfo) -> str:
+        # https://docs.pydantic.dev/latest/concepts/validators/#field-validators
+        # .closed: boolean
+        # .value: float/etc
+        if any(
+            info.data['name'].endswith(s)
+            for s in [".closed", ".value"]
+        ):
+            return info.data['name']
+
+        if info.data["data_type"] == "bool":
+            return f"{info.data['name']}.closed"
+        else:
+            return f"{info.data['name']}.value"
+
+    # === User methods ===
+    def humanize(self, value) -> str:
+        """
+        Generate string with human-readable value with the register's
+        unit_type added, e.g. "4.05kW" or "60.0%".
+        """
+        return f"{str(value)}{self.unit_type}"
+
+    # === For comparison and sorting ===
+    def __eq__(self, other: "ModbusRegister") -> bool:
+        return self.num == other.num
+
+    def __lt__(self, other: "ModbusRegister") -> bool:
+        return self.num < other.num
+
+    def __gt__(self, other: "ModbusRegister") -> bool:
+        return self.num > other.num
+
+
+class ModbusSettings(BaseModel):
+    """
+    Configure Modbus/TCP as a protocol for communicating from the provider
+    to the simulator rack. It can be used for both reading values and
+    writing values.
+
+    This is NOT to be confused with Modbus inside the SCEPTRE emulation, this
+    is only between the provider VM and the dynamic simulator (OPALRT/RTDS).
+    """
+    enabled: bool = False
+    ip: IPv4Address = IPv4Address("0.0.0.0")
+    port: int = Field(default=502, gt=0)
+    timeout: float = Field(
+        default=5.0,
+        ge=0.0,
+        title="Modbus request timeout",
+        description="Number of seconds to wait before Modbus/TCP requests time out. Set to 0.0 to never time out.",
+    )
+    retry_attempts: int = Field(
+        default=3,
+        title="Modbus Retry Attempts",
+        description="Number of times to retry querying for data before rebuilding the Modbus TCP connection. Set to 0 to never rebuild connection. Note that TCP connection retries will continue until a connection is established, this config option merely sets the number of failures allowed."
+    )
+    retry_delay: float = Field(
+        default=3.0,
+        ge=0.0,
+        title="Modbus Retry Delay",
+        description="Time to wait before retrying send if a Modbus send fails.",
+    )
+    polling_rate: float = Field(
+        default=0.01,
+        ge=0.0,
+        title="Modbus Polling Rate",
+        description="Rate at which readable values are regularly polled for values. Set to 0.0 to poll as fast as possible (no sleeps).",
+    )
+    registers: List[ModbusRegister] = Field(
+        title="Modbus Registers",
+        default_factory=list,
+    )
+
+
+class CsvSettings(BaseModel):
+    """
+    Configure exporting of ground truth data from the provider
+    to CSV files on disk in the provider VM.
+    """
+    enabled: bool = False
+    file_path: str = Field(
+        default="/root/default_csv_path/",
+        title="CSV File Path",
+        description="Path CSV files should be saved to",
+        examples=["/root/rtds_data/", "/root/opalrt_data/"],
+    )
+    rows_per_file: int = Field(
+        default=50000,
+        gt=0,
+        title="Rows Per CSV File",
+        description="Number of rows to save in each CSV file",
+    )
+    max_files: int = Field(
+        default=3,
+        ge=0,
+        title="Maximum CSV files",
+        description="Maximum number of CSV files to save. The oldest files will be deleted as new files are created. Set to 0 for no limit.",
+    )
+
+
+class ElasticSettings(BaseModel):
+    """
+    Configure export of ground truth data directly from
+    the provider to an Elasticsearch database.
+    """
+    enabled: bool = False
+    host: str = Field(
+        default="http://localhost:9200",
+        title="Elasticsearch Host",
+        description="URL of the Elasticsearch server to save data to.",
+        examples=["http://localhost:9200", "http://172.16.0.254:9200"],
+    )
+    index_basename: str = Field(
+        default="default-index-basename-changeme",
+        title="Index Basename",
+        description="Base name of the Elasticsearch indices that will be created.",
+        examples=["rtds-clean", "opalrt"],
+    )
+    num_threads: int = Field(
+        default=3,
+        gt=0,
+        title="Number of Export Threads",
+        description="Number of threads to use to parallelize exporting to Elasticsearch.",
+    )
+
+    @field_validator("host")
+    @classmethod
+    def validate_es_host(cls, v: str) -> str:
+        return str(HttpUrl(v))
+
+
+class PybennuSettings(BaseSettings):
+    # === General Settings ===
+    server_endpoint: str = Field(
+        default="tcp://172.16.1.2:5555",
+    )
+    publish_endpoint: str = Field(
+        default="udp://*;239.0.0.1:40000",
+    )
+    simulator: str = ""  # this is "solver" in the Scenario
+    debug: bool = False
+
+    # === SCEPTRE Metadata ===
+    sceptre_topology: str = ""
+    sceptre_scenario: str = ""
+    sceptre_experiment: str = ""
+    provider_hostname: str = ""
+    provider_ip: IPv4Address = Field(
+        default="0.0.0.0",
+        title="Provider IP Address",
+        description="IPv4 address of the provider VM.",
+    )
+
+    # === OPALRT/RTDS Simulator Settings ===
+    publish_rate: float = Field(
+        default=1.0,
+        ge=0.0,
+        title="Publish Rate",
+        description="How fast points should be published by periodic_publish. Note: if publish-rate is 0, then points will be published as fast as possible.",
+    )
+    rack_ip: IPv4Address = Field(
+        default="0.0.0.0",
+        title="Rack IP Address",
+        description="IPv4 address of the simulator rack (OPALRT or RTDS rack).",
+    )
+    data_dir: str = Field(
+        default="/root/default_data_dir/",
+        title="Data Directory",
+        description="Path where any provider-relevant data should be saved to.",
+        examples=["/root/rtds_data/", "/root/opalrt_data/"],
+    )
+
+    # Ground truth data export
+    elastic: ElasticSettings = ElasticSettings()
+    csv: CsvSettings = CsvSettings()
+
+    # Protocols for communicating with the simulator
+    pmu: PmuSettings = PmuSettings()
+    modbus: ModbusSettings = ModbusSettings()
+    gtnet_skt: GtnetSktSettings = GtnetSktSettings()
+
+    # Configuration of the Pydantic model
+    model_config = SettingsConfigDict(
+        # Environment variables start with this, e.g.
+        # "export bennu_publish_rate=2.5"
+        env_prefix="bennu_",
+        env_nested_delimiter="__",
+        env_ignore_empty=True,
+
+        # Remove whitespace from any string fields
+        str_strip_whitespace=True,
+
+        extra='ignore',
+        validate_assignment=True,
+        # validate_default=False,
+        allow_inf_nan=False,
+        nested_model_default_partial_update=True,
+    )
+
+    # Changing the order of precedence, so environment
+    # variables will override values from YAML file.
+    #
+    # Order of precedence:
+    #   - Environment variables
+    #   - Value read from a .env file
+    #   - Values from YAML file (or whatever is used to initialize)
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: Type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,  # not used by us
+    ) -> Tuple[PydanticBaseSettingsSource, ...]:
+        return env_settings, dotenv_settings, init_settings
+
+    @field_validator("server_endpoint", "publish_endpoint")
+    @classmethod
+    def validate_urls(cls, v: str) -> str:
+        return str(AnyUrl(v))
+
+
+def load_settings_yaml(path: Union[Path, str]) -> PybennuSettings:
+    """
+    Generates a settings model from the contents of a YAML file.
+    """
+    if isinstance(path, str):
+        path = Path(path).resolve()
+
+    if not path.is_file():
+        raise FileNotFoundError(f"Non-existent or unreadable settings file '{path}'")
+
+    with path.open("r") as fp:
+        data = yaml.safe_load(fp)
+
+    return PybennuSettings.model_validate(data)
+
+
+# TODO: generate JSON schema
+
+# TODO: use @model_validators to validate all values if a given model's enable flag is True
+# https://docs.pydantic.dev/latest/concepts/validators/#model-validators
+
+if __name__ == "__main__":
+    import sys
+    p = Path(sys.argv[1]).resolve()
+    print(p)
+
+    m = load_settings_yaml(p)
