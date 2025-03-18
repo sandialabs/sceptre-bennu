@@ -1,5 +1,6 @@
 import argparse
 import os
+from pathlib import Path
 import platform
 import sys
 import signal
@@ -7,34 +8,36 @@ import time
 
 from configparser import ConfigParser, NoOptionError
 
-from pybennu.providers.utils.daemon import Daemon
 import pybennu.distributed.swig._Endpoint as E
+from pybennu.providers.utils.daemon import Daemon
+from pybennu.settings import PybennuSettings, load_settings_yaml
 
 
 class ServerDaemon(Daemon):
-    def __init__(self, args):
-        signal.signal(signal.SIGINT,  self.handle_exit) # ctrl + c
-        self.system = platform.system().lower()
-        self.debug = args.debug
+    def __init__(self, args: argparse.Namespace) -> None:
+        signal.signal(signal.SIGINT,  self.handle_exit)  # ctrl + c
+
+        self.system: str = platform.system().lower()
+        self.debug: bool = args.debug
+
         # only care about the config file when starting
         if args.operation in ('start', 'restart'):
-            if args.config_file:
-                config_file = args.config_file
+            if os.path.exists(args.config_file):
+                self.config_file = os.path.abspath(args.config_file)
             else:
-                config_file = f'/etc/sceptre/{args.env}.ini'
-
-            if os.path.exists(config_file):
-                self.config_file = os.path.abspath(config_file)
-            else:
-                print(f"\nThe file {config_file} does not exist - "
+                print(f"\nThe file {args.config_file} does not exist - "
                        "please provide a valid config file.\n")
                 sys.exit(-1)
 
-        Daemon.__init__(self, f'/var/run/bennu-{args.env}.pid', '/dev/null',
-                        f'/var/log/bennu-{args.env}.out',
-                        f'/var/log/bennu-{args.env}.err')
+        Daemon.__init__(
+            self,
+            f'/var/run/bennu-{args.env}.pid',
+            '/dev/null',
+            f'/var/log/bennu-{args.env}.out',
+            f'/var/log/bennu-{args.env}.err',
+        )
 
-    def run(self):
+    def run(self) -> None:
         config = ConfigParser()
         config.read(self.config_file)
 
@@ -53,12 +56,14 @@ class ServerDaemon(Daemon):
         if 'power-solver-service' in config.sections():
             server_endpoint = E.new_Endpoint()
             publish_endpoint = E.new_Endpoint()
+
             try:
                 solver = config.get('power-solver-service', 'solver-type').strip()
             except NoOptionError:
                 print("\nERROR: 'solver-type' must be defined in the "
                       "configuration file\n")
                 sys.exit(-1)
+
             #########################################
             ################ Dummy ##################
             #########################################
@@ -76,11 +81,11 @@ class ServerDaemon(Daemon):
                           "endpoint'\n")
                     sys.exit(-1)
 
-                from pybennu.executables.pybennu_test_ep_server \
-                   import ElectricPowerService
-                self.solver = ElectricPowerService(server_endpoint,
-                                                   publish_endpoint,
-                                                   debug)
+                from pybennu.executables.pybennu_test_ep_server import ElectricPowerService
+                self.solver = ElectricPowerService(
+                    server_endpoint, publish_endpoint, debug
+                )
+
             #########################################
             ################ PyPower ################
             #########################################
@@ -99,10 +104,11 @@ class ServerDaemon(Daemon):
                           "'publish-endpoint', 'case-file'\n")
                     sys.exit(-1)
 
-                from pybennu.providers.power.solvers.python_power \
-                   import PyPower
-                self.solver = PyPower(server_endpoint, publish_endpoint,
-                                      case_file, debug)
+                from pybennu.providers.power.solvers.python_power import PyPower
+                self.solver = PyPower(
+                    server_endpoint, publish_endpoint, case_file, debug
+                )
+
             #########################################
             ############## PowerWorld ###############
             #########################################
@@ -129,11 +135,13 @@ class ServerDaemon(Daemon):
                           "'oneline-file', 'objects-file'\n")
                     sys.exit(-1)
 
-                from pybennu.providers.power.solvers.power_world \
-                   import PowerWorld
-                self.solver = PowerWorld(server_endpoint, publish_endpoint,
-                                         case_file, oneline_file, objects_file,
-                                         debug, noise)
+                from pybennu.providers.power.solvers.power_world import PowerWorld
+                self.solver = PowerWorld(
+                    server_endpoint, publish_endpoint,
+                    case_file, oneline_file, objects_file,
+                    debug, noise
+                )
+
             #########################################
             ########### PowerWorldHelics ############
             #########################################
@@ -151,11 +159,11 @@ class ServerDaemon(Daemon):
                           "'oneline-file', 'config-file'\n")
                     sys.exit(-1)
 
-                from pybennu.providers.power.solvers.power_world_helics \
-                   import PowerWorldHelics
-                self.solver = PowerWorldHelics(case_file, config_file,
-                                               oneline_file,
-                                               debug)
+                from pybennu.providers.power.solvers.power_world_helics import PowerWorldHelics
+                self.solver = PowerWorldHelics(
+                    case_file, config_file, oneline_file, debug
+                )
+
             #########################################
             ################# PWDS ##################
             #########################################
@@ -182,12 +190,12 @@ class ServerDaemon(Daemon):
                     kwargs['objects-file'] = config.get('power-solver-service',
                                                         'objects-file').strip()
 
-                from pybennu.providers.power.solvers.pwds.power_world_dynamics \
-                   import PowerWorldDynamics
-                self.solver = PowerWorldDynamics(server_endpoint,
-                                                 publish_endpoint,
-                                                 pwds_endpoint,
-                                                 debug, **kwargs)
+                from pybennu.providers.power.solvers.pwds.power_world_dynamics import PowerWorldDynamics
+                self.solver = PowerWorldDynamics(
+                    server_endpoint, publish_endpoint,
+                    pwds_endpoint, debug, **kwargs
+                )
+
             #########################################
             ################ OpenDSS ################
             #########################################
@@ -225,20 +233,39 @@ class ServerDaemon(Daemon):
                     "clear_circuit": clear
                 }
 
-                from pybennu.providers.power.solvers.opendss \
-                    import OpenDSS
-                self.solver = OpenDSS(server_endpoint, publish_endpoint,
-                                      case_file, **kwargs)
+                from pybennu.providers.power.solvers.opendss import OpenDSS
+                self.solver = OpenDSS(
+                    server_endpoint, publish_endpoint, case_file, **kwargs
+                )
+
+            #########################################
+            ################# RTDS ##################
+            #########################################
             elif solver == 'RTDS':
                 from pybennu.providers.power.solvers.rtds import RTDS
-                try:
-                    E.Endpoint_str_set(server_endpoint, config.get('power-solver-service', 'server-endpoint').strip())
-                    E.Endpoint_str_set(publish_endpoint, config.get('power-solver-service', 'publish-endpoint').strip())
-                    self.solver = RTDS(server_endpoint, publish_endpoint, config, debug)
-                except NoOptionError:
-                    print(f"\nERROR: The following must be defined in the "
-                          f"configuration file: {RTDS.REQUIRED_CONF_KEYS}\n")
-                    sys.exit(-1)
+
+                config_path = Path(config.get('power-solver-service', 'config-file').strip())
+                settings = load_settings_yaml(config_path)  # type: PybennuSettings
+
+                E.Endpoint_str_set(server_endpoint, settings.server_endpoint)
+                E.Endpoint_str_set(publish_endpoint, settings.publish_endpoint)
+
+                self.solver = RTDS(server_endpoint, publish_endpoint, settings)
+
+            #########################################
+            ################ OpalRT #################
+            #########################################
+            elif solver == 'OPALRT':
+                from pybennu.providers.power.solvers.opal_rt import OPALRT
+
+                config_path = Path(config.get('power-solver-service', 'config-file').strip())
+                settings = load_settings_yaml(config_path)  # type: PybennuSettings
+
+                E.Endpoint_str_set(server_endpoint, settings.server_endpoint)
+                E.Endpoint_str_set(publish_endpoint, settings.publish_endpoint)
+
+                self.solver = OPALRT(server_endpoint, publish_endpoint, settings)
+
             #########################################
             ################ HELICS #################
             #########################################
@@ -259,12 +286,12 @@ class ServerDaemon(Daemon):
                           "'publish-endpoint', 'config-file'\n")
                     sys.exit(-1)
 
-                from pybennu.providers.power.solvers.helics \
-                    import Helics
-                self.solver = Helics(server_endpoint,
-                                     publish_endpoint,
-                                     config_file,
-                                     debug)
+                from pybennu.providers.power.solvers.helics import Helics
+                self.solver = Helics(
+                    server_endpoint, publish_endpoint,
+                    config_file, debug
+                )
+
             #########################################
             ############### ALICANTO ################
             #########################################
@@ -285,12 +312,12 @@ class ServerDaemon(Daemon):
                           "'publish-endpoint', 'config-file'\n")
                     sys.exit(-1)
 
-                from pybennu.providers.alicanto.alicanto \
-                    import Alicanto
-                self.solver = Alicanto(server_endpoint,
-                                     publish_endpoint,
-                                     config_file,
-                                     debug)
+                from pybennu.providers.alicanto.alicanto import Alicanto
+                self.solver = Alicanto(
+                    server_endpoint, publish_endpoint,
+                    config_file, debug
+                )
+
             #########################################
             ############### Default #################
             #########################################
@@ -308,11 +335,10 @@ class ServerDaemon(Daemon):
                           "endpoint'\n")
                     sys.exit(-1)
 
-                from pybennu.executables.pybennu_test_ep_server \
-                    import ElectricPowerService
-                self.solver = ElectricPowerService(server_endpoint,
-                                                   publish_endpoint,
-                                                   debug)
+                from pybennu.executables.pybennu_test_ep_server import ElectricPowerService
+                self.solver = ElectricPowerService(
+                    server_endpoint, publish_endpoint, debug
+                )
 
         self.running = True
         self._solver_run()
@@ -320,36 +346,56 @@ class ServerDaemon(Daemon):
         while self.running:
             time.sleep(1)
 
-    def handle_exit(self, signum, stack):
+    def handle_exit(self, signum, stack) -> None:
         print("\nStopping power solver service...\n")
         self.running = False
         sys.exit()
 
-    def _solver_run(self):
+    def _solver_run(self) -> None:
         self.solver.run()
-        return
 
 
+# Note: this function is called from setup.py, as 'pybennu-power-solver'
 def server():
-    parser = argparse.ArgumentParser(description="SCEPTRE Power Solver Service")
-    parser.add_argument('-c', '--config-file', dest='config_file',
-                        help='Config file to load (.ini)')
-    parser.add_argument('-d', '--daemonize', dest='daemonize',
-                        action='store_true',
-                        help='Run as a daemon')
-    parser.add_argument('-e', '--env', dest='env',
-                        default='sceptre',
-                        help='Environment for daemon to run in')
-    parser.add_argument('operation', metavar='OPERATION',
-                        type=str, choices=['start', 'stop', 'restart', 'status'],
-                        help='Daemon operation - accepts any of these values: start, stop, restart, status')
-    parser.add_argument('-v', '--debug', dest='debug',
-                        action='store_true',
-                        help='Enable debug option')
+    parser = argparse.ArgumentParser(
+        description="SCEPTRE Power Solver Service",
+    )
+    parser.add_argument(
+        '-c', '--config-file',
+        dest='config_file',
+        default='/etc/sceptre/config.ini',
+        help='Config file to load (.ini)',
+    )
+    parser.add_argument(
+        '-d', '--daemonize',
+        dest='daemonize',
+        action='store_true',
+        help='Run as a daemon',
+    )
+    parser.add_argument(
+        '-e', '--env',
+        dest='env',
+        default='pybennu',  # previous default: sceptre
+        help='Environment for daemon to run in, this determines names of files in /var, e.g. /var/log/bennu-pybennu.err for --env=pybennu',
+    )
+    parser.add_argument(
+        'operation',
+        metavar='OPERATION',
+        type=str,
+        choices=['start', 'stop', 'restart', 'status'],
+        help='Daemon operation - accepts any of these values: start, stop, restart, status',
+    )
+    parser.add_argument(
+        '-v', '--debug',
+        dest='debug',
+        action='store_true',
+        help='Enable debug option',
+    )
 
     args = parser.parse_args()
 
     handle = ServerDaemon(args)
+
     if handle.system == 'linux':
         if args.operation == 'start':
             if args.daemonize:
@@ -390,4 +436,5 @@ def server():
                 print('Daemon is running')
             else:
                 print('Daemon is not running')
+
     sys.exit(0)
