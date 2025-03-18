@@ -1,3 +1,5 @@
+#!/bin/bash
+
 set -ex
 
 printf "\n--- RUNNING PYBENNU AFTER INSTALL SCRIPT ---\n\n"
@@ -9,26 +11,81 @@ if [[ ! -f /usr/lib/x86_64-linux-gnu/libzmq.so.5.1.5 ]]; then
 fi
 # mv /root/libzmq* /usr/lib/x86_64-linux-gnu
 
-# TODO: we should statically include our own version of install.sh
-# instead of downloading it every build and running sed on it
-printf "\n\tINSTALLING ZMQ WITH DRAFT SUPPORT...\n\n"
-wget --no-check-certificate -O install.sh https://raw.githubusercontent.com/zeromq/pyzmq/main/examples/draft/install.sh
-sed -i -e "s/wget/wget --no-check-certificate/g" install.sh
-sed -i -e "s/pip install/pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org -I/g" install.sh
-chmod +x install.sh
-./install.sh
-rm ./install.sh
 
+# Only add trusted-host and no-check-cert if proxy variables are set
+if [[ -z "${HTTP_PROXY}" ]]; then
+    PIPINSTALL="pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org"
+    WGETCMD="wget --no-check-certificate"
+else
+    PIPINSTALL="pip3 install"
+    WGETCMD="wget"
+fi
+
+
+printf "\n\tINSTALLING ZMQ WITH DRAFT SUPPORT...\n\n"
+# Source: https://github.com/zeromq/pyzmq/blob/cddb63a76c2e09dbf51d9b3902a527a8588e7964/examples/draft/install.sh
+# install libzmq with draft enabled
+#
+# BSD 3-Clause License
+#
+# Copyright (c) 2009-2012, Brian Granger, Min Ragan-Kelley
+#
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#     Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#
+#     Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+#     Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ZMQ_VERSION=4.3.4
+PREFIX=${PREFIX:-/usr/local}
+PYZMQ=${PYZMQ:-pyzmq}
+CPU_COUNT=${CPU_COUNT:-$(python3 -c "import os; print(os.cpu_count())")}
+
+echo "installing libzmq to $PREFIX"
+$WGETCMD https://github.com/zeromq/libzmq/releases/download/v${ZMQ_VERSION}/zeromq-${ZMQ_VERSION}.tar.gz -O libzmq.tar.gz
+tar -xzf libzmq.tar.gz
+cd zeromq-${ZMQ_VERSION}
+./configure --prefix="${PREFIX}" --enable-drafts
+make -j${CPU_COUNT} && make install
+
+# install pyzmq with drafts enabled
+# By specifying ``--no-binary pyzmq``, pip knows to not install wheels, and will compile pyzmq from source.
+echo "installing ${PYZMQ}"
+export ZMQ_PREFIX=${PREFIX}
+export ZMQ_DRAFT_API=1
+
+$PIPINSTALL -v --no-binary pyzmq --pre "${PYZMQ}"
+
+cat << END | python3
+import sys
+import zmq
+print('python: %s' % sys.executable)
+print(sys.version)
+print('pyzmq-%s' % zmq.__version__)
+print('libzmq-%s' % zmq.zmq_version())
+print('Draft API available: %s' % zmq.DRAFT_API)
+END
+
+
+# NOTE: this depends on the ZMQ libraries built with draft support
 printf "\n\tINSTALLING HELICS/PYHELICS...\n\n"
-wget --no-check-certificate -O pyhelics.tgz https://github.com/GMLC-TDC/pyhelics/releases/download/v2.7.1/helics-2.7.1.tar.gz
+$WGETCMD -O pyhelics.tgz https://github.com/GMLC-TDC/pyhelics/releases/download/v2.7.1/helics-2.7.1.tar.gz
 mkdir -p /tmp/pyhelics
 tar -C /tmp/pyhelics -xzf pyhelics.tgz
 rm pyhelics.tgz
 cd /tmp/pyhelics/helics-2.7.1
 sed -i "s/helics-apps/helics-apps~=2.7.1/" /tmp/pyhelics/helics-2.7.1/setup.py
-pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org /tmp/pyhelics/helics-2.7.1/
+$PIPINSTALL /tmp/pyhelics/helics-2.7.1/
 
+
+# TODO: is this needed? does dpkg run setup.py for us? can any of these be added as package dependencies?
 printf "\n\tINSTALLING PYBENNU PIP DEPENDENCIES...\n\n"
-pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org bitarray 'elasticsearch>=5.3.0' 'helics~=2.7.1' 'matplotlib>=1.5.3' 'networkx>=1.11' 'numpy>=1.11.2' 'opendssdirect.py~=0.6.1' 'py-expression-eval~=0.3.14' 'PYPOWER>=5.0.1' 'pyserial>=3.4' 'pyyaml>=3.12' 'requests>=2.20' 'scipy>=0.18.1' sysv_ipc labjack-ljm~=1.23.0
+# $PIPINSTALL 'bitarray' 'sysv_ipc' 'elasticsearch>=5.3.0' 'helics~=2.7.1' 'matplotlib>=1.5.3' 'networkx>=1.11' 'numpy>=1.11.2' 'opendssdirect.py~=0.6.1' 'py-expression-eval~=0.3.14' 'PYPOWER>=5.0.1' 'pyserial>=3.4' 'pyyaml>=3.12' 'requests>=2.20' 'scipy>=0.18.1' 'labjack-ljm~=1.23.0' 'pymodbus>=3.6.0' 'pydantic>2'
+$PIPINSTALL 'elasticsearch>=7.17.0' 'helics~=2.7.1' 'opendssdirect.py~=0.6.1' 'py-expression-eval~=0.3.14' 'PYPOWER>=5.0.1' 'labjack-ljm~=1.23.0' 'pymodbus>=3.6.0' 'pydantic>2' 'pydantic-settings'
 
 printf "\nDONE!!\n\n"
