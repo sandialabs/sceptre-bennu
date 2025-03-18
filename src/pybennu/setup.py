@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Python setup module for pybennu."""
+
+"""
+Python setup module for pybennu.
+"""
+
 import itertools
 import os
 import sys
@@ -95,19 +99,25 @@ END CUSTOM INSTALL COMMANDS
 
 # If you need something in a newer version of a package, increase the version pinned here
 requires = [
-    'elasticsearch>=5.3.0',  # ==7.14.0
+    'elasticsearch>=7.17.0',
     'helics~=2.7.1',
-    'matplotlib>=1.5.3',  # ~=3.4.3
-    'networkx>=1.11',  # ==2.6.2
-    'numpy>=1.11.2',  # >=1.11.2  ~=1.21.2
+    'matplotlib>=1.5.3',
+    'networkx>=1.11',
+    'numpy>=1.11.2',
     'opendssdirect.py~=0.6.1',
     'py-expression-eval~=0.3.14',
-    'PYPOWER==5.1.16',  # ==5.1.15
-    'pyserial>=3.4',  # >=3.4
-    'PyYAML>=3.12',  # pyyaml>=3.12  ==5.4.1
-    'requests>=2.20',  # ~=2.26.0
-    'scipy>=0.18.1',  # ~=1.7.1
+    'PYPOWER==5.1.16',
+    'pyserial>=3.4',
+    'PyYAML>=3.12',
+    'requests>=2.20',
+    'scipy>=0.18.1',
     'labjack-ljm~=1.23.0',
+    # NOTE: need at least pymodbus 3+. The version in apt
+    # for ubuntu 20.04 is 2.x, which is too old.
+    # NOTE: pymodbus 3.7.0 dropped support for Python 3.8
+    'pymodbus>=3.6.0',
+    'pydantic>2',
+    'pydantic-settings',
 ]
 
 if 'linux' in sys.platform:
@@ -137,7 +147,7 @@ entries = {
         'pybennu-test-subscriber          = pybennu.executables.pybennu_test_subscriber:main',
         'pybennu-probe                    = pybennu.executables.pybennu_probe:main',
         'pybennu-alicanto                 = pybennu.executables.pybennu_alicanto:main',
-        'pybennu-siren                    = pybennu.siren.siren:main'
+        'pybennu-siren                    = pybennu.siren.siren:main',
     ]
 }
 
