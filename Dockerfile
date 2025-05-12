@@ -55,7 +55,8 @@ ADD src/pybennu /tmp/bennu/src/pybennu
 WORKDIR /tmp/bennu/src/pybennu
 RUN python3 -m pip install --no-cache-dir .
 
-# create final image
+
+# ** create final image **
 FROM ${REGISTRY_IMAGE}
 
 ENV DEBIAN_FRONTEND="noninteractive" \
@@ -89,6 +90,15 @@ RUN apt-get update \
 COPY --from=pybuilder /usr/local /usr/local
 ENV LD_LIBRARY_PATH /usr/local/lib:/usr/local/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}
 
+# Gem install failures: https://github.com/jordansissel/fpm/issues/2048
+# For now, manually install dotenv 2.8.1
+# NOTE: remove existing "dotenv" executable shim installed by python-dotenv (depended on by pydantic-settings)
+RUN rm -f /usr/local/bin/dotenv \
+  && gem install dotenv -v 2.8.1 \
+  && gem install fpm -v 1.15.1
+
+RUN python3 -m pip install --no-cache-dir --upgrade aptly-ctl pip setuptools twine wheel
+
 # copy over bennu source code
 ADD cmake          /tmp/bennu/cmake
 ADD CMakeLists.txt /tmp/bennu/CMakeLists.txt
@@ -108,15 +118,6 @@ WORKDIR /tmp/bennu/build
 RUN cmake -j$(nproc) -D BUILD_GOBENNU=OFF ../ \
   && make -j$(nproc) install \
   && rm -rf /tmp/*
-
-# Gem install failures: https://github.com/jordansissel/fpm/issues/2048
-# For now, manually install dotenv 2.8.1
-# NOTE: remove existing "dotenv" executable shim installed by python-dotenv (depended on by pydantic-settings)
-RUN rm -f /usr/local/bin/dotenv \
-    && gem install dotenv -v 2.8.1 \
-    && gem install fpm -v 1.15.1
-
-RUN python3 -m pip install --no-cache-dir --upgrade aptly-ctl pip setuptools twine wheel
 
 WORKDIR /root
 CMD /bin/bash
