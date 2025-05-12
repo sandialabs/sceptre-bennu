@@ -23,6 +23,7 @@ trim_trailing_whitespace = true
 
 [*.{yml,yaml}]
 indent_size = 2
+trim_trailing_whitespace = true
 
 [*.json]
 insert_final_newline = unset
