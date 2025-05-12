@@ -89,7 +89,7 @@ jobs:
         sudo dpkg -i bennu.deb
     - name: check pybennu deb installs
       run: |
-        sudo dpkg -i pybennu.deb
+        sudo apt install ./pybennu.deb
     - name: release debs to apt repo
       if: (github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true) || (github.event_name == 'push' && github.ref == 'refs/heads/main')
       run: |
