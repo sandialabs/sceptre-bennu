@@ -10,7 +10,8 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    # NOTE: compilation currently fails with Ubuntu 24.04
+    runs-on: ubuntu-22.04
     steps:
     - name: checkout the repo
       uses: actions/checkout@v4
