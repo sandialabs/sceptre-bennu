@@ -14,11 +14,11 @@ fi
 
 # Only add trusted-host and no-check-cert if proxy variables are set
 if [[ -z "${HTTP_PROXY}" ]]; then
-    PIPINSTALL="pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org"
-    WGETCMD="wget --no-check-certificate"
-else
     PIPINSTALL="pip3 install"
     WGETCMD="wget"
+else
+    PIPINSTALL="pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org"
+    WGETCMD="wget --no-check-certificate"  
 fi
 
 
