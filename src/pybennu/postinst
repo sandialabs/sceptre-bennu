@@ -88,6 +88,6 @@ $PIPINSTALL /tmp/pyhelics/helics-2.7.1/
 # TODO: is this needed? does dpkg run setup.py for us? can any of these be added as package dependencies?
 printf "\n\tINSTALLING PYBENNU PIP DEPENDENCIES...\n\n"
 # $PIPINSTALL 'bitarray' 'sysv_ipc' 'elasticsearch>=5.3.0' 'helics~=2.7.1' 'matplotlib>=1.5.3' 'networkx>=1.11' 'numpy>=1.11.2' 'opendssdirect.py~=0.6.1' 'py-expression-eval~=0.3.14' 'PYPOWER>=5.0.1' 'pyserial>=3.4' 'pyyaml>=3.12' 'requests>=2.20' 'scipy>=0.18.1' 'labjack-ljm~=1.23.0' 'pymodbus>=3.6.0' 'pydantic>2'
-$PIPINSTALL 'elasticsearch>=7.17.0' 'helics~=2.7.1' 'opendssdirect.py~=0.6.1' 'py-expression-eval~=0.3.14' 'PYPOWER>=5.0.1' 'labjack-ljm~=1.23.0' 'pymodbus>=3.6.0' 'pydantic>2' 'pydantic-settings'
+$PIPINSTALL --ignore-installed 'elasticsearch>=7.17.0' 'helics~=2.7.1' 'opendssdirect.py~=0.6.1' 'py-expression-eval~=0.3.14' 'PYPOWER>=5.0.1' 'labjack-ljm~=1.23.0' 'pymodbus>=3.6.0' 'pydantic>2' 'pydantic-settings'
 
 printf "\nDONE!!\n\n"
