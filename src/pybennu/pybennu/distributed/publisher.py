@@ -18,7 +18,14 @@ class Publisher:
         """ Initialize connection environment.
         """
         self.MTU = 1465
-        self.__endpoint = endpoint
+
+        if isinstance(endpoint, str):
+            # if using a DynamicSimulatorSettings class, endpoint needs to be converted to an actual endpoint
+            self.__endpoint = E.new_Endpoint()
+            E.Endpoint_str_set(self.__endpoint, endpoint)
+        else:
+            self.__endpoint = endpoint
+
         self.__group = E.Endpoint_hash(self.__endpoint)
         self.connect()
 

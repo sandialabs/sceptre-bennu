@@ -24,6 +24,7 @@ SPDX-License-Identifier: BSD-3-Clause
 #include <mutex>
 #include <stdexcept>
 #include <utility>
+#include <thread>
 
 /** a storage system for the available core objects allowing references by name to the core
  */

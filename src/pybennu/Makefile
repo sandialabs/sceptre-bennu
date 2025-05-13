@@ -110,20 +110,35 @@ deb: packagetools
 	@mkdir -p $(DIST_DIR)
 	@$(FPM) \
 		--verbose \
-		-f \
-		-s python \
-		-t deb \
+		--force \
+		--input-type python \
+		--output-type deb \
 		-d cmake \
 		-d gcc \
 		-d g++ \
 		-d make \
-		-d python3-dev \
-		-d python3-pip \
-		-d python3-setuptools \
 		-d wget \
 		-d libboost-python-dev \
 		-d libzmq5-dev \
-		-p '$(subst __colon__,:,$(DIST_DIR)/$(PACKAGE_FILENAME))' \
+		-d python3-dev \
+		-d python3-pip \
+		-d python3-setuptools \
+		-d python3-wheel \
+		-d cython3 \
+		-d python3-typing-extensions \
+		-d python3-pygments \
+		-d python3-ipython \
+		-d python3-pexpect \
+		-d python3-serial \
+		-d python3-matplotlib \
+		-d python3-numpy \
+		-d python3-yaml \
+		-d python3-requests \
+		-d python3-scipy \
+		-d python3-networkx \
+		-d python3-bitarray \
+		-d python3-sysv-ipc \
+		--package '$(subst __colon__,:,$(DIST_DIR)/$(PACKAGE_FILENAME))' \
 		--name '$(PACKAGE_NAME)' \
 		$(call iter,$(PACKAGE_VENDOR),--vendor) \
 		--maintainer '$(PACKAGE_MAINTAINER)' \

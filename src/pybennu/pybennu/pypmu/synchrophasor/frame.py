@@ -41,6 +41,8 @@ Data Transfer for Power Systems.
 
 """
 
+from __future__ import annotations
+
 # NOTE: The code included in pypmu for calculating the CRC is
 # GPL-licensed. binascii.crc_hqx() implements CRC-CCITT variant of CRC-16
 # using the exact same table (0x1021 as the polynomial) and it's included
@@ -51,6 +53,7 @@ from abc import ABCMeta, abstractmethod
 from struct import pack, unpack
 from time import time
 from math import sqrt, atan2, pi
+from typing import Dict, Optional
 
 from .utils import list2bytes
 
@@ -91,13 +94,20 @@ class CommonFrame(metaclass=ABCMeta):
     When it's not possible to create valid frame, usually due invalid parameter value.
     """
 
-    FRAME_TYPES = { "data": 0, "header": 1, "cfg1": 2, "cfg2": 3, "cfg3": 5, "cmd": 4 }
+    FRAME_TYPES: Dict[str, int] = { "data": 0, "header": 1, "cfg1": 2, "cfg2": 3, "cfg3": 5, "cmd": 4 }
 
     # Invert FRAME_TYPES codes to get FRAME_TYPE_WORDS
-    FRAME_TYPES_WORDS = { code: word for word, code in FRAME_TYPES.items() }
+    FRAME_TYPES_WORDS: Dict[int, str] = { code: word for word, code in FRAME_TYPES.items() }
 
 
-    def __init__(self, frame_type, pmu_id_code, soc=None, frasec=None, version=1):
+    def __init__(
+        self,
+        frame_type: str,
+        pmu_id_code: int,
+        soc: Optional[int] = None,
+        frasec: Optional[int] = None,
+        version: int = 1,
+    ) -> None:
         """
         CommonFrame abstract class
         :param string frame_type: Defines frame type
@@ -116,7 +126,7 @@ class CommonFrame(metaclass=ABCMeta):
             self.set_time(soc, frasec)
 
 
-    def set_frame_type(self, frame_type):
+    def set_frame_type(self, frame_type: str) -> None:
         """
         ### set_frame_type() ###
 
@@ -158,12 +168,12 @@ class CommonFrame(metaclass=ABCMeta):
             self._frame_type = CommonFrame.FRAME_TYPES[frame_type]
 
 
-    def get_frame_type(self):
+    def get_frame_type(self) -> str:
 
         return CommonFrame.FRAME_TYPES_WORDS[self._frame_type]
 
 
-    def extract_frame_type(byte_data):
+    def extract_frame_type(byte_data) -> str:
         """This method will only return type of the frame. It shall be used for stream splitter
         since there is no need to create instance of specific frame which will cause lower performance."""
 
@@ -177,7 +187,7 @@ class CommonFrame(metaclass=ABCMeta):
         return CommonFrame.FRAME_TYPES_WORDS[frame_type]
 
 
-    def set_version(self, version):
+    def set_version(self, version: int) -> None:
         """
         ### set_version() ###
 
@@ -200,12 +210,12 @@ class CommonFrame(metaclass=ABCMeta):
             self._version = version
 
 
-    def get_version(self):
+    def get_version(self) -> int:
 
         return self._version
 
 
-    def set_id_code(self, id_code):
+    def set_id_code(self, id_code: int) -> None:
         """
         ### set_id_code() ###
 
@@ -228,12 +238,12 @@ class CommonFrame(metaclass=ABCMeta):
             self._pmu_id_code = id_code
 
 
-    def get_id_code(self):
+    def get_id_code(self) -> int:
 
         return self._pmu_id_code
 
 
-    def set_time(self, soc=None, frasec=None):
+    def set_time(self, soc: Optional[int] = None, frasec: Optional[int] = None) -> None:
         """
         ### set_time() ###
 
@@ -274,7 +284,7 @@ class CommonFrame(metaclass=ABCMeta):
             self.set_frasec(int((((repr((t % 1))).split("."))[1])[0:6]))
 
 
-    def set_soc(self, soc):
+    def set_soc(self, soc: int) -> None:
         """
         ### set_soc() ###
 
@@ -297,12 +307,12 @@ class CommonFrame(metaclass=ABCMeta):
             self._soc = soc
 
 
-    def get_soc(self):
+    def get_soc(self) -> int:
 
         return self._soc
 
 
-    def set_frasec(self, fr_seconds, leap_dir="+", leap_occ=False, leap_pen=False, time_quality=0):
+    def set_frasec(self, fr_seconds, leap_dir="+", leap_occ=False, leap_pen=False, time_quality=0) -> None:
         """
         ### set_frasec() ###
 
@@ -404,13 +414,13 @@ class CommonFrame(metaclass=ABCMeta):
         self._frasec = frasec
 
 
-    def get_frasec(self):
+    def get_frasec(self) -> tuple:
 
         return self._int2frasec(self._frasec)
 
 
     @staticmethod
-    def _int2frasec(frasec_int):
+    def _int2frasec(frasec_int) -> tuple:
 
         tq = frasec_int >> 24
         leap_dir = tq & 0b01000000
@@ -432,7 +442,7 @@ class CommonFrame(metaclass=ABCMeta):
 
 
     @staticmethod
-    def _get_data_format_size(data_format):
+    def _get_data_format_size(data_format) -> dict:
         """
         ### get_data_format() ###
 
@@ -467,7 +477,7 @@ class CommonFrame(metaclass=ABCMeta):
         return { "phasor": phasors_byte_size, "analog": analog_byte_size, "freq": freq_byte_size }
 
 
-    def set_data_format(self, data_format, num_streams):
+    def set_data_format(self, data_format, num_streams) -> None:
         """
         ### set_data_format() ###
 
@@ -565,7 +575,7 @@ class CommonFrame(metaclass=ABCMeta):
 
 
     @staticmethod
-    def _format2int(phasor_polar=False, phasor_float=False, analogs_float=False, freq_float=False):
+    def _format2int(phasor_polar=False, phasor_float=False, analogs_float=False, freq_float=False) -> int:
         """
         ### format2int() ###
 
@@ -612,7 +622,7 @@ class CommonFrame(metaclass=ABCMeta):
 
 
     @staticmethod
-    def _int2format(data_format):
+    def _int2format(data_format) -> tuple:
 
         phasor_polar = data_format & 0b0001
         phasor_float = data_format & 0b0010
@@ -623,7 +633,7 @@ class CommonFrame(metaclass=ABCMeta):
 
 
     @staticmethod
-    def _check_crc(byte_data):
+    def _check_crc(byte_data) -> bool:
 
         crc_calculated = binascii.crc_hqx(byte_data[0:-2], 0xffff).to_bytes(2, "big")  # Calculate CRC
 
@@ -634,7 +644,7 @@ class CommonFrame(metaclass=ABCMeta):
 
 
     @abstractmethod
-    def convert2bytes(self, byte_message):
+    def convert2bytes(self, byte_message) -> bytes:
 
         # SYNC word in CommonFrame starting with AA hex word + frame type + version
         sync_b = (0xaa << 8) | (self._frame_type << 4) | self._version
@@ -2494,7 +2504,7 @@ class DataFrame(CommonFrame):
 
 
     @staticmethod
-    def convert2frame(byte_data, cfg):
+    def convert2frame(byte_data: bytes, cfg):
 
         try:
 
@@ -2654,7 +2664,7 @@ class CommandFrame(CommonFrame):
             return extended_frame
 
 
-    def convert2bytes(self):
+    def convert2bytes(self) -> bytes:
 
         if self._command == 8:
             cmd_b = self._command.to_bytes(2, "big") + self._extended_frame
@@ -2717,14 +2727,14 @@ class HeaderFrame(CommonFrame):
         return self._header
 
 
-    def convert2bytes(self):
+    def convert2bytes(self) -> bytes:
 
         header_b = str.encode(self._header)
         return super().convert2bytes(header_b)
 
 
     @staticmethod
-    def convert2frame(byte_data):
+    def convert2frame(byte_data) -> "HeaderFrame":
         try:
 
             if not CommonFrame._check_crc(byte_data):

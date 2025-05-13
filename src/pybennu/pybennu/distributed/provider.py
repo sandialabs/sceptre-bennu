@@ -1,8 +1,10 @@
-"""Provider interface.
+"""
+Provider interface.
 
 This module defines the pybennu Provider base class. It is the interface which
 all providers will implement.
 """
+
 import threading
 from abc import ABC, abstractmethod
 
@@ -11,22 +13,72 @@ import pybennu.distributed.server as server
 
 
 class Provider(ABC):
-    """Provider base class."""
+    """
+    Provider base class.
 
-    def __init__(self, server_endpoint, publish_endpoint):
+    Inheriting providers must implement:
+
+    - query()
+    - read(tag)
+    - write(tags)
+    - periodic_publish()
+    """
+
+    def __init__(self, server_endpoint: str, publish_endpoint: str) -> None:
         """Initialize connection environment."""
         self.__publisher = publisher.Publisher(publish_endpoint)
+
         self.__publish_thread = threading.Thread(target=self.periodic_publish)
         self.__publish_thread.daemon = True
+
         self.__server = server.Server(server_endpoint)
         self.__server.request_handler = self.__message_handler
 
-    def run(self):
+    @abstractmethod
+    def query(self) -> str:
+        """
+        Return all current tag names.
+
+        Must return 'ACK=tag1,tag2,...' or 'ERR=<error message>'.
+        """
+        pass
+
+    @abstractmethod
+    def read(self, tag: str) -> str:
+        """
+        Read the current value of a single tag.
+
+        Must return 'ACK=<value>' or 'ERR=<error message>'.
+        """
+        pass
+
+    @abstractmethod
+    def write(self, tags: dict) -> str:
+        """
+        Write values to one or more tags.
+
+        Must return 'ACK=<success message>' or 'ERR=<error message>'.
+        """
+        pass
+
+    @abstractmethod
+    def periodic_publish(self) -> None:
+        """
+        Publish all tags periodically.
+        Inheriting providers must implement.
+        """
+        pass
+
+    def publish(self, msg: str) -> None:
+        """Publish message using publisher."""
+        self.__publisher.publish(msg)
+
+    def run(self) -> None:
         """Start periodic publish thread and server."""
         self.__publish_thread.start()
         self.__server.run()
 
-    def __message_handler(self, message):
+    def __message_handler(self, message: str) -> str:
         """
         Message requests should be in the form:
             QUERY=
@@ -41,10 +93,12 @@ class Provider(ABC):
             return "ERR=Message empty"
         elif '=' not in message:
             return "ERR=Invalid message request"
+
         split = message.split('=')
         op = split[0]
         payload = split[1]
         print("Received %s request with payload %s" % (op, payload))
+
         reply = ""
         if op == "QUERY" or op == "query":
             reply += self.query()
@@ -59,32 +113,6 @@ class Provider(ABC):
             reply += self.write(tags)
         else:
             reply += "ERR=Unknown command type '%s'", op
+
         print("Sending reply for payload %s -- %s" % (payload, reply))
         return reply
-
-    def publish(self, msg):
-        """Publish message using publisher."""
-        self.__publisher.publish(msg)
-
-    # Methods to process incoming message.
-    # Inheriting providers must implement these.
-
-    @abstractmethod
-    def query(self):
-        """Must return 'ACK=tag1,tag2,...' or 'ERR=<error message>'."""
-        pass
-
-    @abstractmethod
-    def read(self, tag):
-        """Must return 'ACK=<value>' or 'ERR=<error message>'."""
-        pass
-
-    @abstractmethod
-    def write(self, tags):
-        """Must return 'ACK=<success message>' or 'ERR=<error message>'."""
-        pass
-
-    @abstractmethod
-    def periodic_publish(self):
-        """Method to periodically publish data. Inheriting providers must implement."""
-        pass

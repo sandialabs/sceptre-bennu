@@ -40,6 +40,8 @@ set(BUILD_SHARED_LIBS OFF)
 add_definitions(-DBENNU_VERSION="${bennu_VERSION}")
 add_definitions(-DZMQ_BUILD_DRAFT_API)
 add_definitions(-Wno-deprecated)
+# suppress boost warnings
+add_definitions(-DBOOST_BIND_GLOBAL_PLACEHOLDERS)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 include(PreventInSourceBuilds)

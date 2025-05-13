@@ -341,7 +341,7 @@ int main(int argc, char** argv)
         ("help",  "show this help menu")
         ("debug", po::bool_switch(&debug), "print debugging information")
         ("server-endpoint", po::value<std::string>()->default_value("tcp://127.0.0.1:5555"), "server listening endpoint")
-        ("publish-endpoint", po::value<std::string>()->default_value("udp://239.0.0.1:40000"), "publishing endpoint");
+        ("publish-endpoint", po::value<std::string>()->default_value("udp://239.0.0.1:40000"), "publishing endpoint")
         ("publish-rate", po::value<double>()->default_value(0.1), "rate at which updates are published from the provider to the simulation");
 
     po::variables_map vm;
