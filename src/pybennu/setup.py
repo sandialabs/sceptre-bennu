@@ -100,7 +100,7 @@ END CUSTOM INSTALL COMMANDS
 # If you need something in a newer version of a package, increase the version pinned here
 requires = [
     'elasticsearch>=7.17.0',
-    'helics~=2.7.1',
+    'helics==3.6.1',  # 'helics~=2.7.1',
     'matplotlib>=1.5.3',
     'networkx>=1.11',
     'numpy>=1.11.2',
