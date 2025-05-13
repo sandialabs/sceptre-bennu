@@ -43,23 +43,24 @@ printf "\n\tINSTALLING ZMQ WITH DRAFT SUPPORT...\n\n"
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ZMQ_VERSION=4.3.4
 PREFIX=${PREFIX:-/usr/local}
-PYZMQ=${PYZMQ:-pyzmq}
 CPU_COUNT=${CPU_COUNT:-$(python3 -c "import os; print(os.cpu_count())")}
 
 echo "installing libzmq to $PREFIX"
 $WGETCMD https://github.com/zeromq/libzmq/releases/download/v${ZMQ_VERSION}/zeromq-${ZMQ_VERSION}.tar.gz -O libzmq.tar.gz
 tar -xzf libzmq.tar.gz
+rm -f libzmq.tar.gz
 cd zeromq-${ZMQ_VERSION}
 ./configure --prefix="${PREFIX}" --enable-drafts
 make -j${CPU_COUNT} && make install
 
 # install pyzmq with drafts enabled
 # By specifying ``--no-binary pyzmq``, pip knows to not install wheels, and will compile pyzmq from source.
-echo "installing ${PYZMQ}"
+echo "installing pyzmq"
 export ZMQ_PREFIX=${PREFIX}
 export ZMQ_DRAFT_API=1
 
-$PIPINSTALL -v --no-binary pyzmq --pre "${PYZMQ}"
+$PIPINSTALL --upgrade 'pip<25.3'
+$PIPINSTALL --no-deps --force-reinstall --no-cache-dir -v --no-binary pyzmq 'pyzmq>26'
 
 cat << END | python3
 import sys
@@ -75,9 +76,10 @@ END
 # NOTE: this depends on the ZMQ libraries built with draft support
 printf "\n\tINSTALLING HELICS/PYHELICS...\n\n"
 $WGETCMD -O pyhelics.tgz https://github.com/GMLC-TDC/pyhelics/releases/download/v2.7.1/helics-2.7.1.tar.gz
+rm -rf /tmp/pyhelics
 mkdir -p /tmp/pyhelics
 tar -C /tmp/pyhelics -xzf pyhelics.tgz
-rm pyhelics.tgz
+rm -f pyhelics.tgz
 cd /tmp/pyhelics/helics-2.7.1
 sed -i "s/helics-apps/helics-apps~=2.7.1/" /tmp/pyhelics/helics-2.7.1/setup.py
 $PIPINSTALL /tmp/pyhelics/helics-2.7.1/
