@@ -195,7 +195,7 @@ class Pdc(object):
         if isinstance(header, HeaderFrame):
             return header
         else:
-            raise PdcError("Invalid Header message received")
+            raise PdcError(f"Invalid Header message received: {header!r}")
 
 
     def get_config(
@@ -276,10 +276,10 @@ class Pdc(object):
                     "[%d] - Received %s from PMU (%s:%d)",
                     self.pdc_id, type(received_message).__name__, self.pmu_ip, self.pmu_port
                 )
-            except FrameError:
+            except FrameError as ex:
                 self.logger.warning(
-                    "[%d] - Received unknown message from PMU (%s:%d)",
-                    self.pdc_id, self.pmu_ip, self.pmu_port
+                    "[%d] - Received unknown message from PMU (%s:%d), the FrameError exception is: %s",
+                    self.pdc_id, self.pmu_ip, self.pmu_port, str(ex)
                 )
 
         return received_message
