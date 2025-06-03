@@ -1,0 +1,3041 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" type="text/css" href="css/overpass300,400,600,800.css">
+    <script src="js/jquery-3.4.1.min.js"></script>
+    <link href="css/bootstrap-4.3.1.min.css" rel="stylesheet">
+    <script src="js/bootstrap-4.3.1.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="css/schema_doc.css">
+    <!-- <script src="js/facf9fa52c.js"></script> -->
+    <script src="js/schema_doc.min.js"></script>
+    <meta charset="utf-8"/>
+        
+    
+    <title>PybennuSettings</title>
+</head>
+<body onload="anchorOnLoad();" id="root"><div class="text-right">
+            <button class="btn btn-primary" type="button" data-toggle="collapse" data-target=".collapse:not(.show)" aria-expanded="false">Expand all</button>
+            <button class="btn btn-primary" type="button" data-toggle="collapse" data-target=".collapse.show" aria-expanded="false">Collapse all</button>
+        </div>
+
+    <div class="breadcrumbs"></div> <h1>PybennuSettings</h1><span class="badge badge-dark value-type">Type: object</span><br/>
+<span class="description"><p>Configuration settings for a Pybennu Provider.</p>
+</span>
+        
+
+        
+        
+
+        
+<div class="accordion" id="accordionserver_endpoint">
+    <div class="card">
+        <div class="card-header" id="headingserver_endpoint">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#server_endpoint"
+                        aria-expanded="" aria-controls="server_endpoint" onclick="setAnchor('#server_endpoint')"><span class="property-name">server_endpoint</span></button>
+            </h2>
+        </div>
+
+        <div id="server_endpoint"
+             class="collapse property-definition-div" aria-labelledby="headingserver_endpoint"
+             data-parent="#accordionserver_endpoint">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#server_endpoint" onclick="anchorLink('server_endpoint')">server_endpoint</a></div><h4>Provider server endpoint</h4><span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "tcp://172.16.1.2:5555"</span><br/>
+<span class="description"><p>Where the provider daemon listens. This is typically set by sceptre app.</p>
+</span>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionpublish_endpoint">
+    <div class="card">
+        <div class="card-header" id="headingpublish_endpoint">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#publish_endpoint"
+                        aria-expanded="" aria-controls="publish_endpoint" onclick="setAnchor('#publish_endpoint')"><span class="property-name">publish_endpoint</span></button>
+            </h2>
+        </div>
+
+        <div id="publish_endpoint"
+             class="collapse property-definition-div" aria-labelledby="headingpublish_endpoint"
+             data-parent="#accordionpublish_endpoint">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#publish_endpoint" onclick="anchorLink('publish_endpoint')">publish_endpoint</a></div><h4>Provider publish endpoint</h4><span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "udp://*;239.0.0.1:40000"</span><br/>
+<span class="description"><p>Where provider messages are published to as UDP multicast messages. This is typically set by sceptre app.</p>
+</span>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionsimulator">
+    <div class="card">
+        <div class="card-header" id="headingsimulator">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#simulator"
+                        aria-expanded="" aria-controls="simulator" onclick="setAnchor('#simulator')"><span class="property-name">simulator</span></button>
+            </h2>
+        </div>
+
+        <div id="simulator"
+             class="collapse property-definition-div" aria-labelledby="headingsimulator"
+             data-parent="#accordionsimulator">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#simulator" onclick="anchorLink('simulator')">simulator</a></div><h4>Provider Simulator</h4><span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: ""</span><br/>
+<span class="description"><p>This is the 'solver' field in the Scenario YAML, and the 'solver-type' in the legacy config.ini format. This is typically set by sceptre app.</p>
+</span>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordiondebug">
+    <div class="card">
+        <div class="card-header" id="headingdebug">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#debug"
+                        aria-expanded="" aria-controls="debug" onclick="setAnchor('#debug')"><span class="property-name">debug</span></button>
+            </h2>
+        </div>
+
+        <div id="debug"
+             class="collapse property-definition-div" aria-labelledby="headingdebug"
+             data-parent="#accordiondebug">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#debug" onclick="anchorLink('debug')">debug</a></div><h4>Debug</h4><span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
+<span class="description"><p>Enable debugging output (more verbose)</p>
+</span>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionsceptre_topology">
+    <div class="card">
+        <div class="card-header" id="headingsceptre_topology">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#sceptre_topology"
+                        aria-expanded="" aria-controls="sceptre_topology" onclick="setAnchor('#sceptre_topology')"><span class="property-name">sceptre_topology</span></button>
+            </h2>
+        </div>
+
+        <div id="sceptre_topology"
+             class="collapse property-definition-div" aria-labelledby="headingsceptre_topology"
+             data-parent="#accordionsceptre_topology">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#sceptre_topology" onclick="anchorLink('sceptre_topology')">sceptre_topology</a></div><h4>SCEPTRE Topology</h4><span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: ""</span><br/>
+<span class="description"><p>This is typically set by sceptre app</p>
+</span>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionsceptre_scenario">
+    <div class="card">
+        <div class="card-header" id="headingsceptre_scenario">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#sceptre_scenario"
+                        aria-expanded="" aria-controls="sceptre_scenario" onclick="setAnchor('#sceptre_scenario')"><span class="property-name">sceptre_scenario</span></button>
+            </h2>
+        </div>
+
+        <div id="sceptre_scenario"
+             class="collapse property-definition-div" aria-labelledby="headingsceptre_scenario"
+             data-parent="#accordionsceptre_scenario">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#sceptre_scenario" onclick="anchorLink('sceptre_scenario')">sceptre_scenario</a></div><h4>SCEPTRE Scenario</h4><span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: ""</span><br/>
+<span class="description"><p>This is typically set by sceptre app</p>
+</span>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionsceptre_experiment">
+    <div class="card">
+        <div class="card-header" id="headingsceptre_experiment">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#sceptre_experiment"
+                        aria-expanded="" aria-controls="sceptre_experiment" onclick="setAnchor('#sceptre_experiment')"><span class="property-name">sceptre_experiment</span></button>
+            </h2>
+        </div>
+
+        <div id="sceptre_experiment"
+             class="collapse property-definition-div" aria-labelledby="headingsceptre_experiment"
+             data-parent="#accordionsceptre_experiment">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#sceptre_experiment" onclick="anchorLink('sceptre_experiment')">sceptre_experiment</a></div><h4>SCEPTRE Experiment</h4><span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: ""</span><br/>
+<span class="description"><p>This is typically set by sceptre app</p>
+</span>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionprovider_hostname">
+    <div class="card">
+        <div class="card-header" id="headingprovider_hostname">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#provider_hostname"
+                        aria-expanded="" aria-controls="provider_hostname" onclick="setAnchor('#provider_hostname')"><span class="property-name">provider_hostname</span></button>
+            </h2>
+        </div>
+
+        <div id="provider_hostname"
+             class="collapse property-definition-div" aria-labelledby="headingprovider_hostname"
+             data-parent="#accordionprovider_hostname">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#provider_hostname" onclick="anchorLink('provider_hostname')">provider_hostname</a></div><h4>Provider Hostname</h4><span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: ""</span><br/>
+<span class="description"><p>Hostname of the provider. This is typically set by sceptre app.</p>
+</span>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionprovider_ip">
+    <div class="card">
+        <div class="card-header" id="headingprovider_ip">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#provider_ip"
+                        aria-expanded="" aria-controls="provider_ip" onclick="setAnchor('#provider_ip')"><span class="property-name">provider_ip</span></button>
+            </h2>
+        </div>
+
+        <div id="provider_ip"
+             class="collapse property-definition-div" aria-labelledby="headingprovider_ip"
+             data-parent="#accordionprovider_ip">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#provider_ip" onclick="anchorLink('provider_ip')">provider_ip</a></div><h4>Provider IP Address</h4><span class="badge badge-dark value-type">Type: string</span><span class="badge badge-info value-type">Format: ipv4</span> <span class="badge badge-success default-value">Default: "0.0.0.0"</span><br/>
+<span class="description"><p>IPv4 address of the provider VM. This is typically set by sceptre app.</p>
+</span>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionpublish_rate">
+    <div class="card">
+        <div class="card-header" id="headingpublish_rate">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#publish_rate"
+                        aria-expanded="" aria-controls="publish_rate" onclick="setAnchor('#publish_rate')"><span class="property-name">publish_rate</span></button>
+            </h2>
+        </div>
+
+        <div id="publish_rate"
+             class="collapse property-definition-div" aria-labelledby="headingpublish_rate"
+             data-parent="#accordionpublish_rate">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#publish_rate" onclick="anchorLink('publish_rate')">publish_rate</a></div><h4>Publish Rate</h4><span class="badge badge-dark value-type">Type: number</span> <span class="badge badge-success default-value">Default: 1.0</span><br/>
+<span class="description"><p>How fast points should be published by periodic_publish. Note: if publish-rate is 0, then points will be published as fast as possible.</p>
+</span>
+        
+
+        
+        <p><span class="badge badge-light restriction numeric-restriction" id="publish_rate_number">Value must be greater or equal to <code>0.0</code></span></p>
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionrack_ip">
+    <div class="card">
+        <div class="card-header" id="headingrack_ip">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#rack_ip"
+                        aria-expanded="" aria-controls="rack_ip" onclick="setAnchor('#rack_ip')"><span class="property-name">rack_ip</span></button>
+            </h2>
+        </div>
+
+        <div id="rack_ip"
+             class="collapse property-definition-div" aria-labelledby="headingrack_ip"
+             data-parent="#accordionrack_ip">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#rack_ip" onclick="anchorLink('rack_ip')">rack_ip</a></div><h4>Rack IP Address</h4><span class="badge badge-dark value-type">Type: string</span><span class="badge badge-info value-type">Format: ipv4</span> <span class="badge badge-success default-value">Default: "0.0.0.0"</span><br/>
+<span class="description"><p>IPv4 address of the simulator rack (OPALRT or RTDS rack).</p>
+</span>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordiondata_dir">
+    <div class="card">
+        <div class="card-header" id="headingdata_dir">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#data_dir"
+                        aria-expanded="" aria-controls="data_dir" onclick="setAnchor('#data_dir')"><span class="property-name">data_dir</span></button>
+            </h2>
+        </div>
+
+        <div id="data_dir"
+             class="collapse property-definition-div" aria-labelledby="headingdata_dir"
+             data-parent="#accordiondata_dir">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#data_dir" onclick="anchorLink('data_dir')">data_dir</a></div><h4>Data Directory</h4><span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "/root/default_data_dir/"</span><br/>
+<span class="description"><p>Path where any provider-relevant data should be saved.</p>
+</span>
+        
+
+        
+        
+
+        <br/>
+<div class="badge badge-secondary">Examples:</div>
+<br/><div id="data_dir_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;/root/rtds_data/&quot;</span>
+</pre></div>
+</div><div id="data_dir_ex2" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;/root/opalrt_data/&quot;</span>
+</pre></div>
+</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionelastic">
+    <div class="card">
+        <div class="card-header" id="headingelastic">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#elastic"
+                        aria-expanded="" aria-controls="elastic" onclick="setAnchor('#elastic')"><span class="property-name">elastic</span></button>
+            </h2>
+        </div>
+
+        <div id="elastic"
+             class="collapse property-definition-div" aria-labelledby="headingelastic"
+             data-parent="#accordionelastic">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#elastic" onclick="anchorLink('elastic')">elastic</a></div><h4>ElasticSettings</h4><span class="badge badge-dark value-type">Type: object</span> <span class="badge badge-success default-value">Default: {"enabled": false, "host": "http://localhost:9200", "index_basename": "default-index-basename-changeme", "num_threads": 3}</span><br/>
+<span class="description"><p>Configure export of ground truth data directly from<br />
+the provider to an Elasticsearch database.</p>
+</span>
+
+    
+        
+
+        
+        
+
+        
+<div class="accordion" id="accordionelastic_enabled">
+    <div class="card">
+        <div class="card-header" id="headingelastic_enabled">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#elastic_enabled"
+                        aria-expanded="" aria-controls="elastic_enabled" onclick="setAnchor('#elastic_enabled')"><span class="property-name">enabled</span></button>
+            </h2>
+        </div>
+
+        <div id="elastic_enabled"
+             class="collapse property-definition-div" aria-labelledby="headingelastic_enabled"
+             data-parent="#accordionelastic_enabled">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#elastic" onclick="anchorLink('elastic')">elastic</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#elastic_enabled" onclick="anchorLink('elastic_enabled')">enabled</a></div><h4>Enabled</h4><span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
+
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionelastic_host">
+    <div class="card">
+        <div class="card-header" id="headingelastic_host">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#elastic_host"
+                        aria-expanded="" aria-controls="elastic_host" onclick="setAnchor('#elastic_host')"><span class="property-name">host</span></button>
+            </h2>
+        </div>
+
+        <div id="elastic_host"
+             class="collapse property-definition-div" aria-labelledby="headingelastic_host"
+             data-parent="#accordionelastic_host">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#elastic" onclick="anchorLink('elastic')">elastic</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#elastic_host" onclick="anchorLink('elastic_host')">host</a></div><h4>Elasticsearch Host</h4><span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "http://localhost:9200"</span><br/>
+<span class="description"><p>URL of the Elasticsearch server to save data to.</p>
+</span>
+        
+
+        
+        
+
+        <br/>
+<div class="badge badge-secondary">Examples:</div>
+<br/><div id="elastic_host_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;http://localhost:9200&quot;</span>
+</pre></div>
+</div><div id="elastic_host_ex2" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;http://172.16.0.254:9200&quot;</span>
+</pre></div>
+</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionelastic_index_basename">
+    <div class="card">
+        <div class="card-header" id="headingelastic_index_basename">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#elastic_index_basename"
+                        aria-expanded="" aria-controls="elastic_index_basename" onclick="setAnchor('#elastic_index_basename')"><span class="property-name">index_basename</span></button>
+            </h2>
+        </div>
+
+        <div id="elastic_index_basename"
+             class="collapse property-definition-div" aria-labelledby="headingelastic_index_basename"
+             data-parent="#accordionelastic_index_basename">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#elastic" onclick="anchorLink('elastic')">elastic</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#elastic_index_basename" onclick="anchorLink('elastic_index_basename')">index_basename</a></div><h4>Index Basename</h4><span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "default-index-basename-changeme"</span><br/>
+<span class="description"><p>Base name of the Elasticsearch indices that will be created.</p>
+</span>
+        
+
+        
+        
+
+        <br/>
+<div class="badge badge-secondary">Examples:</div>
+<br/><div id="elastic_index_basename_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;rtds-clean&quot;</span>
+</pre></div>
+</div><div id="elastic_index_basename_ex2" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;opalrt&quot;</span>
+</pre></div>
+</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionelastic_num_threads">
+    <div class="card">
+        <div class="card-header" id="headingelastic_num_threads">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#elastic_num_threads"
+                        aria-expanded="" aria-controls="elastic_num_threads" onclick="setAnchor('#elastic_num_threads')"><span class="property-name">num_threads</span></button>
+            </h2>
+        </div>
+
+        <div id="elastic_num_threads"
+             class="collapse property-definition-div" aria-labelledby="headingelastic_num_threads"
+             data-parent="#accordionelastic_num_threads">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#elastic" onclick="anchorLink('elastic')">elastic</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#elastic_num_threads" onclick="anchorLink('elastic_num_threads')">num_threads</a></div><h4>Number of Export Threads</h4><span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 3</span><br/>
+<span class="description"><p>Number of threads to use to parallelize exporting to Elasticsearch.</p>
+</span>
+        
+
+        
+        <p><span class="badge badge-light restriction numeric-restriction" id="elastic_num_threads_number">Value must be strictly greater than <code>0</code></span></p>
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordioncsv">
+    <div class="card">
+        <div class="card-header" id="headingcsv">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#csv"
+                        aria-expanded="" aria-controls="csv" onclick="setAnchor('#csv')"><span class="property-name">csv</span></button>
+            </h2>
+        </div>
+
+        <div id="csv"
+             class="collapse property-definition-div" aria-labelledby="headingcsv"
+             data-parent="#accordioncsv">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#csv" onclick="anchorLink('csv')">csv</a></div><h4>CsvSettings</h4><span class="badge badge-dark value-type">Type: object</span> <span class="badge badge-success default-value">Default: {"enabled": false, "file_path": "/root/default_csv_path/", "rows_per_file": 50000, "max_files": 3}</span><br/>
+<span class="description"><p>Configure exporting of ground truth data from the provider<br />
+to CSV files on disk in the provider VM.</p>
+</span>
+
+    
+        
+
+        
+        
+
+        
+<div class="accordion" id="accordioncsv_enabled">
+    <div class="card">
+        <div class="card-header" id="headingcsv_enabled">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#csv_enabled"
+                        aria-expanded="" aria-controls="csv_enabled" onclick="setAnchor('#csv_enabled')"><span class="property-name">enabled</span></button>
+            </h2>
+        </div>
+
+        <div id="csv_enabled"
+             class="collapse property-definition-div" aria-labelledby="headingcsv_enabled"
+             data-parent="#accordioncsv_enabled">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#csv" onclick="anchorLink('csv')">csv</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#csv_enabled" onclick="anchorLink('csv_enabled')">enabled</a></div><h4>Enabled</h4><span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
+
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordioncsv_file_path">
+    <div class="card">
+        <div class="card-header" id="headingcsv_file_path">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#csv_file_path"
+                        aria-expanded="" aria-controls="csv_file_path" onclick="setAnchor('#csv_file_path')"><span class="property-name">file_path</span></button>
+            </h2>
+        </div>
+
+        <div id="csv_file_path"
+             class="collapse property-definition-div" aria-labelledby="headingcsv_file_path"
+             data-parent="#accordioncsv_file_path">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#csv" onclick="anchorLink('csv')">csv</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#csv_file_path" onclick="anchorLink('csv_file_path')">file_path</a></div><h4>CSV File Path</h4><span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: "/root/default_csv_path/"</span><br/>
+<span class="description"><p>Path CSV files should be saved to</p>
+</span>
+        
+
+        
+        
+
+        <br/>
+<div class="badge badge-secondary">Examples:</div>
+<br/><div id="csv_file_path_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;/root/rtds_data/&quot;</span>
+</pre></div>
+</div><div id="csv_file_path_ex2" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;/root/opalrt_data/&quot;</span>
+</pre></div>
+</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordioncsv_rows_per_file">
+    <div class="card">
+        <div class="card-header" id="headingcsv_rows_per_file">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#csv_rows_per_file"
+                        aria-expanded="" aria-controls="csv_rows_per_file" onclick="setAnchor('#csv_rows_per_file')"><span class="property-name">rows_per_file</span></button>
+            </h2>
+        </div>
+
+        <div id="csv_rows_per_file"
+             class="collapse property-definition-div" aria-labelledby="headingcsv_rows_per_file"
+             data-parent="#accordioncsv_rows_per_file">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#csv" onclick="anchorLink('csv')">csv</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#csv_rows_per_file" onclick="anchorLink('csv_rows_per_file')">rows_per_file</a></div><h4>Rows Per CSV File</h4><span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 50000</span><br/>
+<span class="description"><p>Number of rows to save in each CSV file</p>
+</span>
+        
+
+        
+        <p><span class="badge badge-light restriction numeric-restriction" id="csv_rows_per_file_number">Value must be strictly greater than <code>0</code></span></p>
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordioncsv_max_files">
+    <div class="card">
+        <div class="card-header" id="headingcsv_max_files">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#csv_max_files"
+                        aria-expanded="" aria-controls="csv_max_files" onclick="setAnchor('#csv_max_files')"><span class="property-name">max_files</span></button>
+            </h2>
+        </div>
+
+        <div id="csv_max_files"
+             class="collapse property-definition-div" aria-labelledby="headingcsv_max_files"
+             data-parent="#accordioncsv_max_files">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#csv" onclick="anchorLink('csv')">csv</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#csv_max_files" onclick="anchorLink('csv_max_files')">max_files</a></div><h4>Maximum CSV files</h4><span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 3</span><br/>
+<span class="description"><p>Maximum number of CSV files to save. The oldest files will be deleted as new files are created. Set to 0 for no limit.</p>
+</span>
+        
+
+        
+        <p><span class="badge badge-light restriction numeric-restriction" id="csv_max_files_number">Value must be greater or equal to <code>0</code></span></p>
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionpmu">
+    <div class="card">
+        <div class="card-header" id="headingpmu">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#pmu"
+                        aria-expanded="" aria-controls="pmu" onclick="setAnchor('#pmu')"><span class="property-name">pmu</span></button>
+            </h2>
+        </div>
+
+        <div id="pmu"
+             class="collapse property-definition-div" aria-labelledby="headingpmu"
+             data-parent="#accordionpmu">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu" onclick="anchorLink('pmu')">pmu</a></div><h4>PmuSettings</h4><span class="badge badge-dark value-type">Type: object</span> <span class="badge badge-success default-value">Default: {"enabled": false, "retry_delay": 5.0, "retry_attempts": 3, "bind_ip": "0.0.0.0", "pmus": []}</span><br/>
+<span class="description"><p>Active polling of PMUs. This is where the provider regularly queries<br />
+one or more PMUs on the simulator rack over C37.118 protocol.</p>
+
+<p>For the RTDS, there are up to 8 PMUs that can be configured. These will share<br />
+the same IP address, but different TCP/UDP ports. Therefore, this configuration<br />
+requires each PMU to be configured individually, even if they all have the<br />
+same IP address.</p>
+</span>
+
+    
+        
+
+        
+        
+
+        
+<div class="accordion" id="accordionpmu_enabled">
+    <div class="card">
+        <div class="card-header" id="headingpmu_enabled">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#pmu_enabled"
+                        aria-expanded="" aria-controls="pmu_enabled" onclick="setAnchor('#pmu_enabled')"><span class="property-name">enabled</span></button>
+            </h2>
+        </div>
+
+        <div id="pmu_enabled"
+             class="collapse property-definition-div" aria-labelledby="headingpmu_enabled"
+             data-parent="#accordionpmu_enabled">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu" onclick="anchorLink('pmu')">pmu</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_enabled" onclick="anchorLink('pmu_enabled')">enabled</a></div><h4>Enabled</h4><span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
+
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionpmu_retry_delay">
+    <div class="card">
+        <div class="card-header" id="headingpmu_retry_delay">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#pmu_retry_delay"
+                        aria-expanded="" aria-controls="pmu_retry_delay" onclick="setAnchor('#pmu_retry_delay')"><span class="property-name">retry_delay</span></button>
+            </h2>
+        </div>
+
+        <div id="pmu_retry_delay"
+             class="collapse property-definition-div" aria-labelledby="headingpmu_retry_delay"
+             data-parent="#accordionpmu_retry_delay">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu" onclick="anchorLink('pmu')">pmu</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_retry_delay" onclick="anchorLink('pmu_retry_delay')">retry_delay</a></div><h4>Retry Delay</h4><span class="badge badge-dark value-type">Type: number</span> <span class="badge badge-success default-value">Default: 5.0</span><br/>
+<span class="description"><p>How often to retry connections or requests to PMUs if TCP connections fail (for TCP protocol) or if there is no data in frame.</p>
+</span>
+        
+
+        
+        <p><span class="badge badge-light restriction numeric-restriction" id="pmu_retry_delay_number">Value must be strictly greater than <code>0.0</code></span></p>
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionpmu_retry_attempts">
+    <div class="card">
+        <div class="card-header" id="headingpmu_retry_attempts">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#pmu_retry_attempts"
+                        aria-expanded="" aria-controls="pmu_retry_attempts" onclick="setAnchor('#pmu_retry_attempts')"><span class="property-name">retry_attempts</span></button>
+            </h2>
+        </div>
+
+        <div id="pmu_retry_attempts"
+             class="collapse property-definition-div" aria-labelledby="headingpmu_retry_attempts"
+             data-parent="#accordionpmu_retry_attempts">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu" onclick="anchorLink('pmu')">pmu</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_retry_attempts" onclick="anchorLink('pmu_retry_attempts')">retry_attempts</a></div><h4>Retry Attempts</h4><span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 3</span><br/>
+<span class="description"><p>Number of times to retry querying for data before either rebuilding the TCP connection (for TCP protocol) or exiting with an error (for UDP). Note that TCP connection retries will continue until a connection is established, this config option merely sets the number of failures allowed.</p>
+</span>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionpmu_bind_ip">
+    <div class="card">
+        <div class="card-header" id="headingpmu_bind_ip">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#pmu_bind_ip"
+                        aria-expanded="" aria-controls="pmu_bind_ip" onclick="setAnchor('#pmu_bind_ip')"><span class="property-name">bind_ip</span></button>
+            </h2>
+        </div>
+
+        <div id="pmu_bind_ip"
+             class="collapse property-definition-div" aria-labelledby="headingpmu_bind_ip"
+             data-parent="#accordionpmu_bind_ip">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu" onclick="anchorLink('pmu')">pmu</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_bind_ip" onclick="anchorLink('pmu_bind_ip')">bind_ip</a></div><h4>Bind IP</h4><span class="badge badge-dark value-type">Type: string</span><span class="badge badge-info value-type">Format: ipv4</span> <span class="badge badge-success default-value">Default: "0.0.0.0"</span><br/>
+<span class="description"><p>IPv4 address to listen on for UDP-based PMU communications.</p>
+</span>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionpmu_pmus">
+    <div class="card">
+        <div class="card-header" id="headingpmu_pmus">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#pmu_pmus"
+                        aria-expanded="" aria-controls="pmu_pmus" onclick="setAnchor('#pmu_pmus')"><span class="property-name">pmus</span></button>
+            </h2>
+        </div>
+
+        <div id="pmu_pmus"
+             class="collapse property-definition-div" aria-labelledby="headingpmu_pmus"
+             data-parent="#accordionpmu_pmus">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu" onclick="anchorLink('pmu')">pmu</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_pmus" onclick="anchorLink('pmu_pmus')">pmus</a></div><h4>Pmus</h4><span class="badge badge-dark value-type">Type: array</span><br/>
+
+        
+
+        
+        
+
+         <span class="badge badge-info no-additional">No Additional Items</span><h4>Each item of this array must be:</h4>
+    <div class="card">
+        <div class="card-body items-definition" id="pmu_pmus_items">
+            
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu" onclick="anchorLink('pmu')">pmu</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_pmus" onclick="anchorLink('pmu_pmus')">pmus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_pmus_items" onclick="anchorLink('pmu_pmus_items')">PmuDevice</a></div><h4>PmuDevice</h4><span class="badge badge-dark value-type">Type: object</span><br/>
+<span class="description"><p>PMU device that will be polled regularly for values over C37.118 protocol.</p>
+
+<p>SCEPTRE Tag format for PMU data:<br />
+    {pmu-label}<em>{channel}.real<br />
+    {pmu-label}</em>{channel}.angle</p>
+
+<p>Tag examples for PMU data:<br />
+    BUS6<em>VA.real<br />
+    BUS6</em>VA.angle</p>
+</span>
+
+    
+        
+
+        
+        
+
+        
+<div class="accordion" id="accordionpmu_pmus_items_name">
+    <div class="card">
+        <div class="card-header" id="headingpmu_pmus_items_name">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#pmu_pmus_items_name"
+                        aria-expanded="" aria-controls="pmu_pmus_items_name" onclick="setAnchor('#pmu_pmus_items_name')"><span class="property-name">name</span> <span class="badge badge-warning required-property">Required</span></button>
+            </h2>
+        </div>
+
+        <div id="pmu_pmus_items_name"
+             class="collapse property-definition-div" aria-labelledby="headingpmu_pmus_items_name"
+             data-parent="#accordionpmu_pmus_items_name">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu" onclick="anchorLink('pmu')">pmu</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_pmus" onclick="anchorLink('pmu_pmus')">pmus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_pmus_items" onclick="anchorLink('pmu_pmus_items')">PmuDevice</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_pmus_items_name" onclick="anchorLink('pmu_pmus_items_name')">name</a></div><h4>PMU Name</h4><span class="badge badge-dark value-type">Type: string</span><br/>
+<span class="description"><p>Name of the PMU.</p>
+</span>
+        
+
+        
+        
+
+        <br/>
+<div class="badge badge-secondary">Examples:</div>
+<br/><div id="pmu_pmus_items_name_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;PMU1&quot;</span>
+</pre></div>
+</div><div id="pmu_pmus_items_name_ex2" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;PMU8&quot;</span>
+</pre></div>
+</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionpmu_pmus_items_label">
+    <div class="card">
+        <div class="card-header" id="headingpmu_pmus_items_label">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#pmu_pmus_items_label"
+                        aria-expanded="" aria-controls="pmu_pmus_items_label" onclick="setAnchor('#pmu_pmus_items_label')"><span class="property-name">label</span> <span class="badge badge-warning required-property">Required</span></button>
+            </h2>
+        </div>
+
+        <div id="pmu_pmus_items_label"
+             class="collapse property-definition-div" aria-labelledby="headingpmu_pmus_items_label"
+             data-parent="#accordionpmu_pmus_items_label">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu" onclick="anchorLink('pmu')">pmu</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_pmus" onclick="anchorLink('pmu_pmus')">pmus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_pmus_items" onclick="anchorLink('pmu_pmus_items')">PmuDevice</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_pmus_items_label" onclick="anchorLink('pmu_pmus_items_label')">label</a></div><h4>Label</h4><span class="badge badge-dark value-type">Type: string</span><br/>
+<span class="description"><p>Label used to generate the SCEPTRE tags for the PMUs values.</p>
+</span>
+        
+
+        
+        
+
+        <br/>
+<div class="badge badge-secondary">Examples:</div>
+<br/><div id="pmu_pmus_items_label_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;BUS6&quot;</span>
+</pre></div>
+</div><div id="pmu_pmus_items_label_ex2" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;BUS5-1&quot;</span>
+</pre></div>
+</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionpmu_pmus_items_pdc_id">
+    <div class="card">
+        <div class="card-header" id="headingpmu_pmus_items_pdc_id">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#pmu_pmus_items_pdc_id"
+                        aria-expanded="" aria-controls="pmu_pmus_items_pdc_id" onclick="setAnchor('#pmu_pmus_items_pdc_id')"><span class="property-name">pdc_id</span> <span class="badge badge-warning required-property">Required</span></button>
+            </h2>
+        </div>
+
+        <div id="pmu_pmus_items_pdc_id"
+             class="collapse property-definition-div" aria-labelledby="headingpmu_pmus_items_pdc_id"
+             data-parent="#accordionpmu_pmus_items_pdc_id">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu" onclick="anchorLink('pmu')">pmu</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_pmus" onclick="anchorLink('pmu_pmus')">pmus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_pmus_items" onclick="anchorLink('pmu_pmus_items')">PmuDevice</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_pmus_items_pdc_id" onclick="anchorLink('pmu_pmus_items_pdc_id')">pdc_id</a></div><h4>PDC ID</h4><span class="badge badge-dark value-type">Type: integer</span><br/>
+
+        
+
+        
+        <p><span class="badge badge-light restriction numeric-restriction" id="pmu_pmus_items_pdc_id_number">Value must be strictly greater than <code>0</code></span></p>
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionpmu_pmus_items_port">
+    <div class="card">
+        <div class="card-header" id="headingpmu_pmus_items_port">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#pmu_pmus_items_port"
+                        aria-expanded="" aria-controls="pmu_pmus_items_port" onclick="setAnchor('#pmu_pmus_items_port')"><span class="property-name">port</span> <span class="badge badge-warning required-property">Required</span></button>
+            </h2>
+        </div>
+
+        <div id="pmu_pmus_items_port"
+             class="collapse property-definition-div" aria-labelledby="headingpmu_pmus_items_port"
+             data-parent="#accordionpmu_pmus_items_port">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu" onclick="anchorLink('pmu')">pmu</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_pmus" onclick="anchorLink('pmu_pmus')">pmus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_pmus_items" onclick="anchorLink('pmu_pmus_items')">PmuDevice</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_pmus_items_port" onclick="anchorLink('pmu_pmus_items_port')">port</a></div><h4>Port</h4><span class="badge badge-dark value-type">Type: integer</span><br/>
+
+        
+
+        
+        <p><span class="badge badge-light restriction numeric-restriction" id="pmu_pmus_items_port_number">Value must be strictly greater than <code>0</code></span></p>
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionpmu_pmus_items_ip">
+    <div class="card">
+        <div class="card-header" id="headingpmu_pmus_items_ip">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#pmu_pmus_items_ip"
+                        aria-expanded="" aria-controls="pmu_pmus_items_ip" onclick="setAnchor('#pmu_pmus_items_ip')"><span class="property-name">ip</span> <span class="badge badge-warning required-property">Required</span></button>
+            </h2>
+        </div>
+
+        <div id="pmu_pmus_items_ip"
+             class="collapse property-definition-div" aria-labelledby="headingpmu_pmus_items_ip"
+             data-parent="#accordionpmu_pmus_items_ip">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu" onclick="anchorLink('pmu')">pmu</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_pmus" onclick="anchorLink('pmu_pmus')">pmus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_pmus_items" onclick="anchorLink('pmu_pmus_items')">PmuDevice</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_pmus_items_ip" onclick="anchorLink('pmu_pmus_items_ip')">ip</a></div><h4>Ip</h4><span class="badge badge-dark value-type">Type: string</span><span class="badge badge-info value-type">Format: ipv4</span><br/>
+
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionpmu_pmus_items_protocol">
+    <div class="card">
+        <div class="card-header" id="headingpmu_pmus_items_protocol">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#pmu_pmus_items_protocol"
+                        aria-expanded="" aria-controls="pmu_pmus_items_protocol" onclick="setAnchor('#pmu_pmus_items_protocol')"><span class="property-name">protocol</span> <span class="badge badge-warning required-property">Required</span></button>
+            </h2>
+        </div>
+
+        <div id="pmu_pmus_items_protocol"
+             class="collapse property-definition-div" aria-labelledby="headingpmu_pmus_items_protocol"
+             data-parent="#accordionpmu_pmus_items_protocol">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu" onclick="anchorLink('pmu')">pmu</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_pmus" onclick="anchorLink('pmu_pmus')">pmus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_pmus_items" onclick="anchorLink('pmu_pmus_items')">PmuDevice</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#pmu_pmus_items_protocol" onclick="anchorLink('pmu_pmus_items_protocol')">protocol</a></div><h4>Protocol</h4><span class="badge badge-dark value-type">Type: enum (of string)</span><br/>
+<div class="enum-value" id="pmu_pmus_items_protocol_enum">
+                <h4>Must be one of:</h4>
+                <ul class="list-group"><li class="list-group-item enum-item">"tcp"</li><li class="list-group-item enum-item">"udp"</li><li class="list-group-item enum-item">"multicast"</li></ul>
+            </div>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+        </div>
+    </div>
+            </div>
+        </div>
+    </div>
+</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionmodbus">
+    <div class="card">
+        <div class="card-header" id="headingmodbus">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#modbus"
+                        aria-expanded="" aria-controls="modbus" onclick="setAnchor('#modbus')"><span class="property-name">modbus</span></button>
+            </h2>
+        </div>
+
+        <div id="modbus"
+             class="collapse property-definition-div" aria-labelledby="headingmodbus"
+             data-parent="#accordionmodbus">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus" onclick="anchorLink('modbus')">modbus</a></div><h4>ModbusSettings</h4><span class="badge badge-dark value-type">Type: object</span> <span class="badge badge-success default-value">Default: {"enabled": false, "ip": "0.0.0.0", "port": 502, "timeout": 5.0, "retry_attempts": 3, "retry_delay": 3.0, "polling_rate": 0.01, "registers": []}</span><br/>
+<span class="description"><p>Configure Modbus/TCP as a protocol for communicating from the provider<br />
+to the simulator rack. It can be used for both reading values and<br />
+writing values.</p>
+
+<p>This is NOT to be confused with Modbus inside the SCEPTRE emulation, this<br />
+is only between the provider VM and the dynamic simulator (OPALRT/RTDS).</p>
+</span>
+
+    
+        
+
+        
+        
+
+        
+<div class="accordion" id="accordionmodbus_enabled">
+    <div class="card">
+        <div class="card-header" id="headingmodbus_enabled">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#modbus_enabled"
+                        aria-expanded="" aria-controls="modbus_enabled" onclick="setAnchor('#modbus_enabled')"><span class="property-name">enabled</span></button>
+            </h2>
+        </div>
+
+        <div id="modbus_enabled"
+             class="collapse property-definition-div" aria-labelledby="headingmodbus_enabled"
+             data-parent="#accordionmodbus_enabled">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus" onclick="anchorLink('modbus')">modbus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_enabled" onclick="anchorLink('modbus_enabled')">enabled</a></div><h4>Enabled</h4><span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
+
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionmodbus_ip">
+    <div class="card">
+        <div class="card-header" id="headingmodbus_ip">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#modbus_ip"
+                        aria-expanded="" aria-controls="modbus_ip" onclick="setAnchor('#modbus_ip')"><span class="property-name">ip</span></button>
+            </h2>
+        </div>
+
+        <div id="modbus_ip"
+             class="collapse property-definition-div" aria-labelledby="headingmodbus_ip"
+             data-parent="#accordionmodbus_ip">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus" onclick="anchorLink('modbus')">modbus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_ip" onclick="anchorLink('modbus_ip')">ip</a></div><h4>Ip</h4><span class="badge badge-dark value-type">Type: string</span><span class="badge badge-info value-type">Format: ipv4</span> <span class="badge badge-success default-value">Default: "0.0.0.0"</span><br/>
+
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionmodbus_port">
+    <div class="card">
+        <div class="card-header" id="headingmodbus_port">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#modbus_port"
+                        aria-expanded="" aria-controls="modbus_port" onclick="setAnchor('#modbus_port')"><span class="property-name">port</span></button>
+            </h2>
+        </div>
+
+        <div id="modbus_port"
+             class="collapse property-definition-div" aria-labelledby="headingmodbus_port"
+             data-parent="#accordionmodbus_port">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus" onclick="anchorLink('modbus')">modbus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_port" onclick="anchorLink('modbus_port')">port</a></div><h4>Port</h4><span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 502</span><br/>
+
+        
+
+        
+        <p><span class="badge badge-light restriction numeric-restriction" id="modbus_port_number">Value must be strictly greater than <code>0</code></span></p>
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionmodbus_timeout">
+    <div class="card">
+        <div class="card-header" id="headingmodbus_timeout">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#modbus_timeout"
+                        aria-expanded="" aria-controls="modbus_timeout" onclick="setAnchor('#modbus_timeout')"><span class="property-name">timeout</span></button>
+            </h2>
+        </div>
+
+        <div id="modbus_timeout"
+             class="collapse property-definition-div" aria-labelledby="headingmodbus_timeout"
+             data-parent="#accordionmodbus_timeout">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus" onclick="anchorLink('modbus')">modbus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_timeout" onclick="anchorLink('modbus_timeout')">timeout</a></div><h4>Modbus request timeout</h4><span class="badge badge-dark value-type">Type: number</span> <span class="badge badge-success default-value">Default: 5.0</span><br/>
+<span class="description"><p>Number of seconds to wait before Modbus/TCP requests time out. Set to 0.0 to never time out.</p>
+</span>
+        
+
+        
+        <p><span class="badge badge-light restriction numeric-restriction" id="modbus_timeout_number">Value must be greater or equal to <code>0.0</code></span></p>
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionmodbus_retry_attempts">
+    <div class="card">
+        <div class="card-header" id="headingmodbus_retry_attempts">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#modbus_retry_attempts"
+                        aria-expanded="" aria-controls="modbus_retry_attempts" onclick="setAnchor('#modbus_retry_attempts')"><span class="property-name">retry_attempts</span></button>
+            </h2>
+        </div>
+
+        <div id="modbus_retry_attempts"
+             class="collapse property-definition-div" aria-labelledby="headingmodbus_retry_attempts"
+             data-parent="#accordionmodbus_retry_attempts">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus" onclick="anchorLink('modbus')">modbus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_retry_attempts" onclick="anchorLink('modbus_retry_attempts')">retry_attempts</a></div><h4>Modbus Retry Attempts</h4><span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 3</span><br/>
+<span class="description"><p>Number of times to retry querying for data before rebuilding the Modbus TCP connection. Set to 0 to never rebuild connection. Note that TCP connection retries will continue until a connection is established, this config option merely sets the number of failures allowed.</p>
+</span>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionmodbus_retry_delay">
+    <div class="card">
+        <div class="card-header" id="headingmodbus_retry_delay">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#modbus_retry_delay"
+                        aria-expanded="" aria-controls="modbus_retry_delay" onclick="setAnchor('#modbus_retry_delay')"><span class="property-name">retry_delay</span></button>
+            </h2>
+        </div>
+
+        <div id="modbus_retry_delay"
+             class="collapse property-definition-div" aria-labelledby="headingmodbus_retry_delay"
+             data-parent="#accordionmodbus_retry_delay">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus" onclick="anchorLink('modbus')">modbus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_retry_delay" onclick="anchorLink('modbus_retry_delay')">retry_delay</a></div><h4>Modbus Retry Delay</h4><span class="badge badge-dark value-type">Type: number</span> <span class="badge badge-success default-value">Default: 3.0</span><br/>
+<span class="description"><p>Time to wait before retrying send if a Modbus send fails.</p>
+</span>
+        
+
+        
+        <p><span class="badge badge-light restriction numeric-restriction" id="modbus_retry_delay_number">Value must be greater or equal to <code>0.0</code></span></p>
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionmodbus_polling_rate">
+    <div class="card">
+        <div class="card-header" id="headingmodbus_polling_rate">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#modbus_polling_rate"
+                        aria-expanded="" aria-controls="modbus_polling_rate" onclick="setAnchor('#modbus_polling_rate')"><span class="property-name">polling_rate</span></button>
+            </h2>
+        </div>
+
+        <div id="modbus_polling_rate"
+             class="collapse property-definition-div" aria-labelledby="headingmodbus_polling_rate"
+             data-parent="#accordionmodbus_polling_rate">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus" onclick="anchorLink('modbus')">modbus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_polling_rate" onclick="anchorLink('modbus_polling_rate')">polling_rate</a></div><h4>Modbus Polling Rate</h4><span class="badge badge-dark value-type">Type: number</span> <span class="badge badge-success default-value">Default: 0.01</span><br/>
+<span class="description"><p>Rate at which readable values are regularly polled for values. Set to 0.0 to poll as fast as possible (no sleeps).</p>
+</span>
+        
+
+        
+        <p><span class="badge badge-light restriction numeric-restriction" id="modbus_polling_rate_number">Value must be greater or equal to <code>0.0</code></span></p>
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionmodbus_registers">
+    <div class="card">
+        <div class="card-header" id="headingmodbus_registers">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#modbus_registers"
+                        aria-expanded="" aria-controls="modbus_registers" onclick="setAnchor('#modbus_registers')"><span class="property-name">registers</span></button>
+            </h2>
+        </div>
+
+        <div id="modbus_registers"
+             class="collapse property-definition-div" aria-labelledby="headingmodbus_registers"
+             data-parent="#accordionmodbus_registers">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus" onclick="anchorLink('modbus')">modbus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers" onclick="anchorLink('modbus_registers')">registers</a></div><h4>Modbus Registers</h4><span class="badge badge-dark value-type">Type: array</span><br/>
+
+        
+
+        
+        
+
+         <span class="badge badge-info no-additional">No Additional Items</span><h4>Each item of this array must be:</h4>
+    <div class="card">
+        <div class="card-body items-definition" id="modbus_registers_items">
+            
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus" onclick="anchorLink('modbus')">modbus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers" onclick="anchorLink('modbus_registers')">registers</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers_items" onclick="anchorLink('modbus_registers_items')">ModbusRegister</a></div><h4>ModbusRegister</h4><span class="badge badge-dark value-type">Type: object</span><br/>
+<span class="description"><p>Modbus registers.</p>
+</span>
+
+    
+        
+
+        
+        
+
+        
+<div class="accordion" id="accordionmodbus_registers_items_num">
+    <div class="card">
+        <div class="card-header" id="headingmodbus_registers_items_num">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#modbus_registers_items_num"
+                        aria-expanded="" aria-controls="modbus_registers_items_num" onclick="setAnchor('#modbus_registers_items_num')"><span class="property-name">num</span> <span class="badge badge-warning required-property">Required</span></button>
+            </h2>
+        </div>
+
+        <div id="modbus_registers_items_num"
+             class="collapse property-definition-div" aria-labelledby="headingmodbus_registers_items_num"
+             data-parent="#accordionmodbus_registers_items_num">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus" onclick="anchorLink('modbus')">modbus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers" onclick="anchorLink('modbus_registers')">registers</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers_items" onclick="anchorLink('modbus_registers_items')">ModbusRegister</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers_items_num" onclick="anchorLink('modbus_registers_items_num')">num</a></div><h4>Register Number</h4><span class="badge badge-dark value-type">Type: integer</span><br/>
+<span class="description"><p>The Modbus Register ID. This should be unique for a given device.</p>
+</span>
+        
+
+        
+        <p><span class="badge badge-light restriction numeric-restriction" id="modbus_registers_items_num_number">Value must be strictly greater than <code>0</code></span></p>
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionmodbus_registers_items_name">
+    <div class="card">
+        <div class="card-header" id="headingmodbus_registers_items_name">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#modbus_registers_items_name"
+                        aria-expanded="" aria-controls="modbus_registers_items_name" onclick="setAnchor('#modbus_registers_items_name')"><span class="property-name">name</span> <span class="badge badge-warning required-property">Required</span></button>
+            </h2>
+        </div>
+
+        <div id="modbus_registers_items_name"
+             class="collapse property-definition-div" aria-labelledby="headingmodbus_registers_items_name"
+             data-parent="#accordionmodbus_registers_items_name">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus" onclick="anchorLink('modbus')">modbus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers" onclick="anchorLink('modbus_registers')">registers</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers_items" onclick="anchorLink('modbus_registers_items')">ModbusRegister</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers_items_name" onclick="anchorLink('modbus_registers_items_name')">name</a></div><h4>Name</h4><span class="badge badge-dark value-type">Type: string</span><br/>
+<span class="description"><p>Descriptive name for the register</p>
+</span>
+        
+
+        
+        
+
+        <br/>
+<div class="badge badge-secondary">Examples:</div>
+<br/><div id="modbus_registers_items_name_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;grid_voltage&quot;</span>
+</pre></div>
+</div><div id="modbus_registers_items_name_ex2" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;battery_current&quot;</span>
+</pre></div>
+</div><div id="modbus_registers_items_name_ex3" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;battery_soc&quot;</span>
+</pre></div>
+</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionmodbus_registers_items_reg_type">
+    <div class="card">
+        <div class="card-header" id="headingmodbus_registers_items_reg_type">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#modbus_registers_items_reg_type"
+                        aria-expanded="" aria-controls="modbus_registers_items_reg_type" onclick="setAnchor('#modbus_registers_items_reg_type')"><span class="property-name">reg_type</span> <span class="badge badge-warning required-property">Required</span></button>
+            </h2>
+        </div>
+
+        <div id="modbus_registers_items_reg_type"
+             class="collapse property-definition-div" aria-labelledby="headingmodbus_registers_items_reg_type"
+             data-parent="#accordionmodbus_registers_items_reg_type">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus" onclick="anchorLink('modbus')">modbus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers" onclick="anchorLink('modbus_registers')">registers</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers_items" onclick="anchorLink('modbus_registers_items')">ModbusRegister</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers_items_reg_type" onclick="anchorLink('modbus_registers_items_reg_type')">reg_type</a></div><h4>Register Type</h4><span class="badge badge-dark value-type">Type: enum (of string)</span><br/>
+<div class="enum-value" id="modbus_registers_items_reg_type_enum">
+                <h4>Must be one of:</h4>
+                <ul class="list-group"><li class="list-group-item enum-item">"holding"</li><li class="list-group-item enum-item">"coil"</li><li class="list-group-item enum-item">"discrete"</li><li class="list-group-item enum-item">"input"</li></ul>
+            </div>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionmodbus_registers_items_access">
+    <div class="card">
+        <div class="card-header" id="headingmodbus_registers_items_access">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#modbus_registers_items_access"
+                        aria-expanded="" aria-controls="modbus_registers_items_access" onclick="setAnchor('#modbus_registers_items_access')"><span class="property-name">access</span> <span class="badge badge-warning required-property">Required</span></button>
+            </h2>
+        </div>
+
+        <div id="modbus_registers_items_access"
+             class="collapse property-definition-div" aria-labelledby="headingmodbus_registers_items_access"
+             data-parent="#accordionmodbus_registers_items_access">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus" onclick="anchorLink('modbus')">modbus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers" onclick="anchorLink('modbus_registers')">registers</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers_items" onclick="anchorLink('modbus_registers_items')">ModbusRegister</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers_items_access" onclick="anchorLink('modbus_registers_items_access')">access</a></div><h4>Access</h4><span class="badge badge-dark value-type">Type: enum (of string)</span><br/>
+<span class="description"><p>Access permissions for the register, Read-only, Write-only, or Read-Write.</p>
+</span><div class="enum-value" id="modbus_registers_items_access_enum">
+                <h4>Must be one of:</h4>
+                <ul class="list-group"><li class="list-group-item enum-item">"r"</li><li class="list-group-item enum-item">"w"</li><li class="list-group-item enum-item">"rw"</li></ul>
+            </div>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionmodbus_registers_items_data_type">
+    <div class="card">
+        <div class="card-header" id="headingmodbus_registers_items_data_type">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#modbus_registers_items_data_type"
+                        aria-expanded="" aria-controls="modbus_registers_items_data_type" onclick="setAnchor('#modbus_registers_items_data_type')"><span class="property-name">data_type</span> <span class="badge badge-warning required-property">Required</span></button>
+            </h2>
+        </div>
+
+        <div id="modbus_registers_items_data_type"
+             class="collapse property-definition-div" aria-labelledby="headingmodbus_registers_items_data_type"
+             data-parent="#accordionmodbus_registers_items_data_type">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus" onclick="anchorLink('modbus')">modbus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers" onclick="anchorLink('modbus_registers')">registers</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers_items" onclick="anchorLink('modbus_registers_items')">ModbusRegister</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers_items_data_type" onclick="anchorLink('modbus_registers_items_data_type')">data_type</a></div><h4>Data Type</h4><span class="badge badge-dark value-type">Type: enum (of string)</span><br/>
+<span class="description"><p>Data type for the register, also determines width (32 bits will be two registers wide).</p>
+</span><div class="enum-value" id="modbus_registers_items_data_type_enum">
+                <h4>Must be one of:</h4>
+                <ul class="list-group"><li class="list-group-item enum-item">"float32"</li><li class="list-group-item enum-item">"bool"</li></ul>
+            </div>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionmodbus_registers_items_unit_type">
+    <div class="card">
+        <div class="card-header" id="headingmodbus_registers_items_unit_type">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#modbus_registers_items_unit_type"
+                        aria-expanded="" aria-controls="modbus_registers_items_unit_type" onclick="setAnchor('#modbus_registers_items_unit_type')"><span class="property-name">unit_type</span> <span class="badge badge-warning required-property">Required</span></button>
+            </h2>
+        </div>
+
+        <div id="modbus_registers_items_unit_type"
+             class="collapse property-definition-div" aria-labelledby="headingmodbus_registers_items_unit_type"
+             data-parent="#accordionmodbus_registers_items_unit_type">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus" onclick="anchorLink('modbus')">modbus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers" onclick="anchorLink('modbus_registers')">registers</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers_items" onclick="anchorLink('modbus_registers_items')">ModbusRegister</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers_items_unit_type" onclick="anchorLink('modbus_registers_items_unit_type')">unit_type</a></div><h4>Unit Type</h4><span class="badge badge-dark value-type">Type: string</span><br/>
+<span class="description"><p>Human-readable unit for the measurement. This will be appended after the value when humanized.</p>
+</span>
+        
+
+        
+        
+
+        <br/>
+<div class="badge badge-secondary">Examples:</div>
+<br/><div id="modbus_registers_items_unit_type_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;kW&quot;</span>
+</pre></div>
+</div><div id="modbus_registers_items_unit_type_ex2" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;%&quot;</span>
+</pre></div>
+</div><div id="modbus_registers_items_unit_type_ex3" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;A&quot;</span>
+</pre></div>
+</div><div id="modbus_registers_items_unit_type_ex4" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;V&quot;</span>
+</pre></div>
+</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionmodbus_registers_items_description">
+    <div class="card">
+        <div class="card-header" id="headingmodbus_registers_items_description">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#modbus_registers_items_description"
+                        aria-expanded="" aria-controls="modbus_registers_items_description" onclick="setAnchor('#modbus_registers_items_description')"><span class="property-name">description</span> <span class="badge badge-warning required-property">Required</span></button>
+            </h2>
+        </div>
+
+        <div id="modbus_registers_items_description"
+             class="collapse property-definition-div" aria-labelledby="headingmodbus_registers_items_description"
+             data-parent="#accordionmodbus_registers_items_description">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus" onclick="anchorLink('modbus')">modbus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers" onclick="anchorLink('modbus_registers')">registers</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers_items" onclick="anchorLink('modbus_registers_items')">ModbusRegister</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers_items_description" onclick="anchorLink('modbus_registers_items_description')">description</a></div><h4>Description</h4><span class="badge badge-dark value-type">Type: string</span><br/>
+<span class="description"><p>Human-readable description of the register's purpose.</p>
+</span>
+        
+
+        
+        
+
+        <br/>
+<div class="badge badge-secondary">Examples:</div>
+<br/><div id="modbus_registers_items_description_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;Bus Power, Bidirectional&quot;</span>
+</pre></div>
+</div><div id="modbus_registers_items_description_ex2" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;Read-only version of some_reg&quot;</span>
+</pre></div>
+</div><div id="modbus_registers_items_description_ex3" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;Genset Voltage&quot;</span>
+</pre></div>
+</div><div id="modbus_registers_items_description_ex4" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;Battery SOC (State of Charge)&quot;</span>
+</pre></div>
+</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordionmodbus_registers_items_sceptre_tag">
+    <div class="card">
+        <div class="card-header" id="headingmodbus_registers_items_sceptre_tag">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#modbus_registers_items_sceptre_tag"
+                        aria-expanded="" aria-controls="modbus_registers_items_sceptre_tag" onclick="setAnchor('#modbus_registers_items_sceptre_tag')"><span class="property-name">sceptre_tag</span></button>
+            </h2>
+        </div>
+
+        <div id="modbus_registers_items_sceptre_tag"
+             class="collapse property-definition-div" aria-labelledby="headingmodbus_registers_items_sceptre_tag"
+             data-parent="#accordionmodbus_registers_items_sceptre_tag">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus" onclick="anchorLink('modbus')">modbus</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers" onclick="anchorLink('modbus_registers')">registers</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers_items" onclick="anchorLink('modbus_registers_items')">ModbusRegister</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#modbus_registers_items_sceptre_tag" onclick="anchorLink('modbus_registers_items_sceptre_tag')">sceptre_tag</a></div><h4>SCEPTRE Tag</h4><span class="badge badge-dark value-type">Type: string</span> <span class="badge badge-success default-value">Default: ""</span><br/>
+<span class="description"><p>The corresponding SCEPTRE tag, e.g. 'reg1.closed' for a register named 'reg1'. This is automatically set via a Pydantic validator, using the 'name' field.</p>
+</span>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+        </div>
+    </div>
+            </div>
+        </div>
+    </div>
+</div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordiongtnet_skt">
+    <div class="card">
+        <div class="card-header" id="headinggtnet_skt">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#gtnet_skt"
+                        aria-expanded="" aria-controls="gtnet_skt" onclick="setAnchor('#gtnet_skt')"><span class="property-name">gtnet_skt</span></button>
+            </h2>
+        </div>
+
+        <div id="gtnet_skt"
+             class="collapse property-definition-div" aria-labelledby="headinggtnet_skt"
+             data-parent="#accordiongtnet_skt">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt" onclick="anchorLink('gtnet_skt')">gtnet_skt</a></div><h4>GtnetSktSettings</h4><span class="badge badge-dark value-type">Type: object</span> <span class="badge badge-success default-value">Default: {"enabled": false, "ip": "0.0.0.0", "port": 7000, "protocol": "udp", "tcp_retry_delay": 1.0, "udp_write_rate": 30, "tags": []}</span><br/>
+<span class="description"><p>Configuration for connecting to the GTNET-SKT interface on the RTDS.<br />
+NOTE: this applies to GTNET-SKT channel 1 ONLY. Multiple GTNET-SKT channels are not supported yet.</p>
+</span>
+
+    
+        
+
+        
+        
+
+        
+<div class="accordion" id="accordiongtnet_skt_enabled">
+    <div class="card">
+        <div class="card-header" id="headinggtnet_skt_enabled">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#gtnet_skt_enabled"
+                        aria-expanded="" aria-controls="gtnet_skt_enabled" onclick="setAnchor('#gtnet_skt_enabled')"><span class="property-name">enabled</span></button>
+            </h2>
+        </div>
+
+        <div id="gtnet_skt_enabled"
+             class="collapse property-definition-div" aria-labelledby="headinggtnet_skt_enabled"
+             data-parent="#accordiongtnet_skt_enabled">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt" onclick="anchorLink('gtnet_skt')">gtnet_skt</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_enabled" onclick="anchorLink('gtnet_skt_enabled')">enabled</a></div><h4>Enabled</h4><span class="badge badge-dark value-type">Type: boolean</span> <span class="badge badge-success default-value">Default: false</span><br/>
+
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordiongtnet_skt_ip">
+    <div class="card">
+        <div class="card-header" id="headinggtnet_skt_ip">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#gtnet_skt_ip"
+                        aria-expanded="" aria-controls="gtnet_skt_ip" onclick="setAnchor('#gtnet_skt_ip')"><span class="property-name">ip</span></button>
+            </h2>
+        </div>
+
+        <div id="gtnet_skt_ip"
+             class="collapse property-definition-div" aria-labelledby="headinggtnet_skt_ip"
+             data-parent="#accordiongtnet_skt_ip">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt" onclick="anchorLink('gtnet_skt')">gtnet_skt</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_ip" onclick="anchorLink('gtnet_skt_ip')">ip</a></div><h4>Ip</h4><span class="badge badge-dark value-type">Type: string</span><span class="badge badge-info value-type">Format: ipv4</span> <span class="badge badge-success default-value">Default: "0.0.0.0"</span><br/>
+
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordiongtnet_skt_port">
+    <div class="card">
+        <div class="card-header" id="headinggtnet_skt_port">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#gtnet_skt_port"
+                        aria-expanded="" aria-controls="gtnet_skt_port" onclick="setAnchor('#gtnet_skt_port')"><span class="property-name">port</span></button>
+            </h2>
+        </div>
+
+        <div id="gtnet_skt_port"
+             class="collapse property-definition-div" aria-labelledby="headinggtnet_skt_port"
+             data-parent="#accordiongtnet_skt_port">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt" onclick="anchorLink('gtnet_skt')">gtnet_skt</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_port" onclick="anchorLink('gtnet_skt_port')">port</a></div><h4>Port</h4><span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 7000</span><br/>
+
+        
+
+        
+        <p><span class="badge badge-light restriction numeric-restriction" id="gtnet_skt_port_number">Value must be strictly greater than <code>0</code></span></p>
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordiongtnet_skt_protocol">
+    <div class="card">
+        <div class="card-header" id="headinggtnet_skt_protocol">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#gtnet_skt_protocol"
+                        aria-expanded="" aria-controls="gtnet_skt_protocol" onclick="setAnchor('#gtnet_skt_protocol')"><span class="property-name">protocol</span></button>
+            </h2>
+        </div>
+
+        <div id="gtnet_skt_protocol"
+             class="collapse property-definition-div" aria-labelledby="headinggtnet_skt_protocol"
+             data-parent="#accordiongtnet_skt_protocol">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt" onclick="anchorLink('gtnet_skt')">gtnet_skt</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_protocol" onclick="anchorLink('gtnet_skt_protocol')">protocol</a></div><h4>Protocol</h4><span class="badge badge-dark value-type">Type: enum (of string)</span> <span class="badge badge-success default-value">Default: "udp"</span><br/>
+<div class="enum-value" id="gtnet_skt_protocol_enum">
+                <h4>Must be one of:</h4>
+                <ul class="list-group"><li class="list-group-item enum-item">"udp"</li><li class="list-group-item enum-item">"tcp"</li></ul>
+            </div>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordiongtnet_skt_tcp_retry_delay">
+    <div class="card">
+        <div class="card-header" id="headinggtnet_skt_tcp_retry_delay">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#gtnet_skt_tcp_retry_delay"
+                        aria-expanded="" aria-controls="gtnet_skt_tcp_retry_delay" onclick="setAnchor('#gtnet_skt_tcp_retry_delay')"><span class="property-name">tcp_retry_delay</span></button>
+            </h2>
+        </div>
+
+        <div id="gtnet_skt_tcp_retry_delay"
+             class="collapse property-definition-div" aria-labelledby="headinggtnet_skt_tcp_retry_delay"
+             data-parent="#accordiongtnet_skt_tcp_retry_delay">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt" onclick="anchorLink('gtnet_skt')">gtnet_skt</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tcp_retry_delay" onclick="anchorLink('gtnet_skt_tcp_retry_delay')">tcp_retry_delay</a></div><h4>TCP Retry Delay</h4><span class="badge badge-dark value-type">Type: number</span> <span class="badge badge-success default-value">Default: 1.0</span><br/>
+<span class="description"><p>Rate at which TCP connection will be attempted to rebuilt if lost.</p>
+</span>
+        
+
+        
+        <p><span class="badge badge-light restriction numeric-restriction" id="gtnet_skt_tcp_retry_delay_number">Value must be strictly greater than <code>0.0</code></span></p>
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordiongtnet_skt_udp_write_rate">
+    <div class="card">
+        <div class="card-header" id="headinggtnet_skt_udp_write_rate">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#gtnet_skt_udp_write_rate"
+                        aria-expanded="" aria-controls="gtnet_skt_udp_write_rate" onclick="setAnchor('#gtnet_skt_udp_write_rate')"><span class="property-name">udp_write_rate</span></button>
+            </h2>
+        </div>
+
+        <div id="gtnet_skt_udp_write_rate"
+             class="collapse property-definition-div" aria-labelledby="headinggtnet_skt_udp_write_rate"
+             data-parent="#accordiongtnet_skt_udp_write_rate">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt" onclick="anchorLink('gtnet_skt')">gtnet_skt</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_udp_write_rate" onclick="anchorLink('gtnet_skt_udp_write_rate')">udp_write_rate</a></div><h4>UDP Write Rate</h4><span class="badge badge-dark value-type">Type: integer</span> <span class="badge badge-success default-value">Default: 30</span><br/>
+<span class="description"><p>How many writes per second for UDP. Default is 30hz (30 times a second).</p>
+</span>
+        
+
+        
+        <p><span class="badge badge-light restriction numeric-restriction" id="gtnet_skt_udp_write_rate_number">Value must be strictly greater than <code>0</code></span></p>
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordiongtnet_skt_tags">
+    <div class="card">
+        <div class="card-header" id="headinggtnet_skt_tags">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#gtnet_skt_tags"
+                        aria-expanded="" aria-controls="gtnet_skt_tags" onclick="setAnchor('#gtnet_skt_tags')"><span class="property-name">tags</span></button>
+            </h2>
+        </div>
+
+        <div id="gtnet_skt_tags"
+             class="collapse property-definition-div" aria-labelledby="headinggtnet_skt_tags"
+             data-parent="#accordiongtnet_skt_tags">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt" onclick="anchorLink('gtnet_skt')">gtnet_skt</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tags" onclick="anchorLink('gtnet_skt_tags')">tags</a></div><h4>GTNET-SKT Tags</h4><span class="badge badge-dark value-type">Type: array</span><br/>
+<span class="description"><p>IMPORTANT: The order of this list matters! It determines the order in which values are serialized on the wire in packets, which determines how they're read by the RTDS. See docstring in rtds.py for details.</p>
+</span>
+        
+
+        
+        
+
+         <span class="badge badge-info no-additional">No Additional Items</span><h4>Each item of this array must be:</h4>
+    <div class="card">
+        <div class="card-body items-definition" id="gtnet_skt_tags_items">
+            
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt" onclick="anchorLink('gtnet_skt')">gtnet_skt</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tags" onclick="anchorLink('gtnet_skt_tags')">tags</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tags_items" onclick="anchorLink('gtnet_skt_tags_items')">GtnetSktTag</a></div><h4>GtnetSktTag</h4><span class="badge badge-dark value-type">Type: object</span><br/>
+
+
+    
+        
+
+        
+        
+
+        
+<div class="accordion" id="accordiongtnet_skt_tags_items_name">
+    <div class="card">
+        <div class="card-header" id="headinggtnet_skt_tags_items_name">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#gtnet_skt_tags_items_name"
+                        aria-expanded="" aria-controls="gtnet_skt_tags_items_name" onclick="setAnchor('#gtnet_skt_tags_items_name')"><span class="property-name">name</span> <span class="badge badge-warning required-property">Required</span></button>
+            </h2>
+        </div>
+
+        <div id="gtnet_skt_tags_items_name"
+             class="collapse property-definition-div" aria-labelledby="headinggtnet_skt_tags_items_name"
+             data-parent="#accordiongtnet_skt_tags_items_name">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt" onclick="anchorLink('gtnet_skt')">gtnet_skt</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tags" onclick="anchorLink('gtnet_skt_tags')">tags</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tags_items" onclick="anchorLink('gtnet_skt_tags_items')">GtnetSktTag</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tags_items_name" onclick="anchorLink('gtnet_skt_tags_items_name')">name</a></div><h4>Name</h4><span class="badge badge-dark value-type">Type: string</span><br/>
+<span class="description"><p>SCEPTRE/Bennu requires tag names with a format "&lt;name&gt;.&lt;thing&gt;"<br />
+- boolean fields (int):  ".closed" ("G3CB3.closed")<br />
+- analog fields (float): ".value"  ("DL5shed.value")</p>
+</span>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordiongtnet_skt_tags_items_type">
+    <div class="card">
+        <div class="card-header" id="headinggtnet_skt_tags_items_type">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#gtnet_skt_tags_items_type"
+                        aria-expanded="" aria-controls="gtnet_skt_tags_items_type" onclick="setAnchor('#gtnet_skt_tags_items_type')"><span class="property-name">type</span> <span class="badge badge-warning required-property">Required</span></button>
+            </h2>
+        </div>
+
+        <div id="gtnet_skt_tags_items_type"
+             class="collapse property-definition-div" aria-labelledby="headinggtnet_skt_tags_items_type"
+             data-parent="#accordiongtnet_skt_tags_items_type">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt" onclick="anchorLink('gtnet_skt')">gtnet_skt</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tags" onclick="anchorLink('gtnet_skt_tags')">tags</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tags_items" onclick="anchorLink('gtnet_skt_tags_items')">GtnetSktTag</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tags_items_type" onclick="anchorLink('gtnet_skt_tags_items_type')">type</a></div><h4>Type</h4><span class="badge badge-dark value-type">Type: enum (of string)</span><br/>
+<div class="enum-value" id="gtnet_skt_tags_items_type_enum">
+                <h4>Must be one of:</h4>
+                <ul class="list-group"><li class="list-group-item enum-item">"int"</li><li class="list-group-item enum-item">"float"</li></ul>
+            </div>
+        
+
+        
+        
+
+        
+            </div>
+        </div>
+    </div>
+</div>
+<div class="accordion" id="accordiongtnet_skt_tags_items_initial_value">
+    <div class="card">
+        <div class="card-header" id="headinggtnet_skt_tags_items_initial_value">
+            <h2 class="mb-0">
+                <button class="btn btn-link property-name-button" type="button" data-toggle="collapse" data-target="#gtnet_skt_tags_items_initial_value"
+                        aria-expanded="" aria-controls="gtnet_skt_tags_items_initial_value" onclick="setAnchor('#gtnet_skt_tags_items_initial_value')"><span class="property-name">initial_value</span> <span class="badge badge-warning required-property">Required</span></button>
+            </h2>
+        </div>
+
+        <div id="gtnet_skt_tags_items_initial_value"
+             class="collapse property-definition-div" aria-labelledby="headinggtnet_skt_tags_items_initial_value"
+             data-parent="#accordiongtnet_skt_tags_items_initial_value">
+            <div class="card-body pl-5">
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt" onclick="anchorLink('gtnet_skt')">gtnet_skt</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tags" onclick="anchorLink('gtnet_skt_tags')">tags</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tags_items" onclick="anchorLink('gtnet_skt_tags_items')">GtnetSktTag</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tags_items_initial_value" onclick="anchorLink('gtnet_skt_tags_items_initial_value')">initial_value</a></div><h4>Initial Value</h4><br/>
+<span class="description"><p>Initial value to set in internal state when provider starts.</p>
+</span><div class="any-of-value" id="gtnet_skt_tags_items_initial_value_anyOf"><h2 class="handle">
+  <label>Any of</label>
+</h2><ul class="nav nav-tabs" id="tabsgtnet_skt_tags_items_initial_value_anyOf_anyOf" role="tablist"><li class="nav-item">
+            <a class="nav-link active anyOf-option"
+               id="gtnet_skt_tags_items_initial_value_anyOf_i0" data-toggle="tab" href="#tab-pane_gtnet_skt_tags_items_initial_value_anyOf_i0" role="tab"
+               onclick="setAnchor('#gtnet_skt_tags_items_initial_value_anyOf_i0')"
+            >Option 1</a>
+        </li><li class="nav-item">
+            <a class="nav-link anyOf-option"
+               id="gtnet_skt_tags_items_initial_value_anyOf_i1" data-toggle="tab" href="#tab-pane_gtnet_skt_tags_items_initial_value_anyOf_i1" role="tab"
+               onclick="setAnchor('#gtnet_skt_tags_items_initial_value_anyOf_i1')"
+            >Option 2</a>
+        </li></ul>
+<div class="tab-content card"><div class="tab-pane fade card-body active show"
+             id="tab-pane_gtnet_skt_tags_items_initial_value_anyOf_i0" role="tabpanel">
+            
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt" onclick="anchorLink('gtnet_skt')">gtnet_skt</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tags" onclick="anchorLink('gtnet_skt_tags')">tags</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tags_items" onclick="anchorLink('gtnet_skt_tags_items')">GtnetSktTag</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tags_items_initial_value" onclick="anchorLink('gtnet_skt_tags_items_initial_value')">initial_value</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tags_items_initial_value_anyOf" onclick="anchorLink('gtnet_skt_tags_items_initial_value_anyOf')">anyOf</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tags_items_initial_value_anyOf_i0" onclick="anchorLink('gtnet_skt_tags_items_initial_value_anyOf_i0')">item 0</a></div><span class="badge badge-dark value-type">Type: integer</span><br/>
+
+        
+
+        
+        
+
+        
+        </div><div class="tab-pane fade card-body "
+             id="tab-pane_gtnet_skt_tags_items_initial_value_anyOf_i1" role="tabpanel">
+            
+
+    <div class="breadcrumbs">root
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt" onclick="anchorLink('gtnet_skt')">gtnet_skt</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tags" onclick="anchorLink('gtnet_skt_tags')">tags</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tags_items" onclick="anchorLink('gtnet_skt_tags_items')">GtnetSktTag</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tags_items_initial_value" onclick="anchorLink('gtnet_skt_tags_items_initial_value')">initial_value</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tags_items_initial_value_anyOf" onclick="anchorLink('gtnet_skt_tags_items_initial_value_anyOf')">anyOf</a>
+        <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-arrow-right-short" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+            <path
+                fill-rule="evenodd"
+                d="M4 8a.5.5 0 0 1 .5-.5h5.793L8.146 5.354a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708-.708L10.293 8.5H4.5A.5.5 0 0 1 4 8z"
+            />
+        </svg>
+    <a href="#gtnet_skt_tags_items_initial_value_anyOf_i1" onclick="anchorLink('gtnet_skt_tags_items_initial_value_anyOf_i1')">item 1</a></div><span class="badge badge-dark value-type">Type: number</span><br/>
+
+        
+
+        
+        
+
+        
+        </div></div></div>
+        
+
+        
+        
+
+        <br/>
+<div class="badge badge-secondary">Examples:</div>
+<br/><div id="gtnet_skt_tags_items_initial_value_ex1" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;0&quot;</span>
+</pre></div>
+</div><div id="gtnet_skt_tags_items_initial_value_ex2" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;1&quot;</span>
+</pre></div>
+</div><div id="gtnet_skt_tags_items_initial_value_ex3" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;0.0&quot;</span>
+</pre></div>
+</div><div id="gtnet_skt_tags_items_initial_value_ex4" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;60.0&quot;</span>
+</pre></div>
+</div><div id="gtnet_skt_tags_items_initial_value_ex5" class="jumbotron examples"><div class="highlight"><pre><span></span><span class="s2">&quot;1.0&quot;</span>
+</pre></div>
+</div>
+            </div>
+        </div>
+    </div>
+</div>
+        </div>
+    </div>
+            </div>
+        </div>
+    </div>
+</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <footer>
+        <p class="generated-by-footer">Generated using <a href="https://github.com/coveooss/json-schema-for-humans">json-schema-for-humans</a> on 2025-06-03 at 15:58:53 -0600</p>
+    </footer></body>
+</html>
