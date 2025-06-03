@@ -30,6 +30,8 @@ Some other examples:
     export bennu_elastic__enabled=false
 """
 
+import argparse
+import json
 from typing import List, Literal, Tuple, Type, Union
 from ipaddress import IPv4Address
 from pathlib import Path
@@ -472,14 +474,34 @@ def load_settings_yaml(path: Union[Path, str]) -> PybennuSettings:
     return PybennuSettings.model_validate(data)
 
 
-# TODO: generate JSON schema
-
 # TODO: use @model_validators to validate all values if a given model's enable flag is True
 # https://docs.pydantic.dev/latest/concepts/validators/#model-validators
 
-if __name__ == "__main__":
-    import sys
-    p = Path(sys.argv[1]).resolve()
-    print(p)
+# TODO: validate no duplicate tag names for gtnet, pmu, modbus. way to do this in schema?
 
-    m = load_settings_yaml(p)
+# To generate docs using https://github.com/coveooss/json-schema-for-humans
+#
+#   pip install json-schema-for-humans
+#   generate-schema-doc --config expand_buttons=true --config collapse_long_descriptions=false --config template_name=js_offline ./settings_schema/pybennu_settings_schema.json ./settings_schema/
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(prog="bennu_settings")
+    parser.add_argument("command", choices=["test_yaml", "gen_schema"], help="Load a settings YAML or generate a JSON schema")
+    parser.add_argument("filepath", type=str, help="Input file (for test_yaml) or output file (for gen_schema)")
+    args = parser.parse_args()
+
+    p = Path(args.filepath).resolve()
+
+    # TODO: command to validate a schema
+    # TODO: command to update schema docs
+    if args.command == "test_yaml":
+        print(f"Reading YAML file {p}")
+        m = load_settings_yaml(p)
+        print(repr(m))
+    elif args.command == "gen_schema":
+        schema = PybennuSettings.model_json_schema()
+        j_str = json.dumps(schema, indent=2)
+        p.write_text(j_str, encoding="utf-8")
+        print(f"Wrote schema to {p}")
+    else:
+        raise Exception(f"Invalid command: {args.command}")
