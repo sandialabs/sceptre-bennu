@@ -140,68 +140,68 @@ static const unsigned int EXIT_ERROR = 1;
 /* ********************************
  * Simulink Model Mapping Variables
  ******************************** */
-const rtwCAPI_ModelMappingInfo*   modelMap;
-const rtwCAPI_DataTypeMap*        dataTypeMap;
-const rtwCAPI_DimensionMap*       dimensionMap;
-const rtwCAPI_FixPtMap*           fixedPointMap;
-const uint_T*                     dimensionArray;
-void**                            dataAddressMap;
+static const rtwCAPI_ModelMappingInfo*   modelMap;
+static const rtwCAPI_DataTypeMap*        dataTypeMap;
+static const rtwCAPI_DimensionMap*       dimensionMap;
+static const rtwCAPI_FixPtMap*           fixedPointMap;
+static const uint_T*                     dimensionArray;
+static void**                            dataAddressMap;
 
 
 /* *******************************
  * PublishPoints Related Variables
  ******************************* */
 /* from file */
-unsigned int  numPublishPoints;
-char**        publishPoints;
+static unsigned int  numPublishPoints;
+static char**        publishPoints;
 
 /* from model */
-unsigned int            numModelSignals;
-const rtwCAPI_Signals*  modelSignals;
+static unsigned int            numModelSignals;
+static const rtwCAPI_Signals*  modelSignals;
 
 /* shared memory */
-int           numPublishPointsShmId;
-char*         numPublishPointsShmAddress;
-unsigned int  publishPointsShmSize;
-int           publishPointsShmId;
-char*         publishPointsShmAddress;
+static int           numPublishPointsShmId;
+static char*         numPublishPointsShmAddress;
+static unsigned int  publishPointsShmSize;
+static int           publishPointsShmId;
+static char*         publishPointsShmAddress;
 
 /* provider <-> solver sync */
-sem_t*        publishSemaphore;
+static sem_t*        publishSemaphore;
 
 
 /* ******************************
  * UpdatePoints Related Variables
  ****************************** */
 /* from model */
-unsigned int                    numModelParameters;
-const rtwCAPI_BlockParameters*  modelParameters;
+static unsigned int                    numModelParameters;
+static const rtwCAPI_BlockParameters*  modelParameters;
 
 /* provider <-> solver sync */
-sem_t*        updatesSemaphore;
-int           updatesFifo;
+static sem_t*        updatesSemaphore;
+static int           updatesFifo;
 
 /* *******************************
  * TimeShm Related Variables
  ******************************* */
-int           timeShmId;
-char*         timeShmAddress;
-char* t_old;
-char *eptr;
-struct timespec start, finish, initial;
-double currentTime;
-double t_oldSim;
-double t_oldStart;
-double wait;
-double jitter;
-double ns2ms;
-double s2ms;
-double internalExeTime;
-double externalExeTime;
-double majorTimeStep;
-double expectedInterval;
-bool isIntegral;
-bool isInterval;
+static int           timeShmId;
+static char*         timeShmAddress;
+static char* t_old;
+static char *eptr;
+static struct timespec start, finish, initial;
+static double currentTime;
+static double t_oldSim;
+static double t_oldStart;
+static double wait;
+static double jitter;
+static double ns2ms;
+static double s2ms;
+static double internalExeTime;
+static double externalExeTime;
+static double majorTimeStep;
+static double expectedInterval;
+static bool isIntegral;
+static bool isInterval;
 
 /* **********************************
  * Model Hooks (called from Simulink)
