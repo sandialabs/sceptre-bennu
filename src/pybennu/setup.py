@@ -99,7 +99,11 @@ END CUSTOM INSTALL COMMANDS
 
 # If you need something in a newer version of a package, increase the version pinned here
 requires = [
-    'elasticsearch>=7.17.0',
+    # Elasticsearch client versions are forward-compatible
+    # with the next major version, but are NOT backward-compatible with major versions.
+    # They ARE backward-compatible with minor versions (e.g. 8.x)
+    # https://www.elastic.co/docs/reference/elasticsearch/clients/python#_compatibility
+    'elasticsearch<9.0.0',
     'helics==3.6.1',  # 'helics~=2.7.1',
     'matplotlib>=1.5.3',
     'networkx>=1.11',
