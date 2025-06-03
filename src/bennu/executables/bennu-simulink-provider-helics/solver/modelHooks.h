@@ -134,46 +134,46 @@ static const unsigned int EXIT_ERROR = 1;
 /* ********************************
  * Simulink Model Mapping Variables
  ******************************** */
-const rtwCAPI_ModelMappingInfo*   modelMap;
-const rtwCAPI_DataTypeMap*        dataTypeMap;
-const rtwCAPI_DimensionMap*       dimensionMap;
-const rtwCAPI_FixPtMap*           fixedPointMap;
-const uint_T*                     dimensionArray;
-void**                            dataAddressMap;
+static const rtwCAPI_ModelMappingInfo*   modelMap;
+static const rtwCAPI_DataTypeMap*        dataTypeMap;
+static const rtwCAPI_DimensionMap*       dimensionMap;
+static const rtwCAPI_FixPtMap*           fixedPointMap;
+static const uint_T*                     dimensionArray;
+static void**                            dataAddressMap;
 
 
 /* *******************************
  * PublishPoints Related Variables
  ******************************* */
 /* from file */
-unsigned int  numPublishPoints;
-char**        publishPoints;
+static unsigned int  numPublishPoints;
+static char**        publishPoints;
 
 /* from model */
-unsigned int            numModelSignals;
-const rtwCAPI_Signals*  modelSignals;
+static unsigned int            numModelSignals;
+static const rtwCAPI_Signals*  modelSignals;
 
 /* shared memory */
-int           numPublishPointsShmId;
-char*         numPublishPointsShmAddress;
-unsigned int  publishPointsShmSize;
-int           publishPointsShmId;
-char*         publishPointsShmAddress;
+static int           numPublishPointsShmId;
+static char*         numPublishPointsShmAddress;
+static unsigned int  publishPointsShmSize;
+static int           publishPointsShmId;
+static char*         publishPointsShmAddress;
 
 /* provider <-> solver sync */
-sem_t*        publishSemaphore;
+static sem_t*        publishSemaphore;
 
 
 /* ******************************
  * UpdatePoints Related Variables
  ****************************** */
 /* from model */
-unsigned int                    numModelParameters;
-const rtwCAPI_BlockParameters*  modelParameters;
+static unsigned int                    numModelParameters;
+static const rtwCAPI_BlockParameters*  modelParameters;
 
 /* provider <-> solver sync */
-sem_t*        updatesSemaphore;
-int           updatesFifo;
+static sem_t*        updatesSemaphore;
+static int           updatesFifo;
 
 
 /* **********************************
