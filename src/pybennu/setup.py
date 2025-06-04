@@ -109,7 +109,7 @@ requires = [
     'networkx>=1.11',
     'numpy>=1.11.2',
     'opendssdirect.py~=0.6.1',
-    'py-expression-eval~=0.3.14',
+    'py-expression-eval==0.3.14',
     'PYPOWER==5.1.16',
     'pyserial>=3.4',
     'PyYAML>=3.12',
@@ -117,19 +117,15 @@ requires = [
     'scipy>=0.18.1',
     'labjack-ljm~=1.23.0',
     # NOTE: need at least pymodbus 3+. The version in apt
-    # for ubuntu 20.04 is 2.x, which is too old.
+    # for ubuntu 22.04 is 2.1.0, which is too old.
     # NOTE: pymodbus 3.7.0 dropped support for Python 3.8
-    'pymodbus>=3.6.0',
-    'pydantic>2',
+    'pymodbus>=3.6.0,<4.0.0',
+    'pydantic>2.0.0,<3.0.0',
+    # NOTE: pydantic-settings 2.9.0 dropped support for Python 3.8
     'pydantic-settings',
+    'bitarray;platform_system=="Linux"',  # ==2.3.2
+    'sysv_ipc;platform_system=="Linux"',  # ==1.1.0
 ]
-
-if 'linux' in sys.platform:
-    requires.extend([
-        'bitarray',  # ==2.3.2
-        'sysv_ipc',  # ==1.1.0
-    ])
-
 
 # Required for .deb to work properly. When using 'pip3 install ...',
 # these data_files are not used.
@@ -181,9 +177,9 @@ setup(
         'Operating System :: POSIX :: Linux',
         'Operating System :: Microsoft :: Windows',
         'Operating System :: Microsoft :: Windows :: Windows 7',
-        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.8',   # Ubuntu 20 (focal)
         'Programming Language :: Python :: 3.9',
-        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.10',  # Ubuntu 22 (jammy)
         'Programming Language :: Python :: Implementation :: CPython',
     ],
     python_requires         = '>=3.8,<4.0',
