@@ -48,7 +48,7 @@ from __future__ import annotations
 # using the exact same table (0x1021 as the polynomial) and it's included
 # in the standard library to boot. Using it instead of utils.crc16xmodem().
 import binascii
-import collections
+import collections.abc
 from abc import ABCMeta, abstractmethod
 from struct import pack, unpack
 from time import time
@@ -274,7 +274,7 @@ class CommonFrame(metaclass=ABCMeta):
             self.set_soc(int(t))  # Get current timestamp
 
         if frasec is not None:
-            if isinstance(frasec, collections.Sequence):
+            if isinstance(frasec, collections.abc.Sequence):
                 self.set_frasec(*frasec)
             else:
                 self.set_frasec(frasec)  # Just set fraction of second and use default values for other arguments.

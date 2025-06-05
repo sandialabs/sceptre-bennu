@@ -1,0 +1,557 @@
+{
+  "$defs": {
+    "CsvSettings": {
+      "description": "Configure exporting of ground truth data from the provider\nto CSV files on disk in the provider VM.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "file_path": {
+          "default": "/root/default_csv_path/",
+          "description": "Path CSV files should be saved to",
+          "examples": [
+            "/root/rtds_data/",
+            "/root/opalrt_data/"
+          ],
+          "title": "CSV File Path",
+          "type": "string"
+        },
+        "rows_per_file": {
+          "default": 50000,
+          "description": "Number of rows to save in each CSV file",
+          "exclusiveMinimum": 0,
+          "title": "Rows Per CSV File",
+          "type": "integer"
+        },
+        "max_files": {
+          "default": 3,
+          "description": "Maximum number of CSV files to save. The oldest files will be deleted as new files are created. Set to 0 for no limit.",
+          "minimum": 0,
+          "title": "Maximum CSV files",
+          "type": "integer"
+        }
+      },
+      "title": "CsvSettings",
+      "type": "object"
+    },
+    "ElasticSettings": {
+      "description": "Configure export of ground truth data directly from\nthe provider to an Elasticsearch database.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "host": {
+          "default": "http://localhost:9200",
+          "description": "URL of the Elasticsearch server to save data to.",
+          "examples": [
+            "http://localhost:9200",
+            "http://172.16.0.254:9200"
+          ],
+          "title": "Elasticsearch Host",
+          "type": "string"
+        },
+        "index_basename": {
+          "default": "default-index-basename-changeme",
+          "description": "Base name of the Elasticsearch indices that will be created.",
+          "examples": [
+            "rtds-clean",
+            "opalrt"
+          ],
+          "title": "Index Basename",
+          "type": "string"
+        },
+        "num_threads": {
+          "default": 3,
+          "description": "Number of threads to use to parallelize exporting to Elasticsearch.",
+          "exclusiveMinimum": 0,
+          "title": "Number of Export Threads",
+          "type": "integer"
+        }
+      },
+      "title": "ElasticSettings",
+      "type": "object"
+    },
+    "GtnetSktSettings": {
+      "description": "Configuration for connecting to the GTNET-SKT interface on the RTDS.\nNOTE: this applies to GTNET-SKT channel 1 ONLY. Multiple GTNET-SKT channels are not supported yet.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "ip": {
+          "default": "0.0.0.0",
+          "format": "ipv4",
+          "title": "Ip",
+          "type": "string"
+        },
+        "port": {
+          "default": 7000,
+          "exclusiveMinimum": 0,
+          "title": "Port",
+          "type": "integer"
+        },
+        "protocol": {
+          "default": "udp",
+          "enum": [
+            "udp",
+            "tcp"
+          ],
+          "title": "Protocol",
+          "type": "string"
+        },
+        "tcp_retry_delay": {
+          "default": 1.0,
+          "description": "Rate at which TCP connection will be attempted to rebuilt if lost.",
+          "exclusiveMinimum": 0.0,
+          "title": "TCP Retry Delay",
+          "type": "number"
+        },
+        "udp_write_rate": {
+          "default": 30,
+          "description": "How many writes per second for UDP. Default is 30hz (30 times a second).",
+          "exclusiveMinimum": 0,
+          "title": "UDP Write Rate",
+          "type": "integer"
+        },
+        "tags": {
+          "description": "IMPORTANT: The order of this list matters! It determines the order in which values are serialized on the wire in packets, which determines how they're read by the RTDS. See docstring in rtds.py for details.",
+          "items": {
+            "$ref": "#/$defs/GtnetSktTag"
+          },
+          "title": "GTNET-SKT Tags",
+          "type": "array"
+        }
+      },
+      "title": "GtnetSktSettings",
+      "type": "object"
+    },
+    "GtnetSktTag": {
+      "properties": {
+        "name": {
+          "description": "SCEPTRE/Bennu requires tag names with a format \"<name>.<thing>\"\n- boolean fields (int):  \".closed\" (\"G3CB3.closed\")\n- analog fields (float): \".value\"  (\"DL5shed.value\")",
+          "title": "Name",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "int",
+            "float"
+          ],
+          "title": "Type",
+          "type": "string"
+        },
+        "initial_value": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "description": "Initial value to set in internal state when provider starts.",
+          "examples": [
+            "0",
+            "1",
+            "0.0",
+            "60.0",
+            "1.0"
+          ],
+          "title": "Initial Value"
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "initial_value"
+      ],
+      "title": "GtnetSktTag",
+      "type": "object"
+    },
+    "ModbusRegister": {
+      "description": "Modbus registers.",
+      "properties": {
+        "num": {
+          "description": "The Modbus Register ID. This should be unique for a given device.",
+          "exclusiveMinimum": 0,
+          "title": "Register Number",
+          "type": "integer"
+        },
+        "name": {
+          "description": "Descriptive name for the register",
+          "examples": [
+            "grid_voltage",
+            "battery_current",
+            "battery_soc"
+          ],
+          "title": "Name",
+          "type": "string"
+        },
+        "reg_type": {
+          "enum": [
+            "holding",
+            "coil",
+            "discrete",
+            "input"
+          ],
+          "title": "Register Type",
+          "type": "string"
+        },
+        "access": {
+          "description": "Access permissions for the register, Read-only, Write-only, or Read-Write.",
+          "enum": [
+            "r",
+            "w",
+            "rw"
+          ],
+          "title": "Access",
+          "type": "string"
+        },
+        "data_type": {
+          "description": "Data type for the register, also determines width (32 bits will be two registers wide).",
+          "enum": [
+            "float32",
+            "bool"
+          ],
+          "title": "Data Type",
+          "type": "string"
+        },
+        "unit_type": {
+          "description": "Human-readable unit for the measurement. This will be appended after the value when humanized.",
+          "examples": [
+            "kW",
+            "%",
+            "A",
+            "V"
+          ],
+          "title": "Unit Type",
+          "type": "string"
+        },
+        "description": {
+          "description": "Human-readable description of the register's purpose.",
+          "examples": [
+            "Bus Power, Bidirectional",
+            "Read-only version of some_reg",
+            "Genset Voltage",
+            "Battery SOC (State of Charge)"
+          ],
+          "title": "Description",
+          "type": "string"
+        },
+        "sceptre_tag": {
+          "default": "",
+          "description": "The corresponding SCEPTRE tag, e.g. 'reg1.closed' for a register named 'reg1'. This is automatically set via a Pydantic validator, using the 'name' field.",
+          "title": "SCEPTRE Tag",
+          "type": "string"
+        }
+      },
+      "required": [
+        "num",
+        "name",
+        "reg_type",
+        "access",
+        "data_type",
+        "unit_type",
+        "description"
+      ],
+      "title": "ModbusRegister",
+      "type": "object"
+    },
+    "ModbusSettings": {
+      "description": "Configure Modbus/TCP as a protocol for communicating from the provider\nto the simulator rack. It can be used for both reading values and\nwriting values.\n\nThis is NOT to be confused with Modbus inside the SCEPTRE emulation, this\nis only between the provider VM and the dynamic simulator (OPALRT/RTDS).",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "ip": {
+          "default": "0.0.0.0",
+          "format": "ipv4",
+          "title": "Ip",
+          "type": "string"
+        },
+        "port": {
+          "default": 502,
+          "exclusiveMinimum": 0,
+          "title": "Port",
+          "type": "integer"
+        },
+        "timeout": {
+          "default": 5.0,
+          "description": "Number of seconds to wait before Modbus/TCP requests time out. Set to 0.0 to never time out.",
+          "minimum": 0.0,
+          "title": "Modbus request timeout",
+          "type": "number"
+        },
+        "retry_attempts": {
+          "default": 3,
+          "description": "Number of times to retry querying for data before rebuilding the Modbus TCP connection. Set to 0 to never rebuild connection. Note that TCP connection retries will continue until a connection is established, this config option merely sets the number of failures allowed.",
+          "title": "Modbus Retry Attempts",
+          "type": "integer"
+        },
+        "retry_delay": {
+          "default": 3.0,
+          "description": "Time to wait before retrying send if a Modbus send fails.",
+          "minimum": 0.0,
+          "title": "Modbus Retry Delay",
+          "type": "number"
+        },
+        "polling_rate": {
+          "default": 0.01,
+          "description": "Rate at which readable values are regularly polled for values. Set to 0.0 to poll as fast as possible (no sleeps).",
+          "minimum": 0.0,
+          "title": "Modbus Polling Rate",
+          "type": "number"
+        },
+        "registers": {
+          "items": {
+            "$ref": "#/$defs/ModbusRegister"
+          },
+          "title": "Modbus Registers",
+          "type": "array"
+        }
+      },
+      "title": "ModbusSettings",
+      "type": "object"
+    },
+    "PmuDevice": {
+      "description": "PMU device that will be polled regularly for values over C37.118 protocol.\n\nSCEPTRE Tag format for PMU data:\n    {pmu-label}_{channel}.real\n    {pmu-label}_{channel}.angle\n\nTag examples for PMU data:\n    BUS6_VA.real\n    BUS6_VA.angle",
+      "properties": {
+        "name": {
+          "description": "Name of the PMU.",
+          "examples": [
+            "PMU1",
+            "PMU8"
+          ],
+          "title": "PMU Name",
+          "type": "string"
+        },
+        "label": {
+          "description": "Label used to generate the SCEPTRE tags for the PMUs values.",
+          "examples": [
+            "BUS6",
+            "BUS5-1"
+          ],
+          "title": "Label",
+          "type": "string"
+        },
+        "pdc_id": {
+          "exclusiveMinimum": 0,
+          "title": "PDC ID",
+          "type": "integer"
+        },
+        "port": {
+          "exclusiveMinimum": 0,
+          "title": "Port",
+          "type": "integer"
+        },
+        "ip": {
+          "format": "ipv4",
+          "title": "Ip",
+          "type": "string"
+        },
+        "protocol": {
+          "enum": [
+            "tcp",
+            "udp",
+            "multicast"
+          ],
+          "title": "Protocol",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "label",
+        "pdc_id",
+        "port",
+        "ip",
+        "protocol"
+      ],
+      "title": "PmuDevice",
+      "type": "object"
+    },
+    "PmuSettings": {
+      "description": "Active polling of PMUs. This is where the provider regularly queries\none or more PMUs on the simulator rack over C37.118 protocol.\n\nFor the RTDS, there are up to 8 PMUs that can be configured. These will share\nthe same IP address, but different TCP/UDP ports. Therefore, this configuration\nrequires each PMU to be configured individually, even if they all have the\nsame IP address.",
+      "properties": {
+        "enabled": {
+          "default": false,
+          "title": "Enabled",
+          "type": "boolean"
+        },
+        "retry_delay": {
+          "default": 5.0,
+          "description": "How often to retry connections or requests to PMUs if TCP connections fail (for TCP protocol) or if there is no data in frame.",
+          "exclusiveMinimum": 0.0,
+          "title": "Retry Delay",
+          "type": "number"
+        },
+        "retry_attempts": {
+          "default": 3,
+          "description": "Number of times to retry querying for data before either rebuilding the TCP connection (for TCP protocol) or exiting with an error (for UDP). Note that TCP connection retries will continue until a connection is established, this config option merely sets the number of failures allowed.",
+          "title": "Retry Attempts",
+          "type": "integer"
+        },
+        "bind_ip": {
+          "default": "0.0.0.0",
+          "description": "IPv4 address to listen on for UDP-based PMU communications.",
+          "format": "ipv4",
+          "title": "Bind IP",
+          "type": "string"
+        },
+        "pmus": {
+          "items": {
+            "$ref": "#/$defs/PmuDevice"
+          },
+          "title": "Pmus",
+          "type": "array"
+        }
+      },
+      "title": "PmuSettings",
+      "type": "object"
+    }
+  },
+  "description": "Configuration settings for a Pybennu Provider.",
+  "properties": {
+    "server_endpoint": {
+      "default": "tcp://172.16.1.2:5555",
+      "description": "Where the provider daemon listens. This is typically set by sceptre app.",
+      "title": "Provider server endpoint",
+      "type": "string"
+    },
+    "publish_endpoint": {
+      "default": "udp://*;239.0.0.1:40000",
+      "description": "Where provider messages are published to as UDP multicast messages. This is typically set by sceptre app.",
+      "title": "Provider publish endpoint",
+      "type": "string"
+    },
+    "simulator": {
+      "default": "",
+      "description": "This is the 'solver' field in the Scenario YAML, and the 'solver-type' in the legacy config.ini format. This is typically set by sceptre app.",
+      "title": "Provider Simulator",
+      "type": "string"
+    },
+    "debug": {
+      "default": false,
+      "description": "Enable debugging output (more verbose)",
+      "title": "Debug",
+      "type": "boolean"
+    },
+    "sceptre_topology": {
+      "default": "",
+      "description": "This is typically set by sceptre app",
+      "title": "SCEPTRE Topology",
+      "type": "string"
+    },
+    "sceptre_scenario": {
+      "default": "",
+      "description": "This is typically set by sceptre app",
+      "title": "SCEPTRE Scenario",
+      "type": "string"
+    },
+    "sceptre_experiment": {
+      "default": "",
+      "description": "This is typically set by sceptre app",
+      "title": "SCEPTRE Experiment",
+      "type": "string"
+    },
+    "provider_hostname": {
+      "default": "",
+      "description": "Hostname of the provider. This is typically set by sceptre app.",
+      "title": "Provider Hostname",
+      "type": "string"
+    },
+    "provider_ip": {
+      "default": "0.0.0.0",
+      "description": "IPv4 address of the provider VM. This is typically set by sceptre app.",
+      "format": "ipv4",
+      "title": "Provider IP Address",
+      "type": "string"
+    },
+    "publish_rate": {
+      "default": 1.0,
+      "description": "How fast points should be published by periodic_publish. Note: if publish-rate is 0, then points will be published as fast as possible.",
+      "minimum": 0.0,
+      "title": "Publish Rate",
+      "type": "number"
+    },
+    "rack_ip": {
+      "default": "0.0.0.0",
+      "description": "IPv4 address of the simulator rack (OPALRT or RTDS rack).",
+      "format": "ipv4",
+      "title": "Rack IP Address",
+      "type": "string"
+    },
+    "data_dir": {
+      "default": "/root/default_data_dir/",
+      "description": "Path where any provider-relevant data should be saved.",
+      "examples": [
+        "/root/rtds_data/",
+        "/root/opalrt_data/"
+      ],
+      "title": "Data Directory",
+      "type": "string"
+    },
+    "elastic": {
+      "$ref": "#/$defs/ElasticSettings",
+      "default": {
+        "enabled": false,
+        "host": "http://localhost:9200",
+        "index_basename": "default-index-basename-changeme",
+        "num_threads": 3
+      }
+    },
+    "csv": {
+      "$ref": "#/$defs/CsvSettings",
+      "default": {
+        "enabled": false,
+        "file_path": "/root/default_csv_path/",
+        "rows_per_file": 50000,
+        "max_files": 3
+      }
+    },
+    "pmu": {
+      "$ref": "#/$defs/PmuSettings",
+      "default": {
+        "enabled": false,
+        "retry_delay": 5.0,
+        "retry_attempts": 3,
+        "bind_ip": "0.0.0.0",
+        "pmus": []
+      }
+    },
+    "modbus": {
+      "$ref": "#/$defs/ModbusSettings",
+      "default": {
+        "enabled": false,
+        "ip": "0.0.0.0",
+        "port": 502,
+        "timeout": 5.0,
+        "retry_attempts": 3,
+        "retry_delay": 3.0,
+        "polling_rate": 0.01,
+        "registers": []
+      }
+    },
+    "gtnet_skt": {
+      "$ref": "#/$defs/GtnetSktSettings",
+      "default": {
+        "enabled": false,
+        "ip": "0.0.0.0",
+        "port": 7000,
+        "protocol": "udp",
+        "tcp_retry_delay": 1.0,
+        "udp_write_rate": 30,
+        "tags": []
+      }
+    }
+  },
+  "title": "PybennuSettings",
+  "type": "object"
+}

@@ -1,0 +1,163 @@
+csv:
+  enabled: true
+  file_path: /root/rtds_data/
+  max_files: 3
+  rows_per_file: 50000
+data_dir: /root/rtds_data/
+debug: false
+elastic:
+  enabled: true
+  host: http://172.24.24.121:9200
+  index_basename: rtds-clean
+  num_threads: 3
+gtnet_skt:
+  enabled: true
+  ip: 172.24.9.52
+  port: 7000
+  protocol: udp
+  tags:
+  - initial_value: 1
+    name: G1CB1.closed
+    type: int
+  - initial_value: 1
+    name: G2CB2.closed
+    type: int
+  - initial_value: 1
+    name: G3CB3.closed
+    type: int
+  - initial_value: 1
+    name: CBL5.closed
+    type: int
+  - initial_value: 1
+    name: CBL6.closed
+    type: int
+  - initial_value: 1
+    name: CBL8.closed
+    type: int
+  - initial_value: 1
+    name: T5SE.closed
+    type: int
+  - initial_value: 1
+    name: T5RE.closed
+    type: int
+  - initial_value: 1
+    name: T6SE.closed
+    type: int
+  - initial_value: 1
+    name: T6RE.closed
+    type: int
+  - initial_value: 1
+    name: T4RE.closed
+    type: int
+  - initial_value: 1
+    name: T4SE.closed
+    type: int
+  - initial_value: 1
+    name: T2RE.closed
+    type: int
+  - initial_value: 1
+    name: T2SE.closed
+    type: int
+  - initial_value: 1
+    name: T1SE.closed
+    type: int
+  - initial_value: 1
+    name: T1RE.closed
+    type: int
+  - initial_value: 1
+    name: T3RE.closed
+    type: int
+  - initial_value: 1
+    name: T3SE.closed
+    type: int
+  - initial_value: 0
+    name: DL5shed.value
+    type: float
+  - initial_value: 0
+    name: DL6shed.value
+    type: float
+  - initial_value: 0
+    name: DL8shed.value
+    type: float
+  - initial_value: 0
+    name: PsetL5.value
+    type: float
+  - initial_value: 0
+    name: QsetL5.value
+    type: float
+  - initial_value: 0
+    name: PsetL6.value
+    type: float
+  - initial_value: 0
+    name: QsetL6.value
+    type: float
+  - initial_value: 0
+    name: PsetL8.value
+    type: float
+  - initial_value: 0
+    name: QsetL8.value
+    type: float
+  tcp_retry_delay: 1
+  udp_write_rate: 30
+pmu:
+  enabled: true
+  pmus:
+  - ip: 172.24.9.51
+    label: BUS4
+    name: PMU1
+    pdc_id: 41
+    port: 4714
+    protocol: tcp
+  - ip: 172.24.9.51
+    label: BUS4-1
+    name: PMU2
+    pdc_id: 6
+    port: 4716
+    protocol: tcp
+  - ip: 172.24.9.51
+    label: BUS9
+    name: PMU3
+    pdc_id: 91
+    port: 4719
+    protocol: tcp
+  - ip: 172.24.9.51
+    label: BUS9-1
+    name: PMU4
+    pdc_id: 92
+    port: 4718
+    protocol: tcp
+  - ip: 172.24.9.51
+    label: BUS7
+    name: PMU5
+    pdc_id: 71
+    port: 4717
+    protocol: tcp
+  - ip: 172.24.9.51
+    label: BUS7-1
+    name: PMU6
+    pdc_id: 72
+    port: 4715
+    protocol: tcp
+  - ip: 172.24.9.51
+    label: BUS5
+    name: PMU7
+    pdc_id: 5
+    port: 4772
+    protocol: tcp
+  - ip: 172.24.9.51
+    label: BUS6
+    name: PMU8
+    pdc_id: 6
+    port: 4782
+    protocol: tcp
+  retry_attempts: 3
+  retry_delay: 5
+provider_hostname: power-provider
+provider_ip: 172.16.1.2
+publish_rate: 0.03
+rack_ip: 172.24.4.122
+sceptre_experiment: rtds_test
+sceptre_scenario: wscc-rtds
+sceptre_topology: wscc-rtds
+simulator: RTDS
+type: provider
