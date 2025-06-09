@@ -3,8 +3,6 @@ import logging
 import time
 
 from pymodbus.client import ModbusTcpClient
-from pymodbus.payload import BinaryPayloadDecoder, BinaryPayloadBuilder
-from pymodbus.constants import Endian
 from pymodbus.exceptions import ModbusException
 from pymodbus import pymodbus_apply_logging_config
 
@@ -87,17 +85,22 @@ class ModbusWrapper:
         """
         Function to DECODE a 32-bit float from two 16-bit registers.
         """
-        decoder = BinaryPayloadDecoder.fromRegisters(registers, byteorder=Endian.BIG, wordorder=Endian.BIG)
-        return decoder.decode_32bit_float()
+        return ModbusTcpClient.convert_from_registers(
+            registers=registers,
+            data_type=ModbusTcpClient.DATATYPE.FLOAT32,
+            word_order="big",
+        )
 
     @staticmethod
     def encode_float(value: float) -> list:
         """
         Function to ENCODE a 32-bit float into two 16-bit registers.
         """
-        builder = BinaryPayloadBuilder(byteorder=Endian.BIG, wordorder=Endian.BIG)
-        builder.add_32bit_float(value)
-        return builder.to_registers()
+        return ModbusTcpClient.convert_to_registers(
+            value=value,
+            data_type=ModbusTcpClient.DATATYPE.FLOAT32,
+            word_order="big",
+        )
 
     def read_register(self, r: ModbusRegister):
         """
@@ -127,16 +130,16 @@ class ModbusWrapper:
         # TODO: read multiple registers
         if r.reg_type == 'input':
             # read 2 registers for a 32-bit register (2x 16-bit)
-            result = self.client.read_input_registers(r.num, 2)
+            result = self.client.read_input_registers(r.num, count=2)
             return self.decode_float(result.registers)
         elif r.reg_type == 'holding':
-            result = self.client.read_holding_registers(r.num, 2)
+            result = self.client.read_holding_registers(r.num, count=2)
             return self.decode_float(result.registers)
         elif r.reg_type == 'discrete':
-            result = self.client.read_discrete_inputs(r.num, 1)
+            result = self.client.read_discrete_inputs(r.num, count=1)
             return result.bits[0]
         elif r.reg_type == 'coil':
-            result = self.client.read_coils(r.num, 1)
+            result = self.client.read_coils(r.num, count=1)
             return result.bits[0]
         else:
             raise TypeError(f"Unknown reg_type: {r.reg_type} (register: {r})")
