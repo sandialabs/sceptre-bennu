@@ -119,7 +119,7 @@ requires = [
     # NOTE: need at least pymodbus 3+. The version in apt
     # for ubuntu 22.04 is 2.1.0, which is too old.
     # NOTE: pymodbus 3.7.0 dropped support for Python 3.8
-    'pymodbus>=3.6.0,<4.0.0',
+    'pymodbus>=3.8.0,<=3.9.2',
     'pydantic>2.0.0,<3.0.0',
     # NOTE: pydantic-settings 2.9.0 dropped support for Python 3.8
     'pydantic-settings',
