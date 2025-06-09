@@ -118,7 +118,7 @@ requires = [
     'labjack-ljm~=1.23.0',
     # NOTE: need at least pymodbus 3+. The version in apt
     # for ubuntu 22.04 is 2.1.0, which is too old.
-    # NOTE: pymodbus 3.7.0 dropped support for Python 3.8
+    # NOTE: pymodbus 3.9.0 informally dropped support for Python 3.9
     'pymodbus>=3.8.0,<=3.9.2',
     'pydantic>2.0.0,<3.0.0',
     # NOTE: pydantic-settings 2.9.0 dropped support for Python 3.8
@@ -177,12 +177,11 @@ setup(
         'Operating System :: POSIX :: Linux',
         'Operating System :: Microsoft :: Windows',
         'Operating System :: Microsoft :: Windows :: Windows 7',
-        'Programming Language :: Python :: 3.8',   # Ubuntu 20 (focal)
         'Programming Language :: Python :: 3.9',
         'Programming Language :: Python :: 3.10',  # Ubuntu 22 (jammy)
         'Programming Language :: Python :: Implementation :: CPython',
     ],
-    python_requires         = '>=3.8,<4.0',
+    python_requires         = '>=3.9,<4.0',
     entry_points            = entries,
     data_files              = data_files,
     packages                = find_packages(),
