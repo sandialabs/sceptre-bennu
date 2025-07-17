@@ -27,7 +27,7 @@ class ModbusWrapper:
         )
 
         # DEBUG level for pymodbus outputs for EVERY request, only use
-        # if you're debugging a really hairy modbus issue.
+        # if you're debugging a really hairy Modbus issue.
         # Otherwise, we set WARNING+ normally, and INFO+ if debug is set.
         # This must be called because logging basicConfig() in the provider
         # will result in the pymodbus logger also getting configured, and
@@ -37,7 +37,7 @@ class ModbusWrapper:
         else:
             pymodbus_apply_logging_config(logging.WARNING)
 
-        # Close modbus connection on exit.
+        # Close Modbus connection on exit.
         # register the "at exit" handler here instead of
         # on connection so it only gets registered once
         # for a given client. Calling close() if connection
@@ -168,10 +168,10 @@ class ModbusWrapper:
         # TODO: other types of registers
         # TODO: what exception is raised by PyModbus if response is an error?
         if r.reg_type == 'holding':  # Holding Registers
-            encoded_value = self.encode_float(value)
+            encoded_value = self.encode_float(float(value))
             self.client.write_registers(r.num, encoded_value)
         elif r.reg_type == 'coil':  # Coil
-            self.client.write_coil(r.num, value)
+            self.client.write_coil(r.num, bool(value))
         elif r.reg_type in ['discrete', 'input']:
             raise NotImplementedError(f"reg_type {r.reg_type} is not supported for writing for register {r.name}")
         else:
