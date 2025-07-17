@@ -301,6 +301,7 @@ class OPALRT(Provider):
                             "tag": tag,
                             "type": reg.data_type,
                             "value": value,
+                            "description": reg.description,
                         },
                     }
                     es_bodies.append(es_body)
