@@ -143,6 +143,7 @@ ES_BASE_TYPE_MAPPING = {
             "tag": {"type": "keyword"},
             "type": {"type": "keyword"},
             "value": {"type": "keyword"},  # TODO: how do we make value properly typed?
+            "description": {"type": "keyword"},
         }
     },
     "sceptre": {
