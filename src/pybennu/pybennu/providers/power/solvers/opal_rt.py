@@ -48,7 +48,6 @@ from pybennu.distributed.provider import Provider
 # TODOs
 # - [ ] Add the SCEPTRE tag and other metadata to Elastic docs
 # - [ ] Log most messages to a file with Rotating handler to avoid filling up log (since bennu isn't very smart and won't rotate the file). Separate log files for things like CSV handler?
-# - [ ] Support CSV file writing for OPALRT? (like for RTDS) Maybe want to aggregate all data from PMU+Modbus sources to a single CSV file
 
 
 MBResultType = Tuple[str, Any, ModbusRegister, datetime]
@@ -413,9 +412,9 @@ class OPALRT(Provider):
             # This will block until there is an item to process
             pmu, frame = self.pmu_frame_queue.get()
 
-            # This is an epic hack to workaround a nasty time syncronization issue.
+            # This is an epic hack to workaround a nasty time synchronization issue.
             # Extensive documentation about this is on the wiki.
-            # tl;dr: due the 8 PMU connections being handled in independant threads,
+            # tl;dr: due the 8 PMU connections being handled in independent threads,
             # the sceptre_time will differ between the 8 PMUs for the same rtds_time.
             with self.__time_map_lock:
                 if frame["time"] not in self.time_map:
@@ -448,11 +447,10 @@ class OPALRT(Provider):
                         for i, cb in enumerate(mm["digital"])
                     },
                 }
-                pmu.log.info(f"Measurments from frame: {line}")
+                pmu.log.info(f"Measurements from frame: {line}")
 
                 # Save data to Elasticsearch
                 if self.es:
-                    print("exporting to es")
                     es_bodies = []
 
                     # TODO: "digital" fields
@@ -491,14 +489,19 @@ class OPALRT(Provider):
                                 # TODO: test
                                 # "breaker_status": line["digital"][0]["Breaker Status"],
                             },
-                            # TODO:
-                            # - groundtruth fields
+                            # # TODO: groundtruth
+                            # # Need to write two separate docs, with "real" and "angle"
+                            # "groundtruth": {
+                            #     "tag": f"{pmu.label}_{pmu.channel_names[ph_id]}.{ph_type}",
+                            #     "type": "float",
+                            #     "value": phasor["real"],
+                            #     "description": "",
+                            # },
                         }
                         pmu.log.info(f"Generated new ES document {es_body}")
                         es_bodies.append(es_body)
 
                     self.es.enqueue(es_bodies)
-                    pmu.log.info("All ES docs have been queud")
 
                 # Update global data structure with measurements.
                 # These are the values that get published to SCEPTRE.
@@ -624,17 +627,17 @@ class OPALRT(Provider):
             # for modbus registers that have access of "rw" or "w"
             # (read/write or write).
             if not reg:
-                msg = f"ERR=Invalid tag name '{tag}' for write to OPALRT its not a Modbus register"
-                self.log.error(f"{msg} (tags being written: {tags})")
+                msg = f"ERR=Tag '{tag}' is not a configured Modbus register for write to OPALRT"
+                self.log.error(f"{msg} (tags being written: {tags})\n=> configured Modbus registers: {list(self.mb_registers.keys())}")
                 return msg
             elif "w" not in reg.access:
                 msg = f"ERR=Modbus Register does not have write permissions for tag '{tag}' for write to OPALRT"
-                self.log.error(f"{msg} (tags being written: {tags})")
+                self.log.error(f"{msg} (reg.access: {reg.access}, tags being written: {tags})")
                 return msg
 
             # write the value
             self.mb_client.write_register(reg, val)
-            # TODO: add logging to ES for modbus writes
+            # TODO: save Modbus write values to Elasticsearch
 
         msg = f"ACK=Wrote {len(tags)} tags to OPALRT via Modbus"
 
