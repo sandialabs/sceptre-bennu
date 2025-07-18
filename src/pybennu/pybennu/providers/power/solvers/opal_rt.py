@@ -35,7 +35,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from threading import Lock, Thread
 from queue import Queue
 
-from pymodbus.exceptions import ModbusException
+from pymodbus.exceptions import ModbusException, ConnectionException
 
 from pybennu.settings import PybennuSettings, ModbusRegister
 from pybennu.elastic import ElasticPusher
@@ -165,7 +165,12 @@ class OPALRT(Provider):
         """Start threads and the provider."""
         if self.conf.modbus.enabled:
             if not self.mb_client.connect():
-                raise ConnectionError(f"Failed to connect to Modbus server {self.mb_client!s} (timeout: {self.conf.modbus.timeout})")
+                if self.conf.modbus.retry_attempts:
+                    # Wait to rebuild Modbus connection in a loop
+                    self.mb_client.retry_until_connected(self.conf.modbus.retry_delay)
+                else:
+                    # Retries are disabled, error out
+                    raise ConnectionError(f"Failed to connect to Modbus server {self.mb_client!s} (timeout: {self.conf.modbus.timeout})")
 
             self.__modbus_data_thread.start()
             self.__modbus_polling_thread.start()
