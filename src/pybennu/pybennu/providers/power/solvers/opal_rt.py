@@ -632,7 +632,7 @@ class OPALRT(Provider):
 
         if not self.conf.modbus.enabled:
             msg = "ERR=Modbus is not enabled which is required for write to OPALRT"
-            self.log.error(f"{msg} (tags: {tags})")
+            self.log.error(f"{msg} (tags being written: {tags})")
             return msg
 
         for tag, val in tags.items():
@@ -644,7 +644,7 @@ class OPALRT(Provider):
             # (read/write or write).
             if not reg:
                 msg = f"ERR=Tag '{tag}' is not a configured Modbus register for write to OPALRT"
-                self.log.error(f"{msg} (tags being written: {tags})\n=> configured Modbus registers: {list(self.mb_registers.keys())}")
+                self.log.error(f"{msg} (tags being written: {tags})")
                 return msg
             elif "w" not in reg.access:
                 msg = f"ERR=Modbus Register does not have write permissions for tag '{tag}' for write to OPALRT"
@@ -652,8 +652,21 @@ class OPALRT(Provider):
                 return msg
 
             # write the value
-            self.mb_client.write_register(reg, val)
-            # TODO: save Modbus write values to Elasticsearch
+            # let non-pymodbus exceptions propagate and crash the provider, as they shouldn't happen
+            try:
+                self.mb_client.write_register(reg, val)
+            except ConnectionException:
+                msg = "ERR=Modbus connection failed for write to OPALRT"
+                self.log.error(f"{msg} (tags being written: {tags}, OPALRT Modbus endpoint: {self.conf.modbus.ip}:{self.conf.modbus.port})")
+                return msg
+            except ModbusException as ex:
+                msg = f"ERR=Modbus error occurred for write to OPALRT of tag '{tag}' skipping subsequent tags"
+                self.log.error(f"{msg} (tags being written: {tags}, Modbus error: {ex!s})")
+                return msg
+            except Exception as ex:
+                msg = f"ERR=Modbus write to OPALRT failed due to exception '{ex.__class__.__name__}'"
+                self.log.error(f"{msg} (tags being written: {tags}, exception: {ex!s})")
+                return msg
 
         msg = f"ACK=Wrote {len(tags)} tags to OPALRT via Modbus"
 
