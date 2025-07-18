@@ -29,10 +29,11 @@ void InputModule::subscriptionHandler(std::string& data)
         } catch (std::exception& e) {
             return;
         }
-        points.pop_back(); // remove last element since it could be empty or cut off
+        
         for (auto& t : points)
         {
-            if (t.length() == 0) { continue; }
+            if (t.length() == 0) { continue; } //Checks if point is empty
+
             if (t.find(":")==std::string::npos && (
                 t.find("bus")==std::string::npos ||
                 t.find("branch")==std::string::npos ||
@@ -48,6 +49,10 @@ void InputModule::subscriptionHandler(std::string& data)
             } catch (std::exception& e) {
                 continue;
             }
+
+	    //Checks if point was cutoff/malformed
+	    if (parts.size() < 2) { continue; }
+
             std::string name, value;
             name = parts[0];
             value = parts[1];
