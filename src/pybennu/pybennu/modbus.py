@@ -3,12 +3,11 @@ import logging
 import time
 
 from pymodbus.client import ModbusTcpClient
-from pymodbus.payload import BinaryPayloadDecoder, BinaryPayloadBuilder
-from pymodbus.constants import Endian
 from pymodbus.exceptions import ModbusException
 from pymodbus import pymodbus_apply_logging_config
 
 from pybennu.settings import ModbusRegister
+from pybennu import utils
 
 
 class ModbusWrapper:
@@ -29,7 +28,7 @@ class ModbusWrapper:
         )
 
         # DEBUG level for pymodbus outputs for EVERY request, only use
-        # if you're debugging a really hairy modbus issue.
+        # if you're debugging a really hairy Modbus issue.
         # Otherwise, we set WARNING+ normally, and INFO+ if debug is set.
         # This must be called because logging basicConfig() in the provider
         # will result in the pymodbus logger also getting configured, and
@@ -39,7 +38,7 @@ class ModbusWrapper:
         else:
             pymodbus_apply_logging_config(logging.WARNING)
 
-        # Close modbus connection on exit.
+        # Close Modbus connection on exit.
         # register the "at exit" handler here instead of
         # on connection so it only gets registered once
         # for a given client. Calling close() if connection
@@ -87,17 +86,22 @@ class ModbusWrapper:
         """
         Function to DECODE a 32-bit float from two 16-bit registers.
         """
-        decoder = BinaryPayloadDecoder.fromRegisters(registers, byteorder=Endian.BIG, wordorder=Endian.BIG)
-        return decoder.decode_32bit_float()
+        return ModbusTcpClient.convert_from_registers(
+            registers=registers,
+            data_type=ModbusTcpClient.DATATYPE.FLOAT32,
+            word_order="big",
+        )
 
     @staticmethod
     def encode_float(value: float) -> list:
         """
         Function to ENCODE a 32-bit float into two 16-bit registers.
         """
-        builder = BinaryPayloadBuilder(byteorder=Endian.BIG, wordorder=Endian.BIG)
-        builder.add_32bit_float(value)
-        return builder.to_registers()
+        return ModbusTcpClient.convert_to_registers(
+            value=value,
+            data_type=ModbusTcpClient.DATATYPE.FLOAT32,
+            word_order="big",
+        )
 
     def read_register(self, r: ModbusRegister):
         """
@@ -127,16 +131,16 @@ class ModbusWrapper:
         # TODO: read multiple registers
         if r.reg_type == 'input':
             # read 2 registers for a 32-bit register (2x 16-bit)
-            result = self.client.read_input_registers(r.num, 2)
+            result = self.client.read_input_registers(r.num, count=2)
             return self.decode_float(result.registers)
         elif r.reg_type == 'holding':
-            result = self.client.read_holding_registers(r.num, 2)
+            result = self.client.read_holding_registers(r.num, count=2)
             return self.decode_float(result.registers)
         elif r.reg_type == 'discrete':
-            result = self.client.read_discrete_inputs(r.num, 1)
+            result = self.client.read_discrete_inputs(r.num, count=1)
             return result.bits[0]
         elif r.reg_type == 'coil':
-            result = self.client.read_coils(r.num, 1)
+            result = self.client.read_coils(r.num, count=1)
             return result.bits[0]
         else:
             raise TypeError(f"Unknown reg_type: {r.reg_type} (register: {r})")
@@ -165,10 +169,13 @@ class ModbusWrapper:
         # TODO: other types of registers
         # TODO: what exception is raised by PyModbus if response is an error?
         if r.reg_type == 'holding':  # Holding Registers
-            encoded_value = self.encode_float(value)
+            encoded_value = self.encode_float(float(value))
             self.client.write_registers(r.num, encoded_value)
         elif r.reg_type == 'coil':  # Coil
-            self.client.write_coil(r.num, value)
+            # The ZMQ messages are strings "true" or "false"
+            if isinstance(value, str):
+                value = utils.str_to_bool(value)
+            self.client.write_coil(r.num, bool(value))
         elif r.reg_type in ['discrete', 'input']:
             raise NotImplementedError(f"reg_type {r.reg_type} is not supported for writing for register {r.name}")
         else:

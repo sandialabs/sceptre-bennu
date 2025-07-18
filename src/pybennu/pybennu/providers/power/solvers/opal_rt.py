@@ -35,7 +35,7 @@ from typing import Any, Dict, List, Optional, Tuple
 from threading import Lock, Thread
 from queue import Queue
 
-from pymodbus.exceptions import ModbusException
+from pymodbus.exceptions import ModbusException, ConnectionException
 
 from pybennu.settings import PybennuSettings, ModbusRegister
 from pybennu.elastic import ElasticPusher
@@ -48,7 +48,6 @@ from pybennu.distributed.provider import Provider
 # TODOs
 # - [ ] Add the SCEPTRE tag and other metadata to Elastic docs
 # - [ ] Log most messages to a file with Rotating handler to avoid filling up log (since bennu isn't very smart and won't rotate the file). Separate log files for things like CSV handler?
-# - [ ] Support CSV file writing for OPALRT? (like for RTDS) Maybe want to aggregate all data from PMU+Modbus sources to a single CSV file
 
 
 MBResultType = Tuple[str, Any, ModbusRegister, datetime]
@@ -166,7 +165,12 @@ class OPALRT(Provider):
         """Start threads and the provider."""
         if self.conf.modbus.enabled:
             if not self.mb_client.connect():
-                raise ConnectionError(f"Failed to connect to Modbus server {self.mb_client!s} (timeout: {self.conf.modbus.timeout})")
+                if self.conf.modbus.retry_attempts:
+                    # Wait to rebuild Modbus connection in a loop
+                    self.mb_client.retry_until_connected(self.conf.modbus.retry_delay)
+                else:
+                    # Retries are disabled, error out
+                    raise ConnectionError(f"Failed to connect to Modbus server {self.mb_client!s} (timeout: {self.conf.modbus.timeout})")
 
             self.__modbus_data_thread.start()
             self.__modbus_polling_thread.start()
@@ -218,7 +222,7 @@ class OPALRT(Provider):
                 for tag, reg in self.mb_readable_regs.items():
                     val = self.mb_client.read_register(reg)
 
-                    # tuple of Register, value, and timestamp
+                    # tuple of tag name, value, Register object, and timestamp
                     mb_results.append((tag, val, reg, timestamp))
                     mb_vals[tag] = val
             except (ValueError, TypeError, NotImplementedError) as ex:
@@ -230,6 +234,7 @@ class OPALRT(Provider):
                 if self.conf.modbus.retry_attempts and retry_count < self.conf.modbus.retry_attempts:
                     self.log.error(f"Sleeping for {self.conf.modbus.retry_delay} seconds before retrying read...")
                     time.sleep(self.conf.modbus.retry_delay)
+                    retry_count += 1
                     continue
                 elif self.conf.modbus.retry_attempts:
                     # Wait to rebuild Modbus connection in a loop
@@ -253,6 +258,7 @@ class OPALRT(Provider):
                 )
 
             # Wait before re-polling
+            retry_count = 0
             time.sleep(self.conf.modbus.polling_rate)
 
     def _modbus_data_writer(self) -> None:
@@ -298,11 +304,29 @@ class OPALRT(Provider):
                             "port": self.conf.modbus.port,
                         },
                         "groundtruth": {
+                            "description": reg.description,
                             "tag": tag,
                             "type": reg.data_type,
                             "value": value,
                         },
                     }
+
+                    # Kibana doesn't allow dynamic typing without using runtime fields
+                    # This is a minor hack to store the value as both keyword type in .value,
+                    # and as it's actual type in a separate field, e.g. "float" field will have
+                    # the value for floating point values.
+                    if isinstance(value, (bool, float, int)):
+                        es_body["groundtruth"]["float"] = float(value)
+                    else:
+                        self.log.warning(f"Unknown data type '{type(value)}' for tag '{tag}' (description: {reg.description})")
+
+                    if isinstance(value, bool):
+                        es_body["groundtruth"]["bool"] = value
+                    elif isinstance(value, int):
+                        es_body["groundtruth"]["int"] = value
+                    else:
+                        self.log.warning(f"Unknown data type '{type(value)}' for tag '{tag}' (description: {reg.description})")
+
                     es_bodies.append(es_body)
 
                 self.es.enqueue(es_bodies)
@@ -412,9 +436,9 @@ class OPALRT(Provider):
             # This will block until there is an item to process
             pmu, frame = self.pmu_frame_queue.get()
 
-            # This is an epic hack to workaround a nasty time syncronization issue.
+            # This is an epic hack to workaround a nasty time synchronization issue.
             # Extensive documentation about this is on the wiki.
-            # tl;dr: due the 8 PMU connections being handled in independant threads,
+            # tl;dr: due the 8 PMU connections being handled in independent threads,
             # the sceptre_time will differ between the 8 PMUs for the same rtds_time.
             with self.__time_map_lock:
                 if frame["time"] not in self.time_map:
@@ -447,11 +471,10 @@ class OPALRT(Provider):
                         for i, cb in enumerate(mm["digital"])
                     },
                 }
-                pmu.log.info(f"Measurments from frame: {line}")
+                pmu.log.info(f"Measurements from frame: {line}")
 
                 # Save data to Elasticsearch
                 if self.es:
-                    print("exporting to es")
                     es_bodies = []
 
                     # TODO: "digital" fields
@@ -490,14 +513,19 @@ class OPALRT(Provider):
                                 # TODO: test
                                 # "breaker_status": line["digital"][0]["Breaker Status"],
                             },
-                            # TODO:
-                            # - groundtruth fields
+                            # # TODO: groundtruth
+                            # # Need to write two separate docs, with "real" and "angle"
+                            # "groundtruth": {
+                            #     "tag": f"{pmu.label}_{pmu.channel_names[ph_id]}.{ph_type}",
+                            #     "type": "float",
+                            #     "value": phasor["real"],
+                            #     "description": "",
+                            # },
                         }
                         pmu.log.info(f"Generated new ES document {es_body}")
                         es_bodies.append(es_body)
 
                     self.es.enqueue(es_bodies)
-                    pmu.log.info("All ES docs have been queud")
 
                 # Update global data structure with measurements.
                 # These are the values that get published to SCEPTRE.
@@ -612,7 +640,7 @@ class OPALRT(Provider):
 
         if not self.conf.modbus.enabled:
             msg = "ERR=Modbus is not enabled which is required for write to OPALRT"
-            self.log.error(f"{msg} (tags: {tags})")
+            self.log.error(f"{msg} (tags being written: {tags})")
             return msg
 
         for tag, val in tags.items():
@@ -623,17 +651,30 @@ class OPALRT(Provider):
             # for modbus registers that have access of "rw" or "w"
             # (read/write or write).
             if not reg:
-                msg = f"ERR=Invalid tag name '{tag}' for write to OPALRT its not a Modbus register"
+                msg = f"ERR=Tag '{tag}' is not a configured Modbus register for write to OPALRT"
                 self.log.error(f"{msg} (tags being written: {tags})")
                 return msg
             elif "w" not in reg.access:
                 msg = f"ERR=Modbus Register does not have write permissions for tag '{tag}' for write to OPALRT"
-                self.log.error(f"{msg} (tags being written: {tags})")
+                self.log.error(f"{msg} (reg.access: {reg.access}, tags being written: {tags})")
                 return msg
 
             # write the value
-            self.mb_client.write_register(reg, val)
-            # TODO: add logging to ES for modbus writes
+            # let non-pymodbus exceptions propagate and crash the provider, as they shouldn't happen
+            try:
+                self.mb_client.write_register(reg, val)
+            except ConnectionException:
+                msg = "ERR=Modbus connection failed for write to OPALRT"
+                self.log.error(f"{msg} (tags being written: {tags}, OPALRT Modbus endpoint: {self.conf.modbus.ip}:{self.conf.modbus.port})")
+                return msg
+            except ModbusException as ex:
+                msg = f"ERR=Modbus error occurred for write to OPALRT of tag '{tag}' skipping subsequent tags"
+                self.log.error(f"{msg} (tags being written: {tags}, Modbus error: {ex!s})")
+                return msg
+            except Exception as ex:
+                msg = f"ERR=Modbus write to OPALRT failed due to exception '{ex.__class__.__name__}'"
+                self.log.error(f"{msg} (tags being written: {tags}, exception: {ex!s})")
+                return msg
 
         msg = f"ACK=Wrote {len(tags)} tags to OPALRT via Modbus"
 

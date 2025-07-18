@@ -196,14 +196,21 @@ class ModbusRegister(BaseModel):
         default="",
         validate_default=True,
         title="SCEPTRE Tag",
-        description="The corresponding SCEPTRE tag, e.g. 'reg1.closed' for a register named 'reg1'. This is automatically set via a Pydantic validator, using the 'name' field.",
+        description="The corresponding SCEPTRE tag, e.g. 'reg1.value' for a register named 'reg1'. If unset, the value for this field is automatically populated using the 'name' field.",
     )
 
     # === Validators ===
+    # https://docs.pydantic.dev/latest/concepts/validators/#field-validators
     @field_validator("sceptre_tag")
     @classmethod
     def append_sceptre_suffix(cls, v: str, info: ValidationInfo) -> str:
-        # https://docs.pydantic.dev/latest/concepts/validators/#field-validators
+        # If a value is set, use as-is
+        if v:
+            return v
+
+        # If a value isn't set, 'name' has a value,
+        # and 'name' has a sceptre tag at the end of it,
+        # use 'name' as-is.
         # .closed: boolean
         # .value: float/etc
         if any(
@@ -212,6 +219,7 @@ class ModbusRegister(BaseModel):
         ):
             return info.data['name']
 
+        # TODO: RTDS uses .closed, OPALRT uses .value
         if info.data["data_type"] == "bool":
             return f"{info.data['name']}.closed"
         else:
