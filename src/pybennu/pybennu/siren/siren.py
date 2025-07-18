@@ -223,13 +223,17 @@ class siren(Subscriber, Client):
         """
         with self.__lock:
             points = message.split(',')
-            points = points[:-1] # remove last element since it might be empty
+            
             for point in points:
-                if point == "":
-                    continue
                 split = point.split(':')
+
+                # Point is empty, cutoff, or malformed
+                if len(split) < 2 or any([len(s) == 0 for s in split]):
+                    continue
+                    
                 tag = split[0]
                 value = split[1]
+
                 if tag not in self.device_config.to_device:
                     continue
                 label = self.device_config.to_device[tag]
