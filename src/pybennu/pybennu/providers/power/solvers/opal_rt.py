@@ -229,6 +229,7 @@ class OPALRT(Provider):
                 if self.conf.modbus.retry_attempts and retry_count < self.conf.modbus.retry_attempts:
                     self.log.error(f"Sleeping for {self.conf.modbus.retry_delay} seconds before retrying read...")
                     time.sleep(self.conf.modbus.retry_delay)
+                    retry_count += 1
                     continue
                 elif self.conf.modbus.retry_attempts:
                     # Wait to rebuild Modbus connection in a loop
@@ -252,6 +253,7 @@ class OPALRT(Provider):
                 )
 
             # Wait before re-polling
+            retry_count = 0
             time.sleep(self.conf.modbus.polling_rate)
 
     def _modbus_data_writer(self) -> None:
