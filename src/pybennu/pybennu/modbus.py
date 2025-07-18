@@ -7,6 +7,7 @@ from pymodbus.exceptions import ModbusException
 from pymodbus import pymodbus_apply_logging_config
 
 from pybennu.settings import ModbusRegister
+from pybennu import utils
 
 
 class ModbusWrapper:
@@ -171,6 +172,9 @@ class ModbusWrapper:
             encoded_value = self.encode_float(float(value))
             self.client.write_registers(r.num, encoded_value)
         elif r.reg_type == 'coil':  # Coil
+            # The ZMQ messages are strings "true" or "false"
+            if isinstance(value, str):
+                value = utils.str_to_bool(value)
             self.client.write_coil(r.num, bool(value))
         elif r.reg_type in ['discrete', 'input']:
             raise NotImplementedError(f"reg_type {r.reg_type} is not supported for writing for register {r.name}")
