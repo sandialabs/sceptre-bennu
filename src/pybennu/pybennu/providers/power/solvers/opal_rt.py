@@ -315,9 +315,12 @@ class OPALRT(Provider):
                     # This is a minor hack to store the value as both keyword type in .value,
                     # and as it's actual type in a separate field, e.g. "float" field will have
                     # the value for floating point values.
-                    if isinstance(value, float):
-                        es_body["groundtruth"]["float"] = value
-                    elif isinstance(value, bool):
+                    if isinstance(value, (bool, float, int)):
+                        es_body["groundtruth"]["float"] = float(value)
+                    else:
+                        self.log.warning(f"Unknown data type '{type(value)}' for tag '{tag}' (description: {reg.description})")
+
+                    if isinstance(value, bool):
                         es_body["groundtruth"]["bool"] = value
                     elif isinstance(value, int):
                         es_body["groundtruth"]["int"] = value
