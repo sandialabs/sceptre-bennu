@@ -140,10 +140,17 @@ ES_BASE_TYPE_MAPPING = {
     },
     "groundtruth": {
         "properties": {
+            "description": {"type": "keyword"},
             "tag": {"type": "keyword"},
             "type": {"type": "keyword"},
-            "value": {"type": "keyword"},  # TODO: how do we make value properly typed?
-            "description": {"type": "keyword"},
+            # Kibana doesn't allow dynamic typing without using runtime fields
+            # This is a minor hack to store the value as both keyword type in .value,
+            # and as it's actual type in a separate field, e.g. "float" field will have
+            # the value for floating point values.
+            "value": {"type": "keyword"},
+            "float": {"type": "double"},
+            "bool": {"type": "boolean"},
+            "int": {"type": "integer"},
         }
     },
     "sceptre": {

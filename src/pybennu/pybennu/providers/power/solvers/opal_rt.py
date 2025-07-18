@@ -217,7 +217,7 @@ class OPALRT(Provider):
                 for tag, reg in self.mb_readable_regs.items():
                     val = self.mb_client.read_register(reg)
 
-                    # tuple of Register, value, and timestamp
+                    # tuple of tag name, value, Register object, and timestamp
                     mb_results.append((tag, val, reg, timestamp))
                     mb_vals[tag] = val
             except (ValueError, TypeError, NotImplementedError) as ex:
@@ -297,12 +297,26 @@ class OPALRT(Provider):
                             "port": self.conf.modbus.port,
                         },
                         "groundtruth": {
+                            "description": reg.description,
                             "tag": tag,
                             "type": reg.data_type,
                             "value": value,
-                            "description": reg.description,
                         },
                     }
+
+                    # Kibana doesn't allow dynamic typing without using runtime fields
+                    # This is a minor hack to store the value as both keyword type in .value,
+                    # and as it's actual type in a separate field, e.g. "float" field will have
+                    # the value for floating point values.
+                    if isinstance(value, float):
+                        es_body["groundtruth"]["float"] = value
+                    elif isinstance(value, bool):
+                        es_body["groundtruth"]["bool"] = value
+                    elif isinstance(value, int):
+                        es_body["groundtruth"]["int"] = value
+                    else:
+                        self.log.warning(f"Unknown data type '{type(value)}' for tag '{tag}' (description: {reg.description})")
+
                     es_bodies.append(es_body)
 
                 self.es.enqueue(es_bodies)
