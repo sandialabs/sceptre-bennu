@@ -121,7 +121,7 @@ class LabJackT7(HIL_Device):
     def write_digital(self, label, status):
         try:
             pin = self.label_mapping[label]
-            voltage = 1 if status else 0
+            voltage = 3.3 if status else 0
             # Currently have not used TDAC tag, but should work fine
             if pin.startswith("TDAC"):
                 voltage = 10 if status else 0

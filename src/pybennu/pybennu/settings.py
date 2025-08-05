@@ -70,6 +70,44 @@ class GtnetSktTag(BaseModel):
         return v
 
 
+class SirenTag(BaseModel):
+    name: str = Field(
+        description="Name of the tag Siren Provider is providing. E.g. \"IA.real\"",
+    )
+    type: Literal["int", "float", "bool"]
+    initial_value: Union[int, float, bool] = Field(
+        description="Initial value to set in internal state when provider starts.",
+    )
+    publish_rms: bool = Field(
+        description="Whether the provider should publish the RMS of this value.",
+        default=False,
+    )
+
+class SirenSettings(BaseModel):
+    enabled: bool = False
+    siren_json: str = Field(
+        title="Siren JSON Config Path",
+        description="Path on the device to the siren.json config file.",
+        default="/etc/sceptre/siren.json",
+    )
+    publish_rate: float = Field(
+        default=1.0,
+        gt=0.0,
+        title="Publish Rate",
+        description="Rate at which Siren Provider publishes values (in seconds)",
+    )
+    rms_buffer_size: int = Field(
+        default=100,
+        gt=0,
+        title="RMS Circular Buffer Size",
+        description="The size of the circular buffer from which RMS values are calculated"
+    )
+    tags: List[SirenTag] = Field(
+        default_factory=list,
+        title="Siren Tags",
+        description="The list of tags for the Siren Provider to provide (i.e. tags to publish and be written by clients)"
+    )
+
 class GtnetSktSettings(BaseModel):
     """
     Configuration for connecting to the GTNET-SKT interface on the RTDS.
@@ -415,6 +453,7 @@ class PybennuSettings(BaseSettings):
     pmu: PmuSettings = PmuSettings()
     modbus: ModbusSettings = ModbusSettings()
     gtnet_skt: GtnetSktSettings = GtnetSktSettings()
+    siren: SirenSettings = SirenSettings()
 
     # Configuration of the Pydantic model
     model_config = SettingsConfigDict(

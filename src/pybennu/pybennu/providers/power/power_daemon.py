@@ -253,6 +253,20 @@ class ServerDaemon(Daemon):
                 self.solver = RTDS(server_endpoint, publish_endpoint, settings)
 
             #########################################
+            ################# Siren #################
+            #########################################
+            elif solver == "Siren":
+                from pybennu.providers.power.solvers.siren import Siren
+
+                config_path = Path(config.get('power-solver-service', 'config-file').strip())
+                settings = load_settings_yaml(config_path) # type: PybennuSettings
+
+                E.Endpoint_str_set(server_endpoint, settings.server_endpoint)
+                E.Endpoint_str_set(publish_endpoint, settings.publish_endpoint)
+
+                self.solver = Siren(server_endpoint, publish_endpoint, settings)
+
+            #########################################
             ################ OpalRT #################
             #########################################
             elif solver == 'OPALRT':
