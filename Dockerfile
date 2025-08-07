@@ -1,4 +1,4 @@
-ARG REGISTRY_IMAGE="ubuntu:20.04"
+ARG REGISTRY_IMAGE="ubuntu:22.04"
 ARG PIP_INDEX="https://pypi.org/"
 ARG PIP_INDEX_URL="https://pypi.org/simple"
 
