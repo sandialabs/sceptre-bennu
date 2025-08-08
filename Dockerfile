@@ -1,4 +1,4 @@
-ARG REGISTRY_IMAGE="ubuntu:20.04"
+ARG REGISTRY_IMAGE="ubuntu:22.04"
 ARG PIP_INDEX="https://pypi.org/"
 ARG PIP_INDEX_URL="https://pypi.org/simple"
 
@@ -12,38 +12,42 @@ RUN apt-get update \
   && apt-get install -y \
     build-essential cmake git wget python3-dev python3-pip \
     libfreetype6-dev liblapack-dev libboost-dev \
+    ninja-build \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
 # setup ZMQ
 ENV ZMQ_VERSION 4.3.4
-RUN wget -O zmq.tgz https://github.com/zeromq/libzmq/releases/download/v4.3.4/zeromq-4.3.4.tar.gz \
+RUN wget -O zmq.tgz https://github.com/zeromq/libzmq/releases/download/v${ZMQ_VERSION}/zeromq-${ZMQ_VERSION}.tar.gz \
   && mkdir -p /tmp/zmq \
   && tar -C /tmp/zmq -xvzf zmq.tgz \
   && rm zmq.tgz \
   && cd /tmp/zmq/zeromq-${ZMQ_VERSION} \
-  && ./configure --enable-drafts \
-  && make -j$(nproc) install
+  && ./configure --prefix=/usr/local --enable-drafts \
+  && make -j$(nproc) \
+  && make install
 
 # setup Helics (needed for pybennu)
-ENV HELICS_VERSION 2.7.1
+ENV HELICS_VERSION 3.6.1
 RUN wget -O helics.tgz https://github.com/GMLC-TDC/HELICS/releases/download/v${HELICS_VERSION}/Helics-v${HELICS_VERSION}-source.tar.gz \
   && mkdir -p /tmp/helics \
   && tar -C /tmp/helics -xzf helics.tgz \
   && rm helics.tgz \
   && mkdir -p /tmp/helics/build && cd /tmp/helics/build \
-  && cmake -j$(nproc) -D HELICS_USE_SYSTEM_ZEROMQ_ONLY=ON .. \
+  && cmake -D HELICS_USE_SYSTEM_ZEROMQ_ONLY=ON .. \
   && make -j$(nproc) install
 
-RUN python3 -m pip install --no-cache-dir pyzmq~=20.0.0 --install-option=--enable-drafts
+RUN python3 -m pip install --no-deps --force-reinstall --no-cache-dir -v --no-binary pyzmq 'pyzmq>26'
 
-RUN wget -O pyhelics.tgz https://github.com/GMLC-TDC/pyhelics/releases/download/v${HELICS_VERSION}/helics-${HELICS_VERSION}.tar.gz \
-  && mkdir -p /tmp/pyhelics \
-  && tar -C /tmp/pyhelics -xzf pyhelics.tgz \
-  && rm pyhelics.tgz \
-  && cd /tmp/pyhelics/helics-${HELICS_VERSION} \
-  && sed -i 's/helics-apps/helics-apps~=2.7.1/' setup.py \
-  && python3 -m pip install --no-cache-dir .
+RUN python3 -m pip install --no-cache-dir --force-reinstall --no-binary helics 'helics==3.6.1'
+
+# RUN wget -O pyhelics.tgz https://github.com/GMLC-TDC/pyhelics/releases/download/v${HELICS_VERSION}/helics-${HELICS_VERSION}.tar.gz \
+#   && mkdir -p /tmp/pyhelics \
+#   && tar -C /tmp/pyhelics -xzf pyhelics.tgz \
+#   && rm pyhelics.tgz \
+#   && cd /tmp/pyhelics/helics-${HELICS_VERSION} \
+#   && sed -i 's/helics-apps/helics-apps~=2.7.1/' setup.py \
+#   && python3 -m pip install --no-cache-dir .
 
 #DEBUG build
 #ADD docker/vendor /tmp/bennu/vendor
@@ -115,7 +119,7 @@ ADD test           /tmp/bennu/test
 
 # install C++ and Golang bennu package
 WORKDIR /tmp/bennu/build
-RUN cmake -j$(nproc) -D BUILD_GOBENNU=OFF ../ \
+RUN cmake -D BUILD_GOBENNU=OFF ../ \
   && make -j$(nproc) install \
   && rm -rf /tmp/*
 
