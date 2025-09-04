@@ -90,7 +90,8 @@ $PIPINSTALL --no-cache-dir --force-reinstall --no-binary helics 'helics==3.6.1'
 # TODO: find a way to avoid this. FPM won't install dependencies automatically or bundle them, and not everything here can be added as apt dependencies unfortunately.
 # These are dependencies that aren't apt packages or the version required is newer than is available in apt
 # For example, pybennu requires pymodbus >=3.6.0, but ubuntu 22.04 apt has pymodbus 2.1.0
+# 
 printf "\n\tINSTALLING PYBENNU PIP DEPENDENCIES...\n\n"
-$PIPINSTALL --ignore-installed 'elasticsearch<9.0.0' 'opendssdirect.py~=0.6.1' 'py-expression-eval==0.3.14' 'PYPOWER==5.1.16' 'labjack-ljm~=1.23.0' 'pymodbus>=3.8.0,<=3.9.2' 'pydantic>2.0.0,<3.0.0' 'pydantic-settings'
+$PIPINSTALL --ignore-installed 'elasticsearch<9.0.0' 'opendssdirect.py~=0.6.1' 'py-expression-eval==0.3.14' 'PYPOWER==5.1.19' 'scipy>=1.15.0' 'labjack-ljm~=1.23.0' 'pymodbus>=3.8.0,<=3.9.2' 'pydantic>2.0.0,<3.0.0' 'pydantic-settings'
 
 printf "\nDONE!!\n\n"

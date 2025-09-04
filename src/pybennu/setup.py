@@ -110,11 +110,11 @@ requires = [
     'numpy>=1.11.2',
     'opendssdirect.py~=0.6.1',
     'py-expression-eval==0.3.14',
-    'PYPOWER==5.1.16',
+    'PYPOWER==5.1.19',
     'pyserial>=3.4',
     'PyYAML>=3.12',
     'requests>=2.20',
-    'scipy>=0.18.1',
+    'scipy>=1.15.0',
     'labjack-ljm~=1.23.0',
     # NOTE: need at least pymodbus 3+. The version in apt
     # for ubuntu 22.04 is 2.1.0, which is too old.
