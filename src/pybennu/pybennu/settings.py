@@ -203,7 +203,7 @@ class ModbusRegister(BaseModel):
     Modbus registers.
     """
     num: int = Field(
-        gt=0,
+        ge=0,
         title="Register Number",
         description="The Modbus Register ID. This should be unique for a given device."
     )
