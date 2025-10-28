@@ -55,8 +55,11 @@ from pydantic_settings import (
 class GtnetSktTag(BaseModel):
     name: str = Field(
         description='SCEPTRE/Bennu requires tag names with a format "<name>.<thing>"\n- boolean fields (int):  ".closed" ("G3CB3.closed")\n- analog fields (float): ".value"  ("DL5shed.value")',
+        examples=["G1CB1.closed", "DL5shed.value", "T1SE.closed", "QsetL8.value"],
     )
-    type: Literal["int", "float"]
+    type: Literal["int", "float"] = Field(
+        description="Data type for the tag, must the string 'int' or 'float'. This must match what's configured in RSCAD for the RTDS.",
+    )
     initial_value: Union[int, float] = Field(
         description="Initial value to set in internal state when provider starts.",
         examples=["0", "1", "0.0", "60.0", "1.0"],
@@ -158,12 +161,23 @@ class PmuDevice(BaseModel):
     label: str = Field(
         description="Label used to generate the SCEPTRE tags for the PMUs values.",
         examples=["BUS6", "BUS5-1"],
-        coerce_numbers_to_str=True
+        coerce_numbers_to_str=True,
     )
-    pdc_id: int = Field(gt=0, title="PDC ID")
-    port: int = Field(gt=0)
-    ip: IPv4Address
-    protocol: Literal["tcp", "udp", "multicast"]
+    pdc_id: int = Field(
+        gt=0,
+        title="PDC ID",
+    )
+    port: int = Field(
+        gt=0,
+        description="TCP or UDP port of the PMU",
+    )
+    ip: IPv4Address = Field(
+        title="PMU IP Address",
+        description="IPv4 address of the PMU",
+    )
+    protocol: Literal["tcp", "udp", "multicast"] = Field(
+        description="Transport protocol for communications with the PMU",
+    )
 
 
 class PmuSettings(BaseModel):
@@ -257,6 +271,7 @@ class ModbusRegister(BaseModel):
         ):
             return info.data['name']
 
+        # TODO: use the simulator type to determine this
         # TODO: RTDS uses .closed, OPALRT uses .value
         if info.data["data_type"] == "bool":
             return f"{info.data['name']}.closed"
