@@ -324,8 +324,10 @@ class OPALRT(Provider):
                         es_body["groundtruth"]["bool"] = value
                     elif isinstance(value, int):
                         es_body["groundtruth"]["int"] = value
-                    else:
-                        self.log.warning(f"Unknown data type '{type(value)}' for tag '{tag}' (description: {reg.description})")
+
+                    # Hack to add the node name as an attribute for filtering
+                    if "emera" in self.conf.sceptre_scenario:
+                        es_body["node"] = tag.split("_")[0]
 
                     es_bodies.append(es_body)
 
