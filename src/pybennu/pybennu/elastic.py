@@ -163,6 +163,7 @@ ES_BASE_TYPE_MAPPING = {
             "publish_endpoint": {"type": "keyword"},
         }
     },
+    "node": {"type": "keyword"},
 }
 
 
