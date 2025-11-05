@@ -20,6 +20,11 @@ PIP = pip3
 ifeq (,$(shell which ${PIP}))
 	pytools += $(PIP)
 endif
+PIPX = pipx
+ifeq (,$(shell which ${PIPX}))
+	pytools += $(PIPX)
+endif
+UV = pipx run uv
 
 ##
 # Variables
@@ -156,10 +161,10 @@ deb: packagetools
 		setup.py
 
 dist: pytools
-	@python3 setup.py sdist bdist_wheel
+	$(UV) build --wheel
 
 sdist: pytools
-	@python3 setup.py sdist
+	$(UV) build --sdist
 
 install: root pytools
 	@pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org .
