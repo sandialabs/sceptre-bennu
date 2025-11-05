@@ -12,7 +12,7 @@ RUN apt-get update \
   && apt-get install -y \
     build-essential cmake git wget python3-dev python3-pip \
     libfreetype6-dev liblapack-dev libboost-dev \
-    ninja-build \
+    ninja-build pipx \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
@@ -37,9 +37,6 @@ RUN wget -O helics.tgz https://github.com/GMLC-TDC/HELICS/releases/download/v${H
   && cmake -D HELICS_USE_SYSTEM_ZEROMQ_ONLY=ON .. \
   && make -j$(nproc) install
 
-RUN python3 -m pip install --no-deps --force-reinstall --no-cache-dir -v --no-binary pyzmq 'pyzmq>26'
-
-RUN python3 -m pip install --no-cache-dir --force-reinstall --no-binary helics 'helics==3.6.1'
 
 # RUN wget -O pyhelics.tgz https://github.com/GMLC-TDC/pyhelics/releases/download/v${HELICS_VERSION}/helics-${HELICS_VERSION}.tar.gz \
 #   && mkdir -p /tmp/pyhelics \
@@ -57,7 +54,7 @@ RUN python3 -m pip install --no-cache-dir --force-reinstall --no-binary helics '
 # install Python bennu package
 ADD src/pybennu /tmp/bennu/src/pybennu
 WORKDIR /tmp/bennu/src/pybennu
-RUN python3 -m pip install --no-cache-dir .
+RUN pipx run uv pip install --no-cache --native-tls --system .
 
 
 # ** create final image **
