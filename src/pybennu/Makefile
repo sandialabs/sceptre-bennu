@@ -1,14 +1,15 @@
 .SUFFIXES:
 .SUFFIXES: .rst .pdf
 
+.ONESHELL:
+
 ##
 # Tools
 ##
 
 packagetools =
-FPM = fpm
-ifeq (,$(shell which ${FPM}))
-	packagetools += $(FPM)
+ifeq (,$(shell which checkinstall))
+	packagetools += checkinstall
 endif
 
 pytools =
@@ -32,27 +33,17 @@ UV = pipx run uv
 
 BUILD_DIR = $(CURDIR)/build
 DIST_DIR = $(CURDIR)/dist
-POST = $(CURDIR)/postinst
 
 ##
 # Packaging
 ##
 
-define PACKAGE_DESCRIPTION
-Modeling and simulation application for SCADA/ICS.
-endef
-PACKAGE_SECTION = python
-PACKAGE_PRIORITY = optional
-PACKAGE_COMPRESSION = bzip2
-# 6.0.1707507794.8a88a442
-PACKAGE_FULL_VERSION := 6.0.$(shell date +%s).$(shell git rev-parse --short HEAD)
-PACKAGE_NAME = pybennu
-PACKAGE_FILENAME = $(PACKAGE_NAME)_$(PACKAGE_FULL_VERSION)_amd64.deb
-PACKAGE_VENDOR = SNL
 PACKAGE_MAINTAINER = Sandia National Laboratories <emulytics@sandia.gov>
-PACKAGE_LICENSE = GPLv3
-PACKAGE_URL = https://github.com/sandialabs/sceptre-bennu
-PACKAGE_ARCHITECTURE = amd64
+
+NPROCS := $(shell nproc)
+ZMQ_VERSION ?= 4.3.4
+ZMQ_PREFIX ?= /usr/local
+HELICS_VERSION ?= 3.6.1
 
 ##
 # Utility functions
@@ -70,16 +61,9 @@ endef
 ##
 .PHONY: packagetools pytools root clean clean-build clean-pyc deb dist sdist install install-dev uninstall wheelhouse bull
 
+# Show this help
 help:
-	@echo "clean		- Remove python and build file artifacts."
-	@echo "deb			- Create a Debian package."
-	@echo "dist 		- Create a src and whl distribution."
-	@echo "sdist		- Create a src distribution (sdist)."
-	@echo "install		- Install the project in the current python environment."
-	@echo "install-dev	- Install the project in editable (-e) mode."
-	@echo "uninstall	- Uninstall the project."
-	@echo "wheelhouse	- Create a wheelhouse (deps included) archive."
-	@echo "bull			- bull."
+	@cat $(MAKEFILE_LIST) | docker run --rm -i xanders/make-help
 
 packagetools:
 ifdef packagetools
@@ -96,6 +80,119 @@ ifneq (root,$(shell whoami))
 	$(error Must run as root.)
 endif
 
+##
+## --- Library dependencies (debs) ---
+##
+
+libzmq-build: build/zeromq-$(ZMQ_VERSION)
+build/zeromq-$(ZMQ_VERSION):
+	# Libzmq source at https://github.com/zeromq/libzmq
+	@echo "Building libzmq package with draft support"
+	mkdir -p build
+	cd build
+	# Download and extract the source code
+	wget https://github.com/zeromq/libzmq/releases/download/v$(ZMQ_VERSION)/zeromq-$(ZMQ_VERSION).tar.gz -O libzmq.tar.gz
+	tar -xzf libzmq.tar.gz
+	rm -f libzmq.tar.gz
+	cd zeromq-$(ZMQ_VERSION)
+
+	# Configure and build the library
+	./configure --prefix="$(ZMQ_PREFIX)" --enable-drafts
+	make -j$(NRPOCS)
+
+# Build the libzmq Debian package with draft support.
+libzmq-deb: build/libzmq_$(ZMQ_VERSION)-1_amd64.deb
+build/libzmq_$(ZMQ_VERSION)-1_amd64.deb: build/zeromq-$(ZMQ_VERSION)
+	# Libzmq source at https://github.com/zeromq/libzmq
+	# Create the Debian package using checkinstall
+	cd build/zeromq-$(ZMQ_VERSION)
+	echo "ZeroMQ is a high-performance asynchronous messaging library." >> ./description-pak
+	sudo checkinstall --pkgname=libzmq --pkgversion=$(ZMQ_VERSION) \
+	  --provides=libzmq --requires=libc6 \
+	  --install=no \
+	  --default \
+	  --pkglicense=MPL-2.0 \
+	  --maintainer="$(PACKAGE_MAINTAINER)" \
+	  --pkgsource=https://github.com/zeromq/libzmq
+	sudo mv libzmq_$(ZMQ_VERSION)-1_amd64.deb ..
+	sudo touch ../libzmq_$(ZMQ_VERSION)-1_amd64.deb
+
+# Install the libzmq deb
+libzmq-install: build/libzmq-install
+build/libzmq-install: build/libzmq_$(ZMQ_VERSION)-1_amd64.deb
+	sudo dpkg -i build/libzmq_$(ZMQ_VERSION)-1_amd64.deb
+	# flag that install is completed for future make tasks
+	touch build/libzmq-install
+
+helics-build: build/helics/build
+build/helics/build: build/libzmq-install
+	mkdir -p ./build/helics 
+	cd ./build/helics
+	wget -O helics.tgz https://github.com/GMLC-TDC/HELICS/releases/download/v$(HELICS_VERSION)/Helics-v$(HELICS_VERSION)-source.tar.gz
+	tar -xaf helics.tgz 
+	rm helics.tgz 
+	mkdir -p build
+	touch build
+	cd build
+	cmake -D HELICS_USE_SYSTEM_ZEROMQ_ONLY=ON ..
+	make -j$(NRPOCS)
+
+# Build helics deb package
+helics-deb: build/helics_$(HELICS_VERSION)-1_amd64.deb
+build/helics_$(HELICS_VERSION)-1_amd64.deb: build/helics/build
+	cd build/helics/build
+	echo "HELICS binaries and libraries - Source: https://github.com/GMLC-TDC/HELICS/" >> ./description-pak
+	sudo checkinstall --pkgname=helics --pkgversion=$(HELICS_VERSION) \
+	  --provides=helics --requires=libc6 \
+	  --install=no \
+	  --default \
+	  --pkglicense=BSD-3-Clause \
+	  --maintainer="$(PACKAGE_MAINTAINER)" \
+	  --pkgsource=https://github.com/GMLC-TDC/HELICS/
+	sudo mv helics_$(HELICS_VERSION)-1_amd64.deb ../..
+	sudo touch ../../helics_$(HELICS_VERSION)-1_amd64.deb
+
+# Install helics deb package
+helics-install: build/helics-install
+build/helics-install: build/helics_$(HELICS_VERSION)-1_amd64.deb
+	sudo dpkg -i build/helics_$(HELICS_VERSION)-1_amd64.deb
+	# flag that install is completed for future make tasks
+	touch build/helics-install
+
+##
+## --- Python packaging ---
+##
+
+# Build pybennu wheel
+dist: pytools
+	$(UV) build --wheel
+
+# Build pybennu source distribution
+sdist: pytools
+	$(UV) build --sdist
+
+# Install pybennu locally
+install: root pytools
+	@pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org .
+
+# Install pybennu locally in dev mode
+install-dev: pytools
+	@pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org -e .
+
+# Uninstall pybennu locally
+uninstall: root pytools
+	@pip3 uninstall $(PACKAGE_NAME)
+
+# Create wheelhouse of pybennu and all dependencies in a .tar.gz
+wheelhouse: pytools
+	@pip3 wheel --wheel-dir=dist/$(PACKAGE_NAME)/ .
+	@tar -C dist/ -cvzf dist/$(PACKAGE_NAME)-$(PACKAGE_FULL_VERSION)-wheelhouse.tar.gz $(PACKAGE_NAME)/
+	@rm -rf dist/$(PACKAGE_NAME)/
+
+##
+## --- Cleanup ---
+##
+# Clean up build and dist files
 clean: clean-pyc clean-build
 
 clean-build:
@@ -110,103 +207,3 @@ clean-pyc:
 	@find . -name "*~" -exec rm -fv {} +
 	@find . -name "__pycache__" -exec rm -rfv {} +
 	@find . -name ".cache" -exec rm -rfv {} +
-
-deb: packagetools
-	@mkdir -p $(DIST_DIR)
-	@$(FPM) \
-		--verbose \
-		--force \
-		--input-type python \
-		--output-type deb \
-		-d cmake \
-		-d gcc \
-		-d g++ \
-		-d make \
-		-d wget \
-		-d libboost-python-dev \
-		-d libzmq5-dev \
-		-d python3-dev \
-		-d python3-pip \
-		-d python3-setuptools \
-		-d python3-wheel \
-		-d cython3 \
-		-d python3-typing-extensions \
-		-d python3-pygments \
-		-d python3-ipython \
-		-d python3-pexpect \
-		-d python3-serial \
-		-d python3-matplotlib \
-		-d python3-yaml \
-		-d python3-requests \
-		-d python3-networkx \
-		-d python3-bitarray \
-		-d python3-sysv-ipc \
-		--package '$(subst __colon__,:,$(DIST_DIR)/$(PACKAGE_FILENAME))' \
-		--name '$(PACKAGE_NAME)' \
-		$(call iter,$(PACKAGE_VENDOR),--vendor) \
-		--maintainer '$(PACKAGE_MAINTAINER)' \
-		--license '$(PACKAGE_LICENSE)' \
-		--description '$(PACKAGE_DESCRIPTION)' \
-		--category '$(PACKAGE_SECTION)' \
-		$(call iter,$(PACKAGE_URL),--url) \
-		--deb-no-default-config-files \
-		--version '$(PACKAGE_FULL_VERSION)' \
-		--architecture '$(PACKAGE_ARCHITECTURE)' \
-		--python-bin python3 \
-		--python-pip pip3 \
-		--python-install-bin /usr/local/bin \
-		--python-install-lib /usr/lib/python3/dist-packages \
-		--no-python-dependencies \
-		--after-install $(POST) \
-		setup.py
-
-dist: pytools
-	$(UV) build --wheel
-
-sdist: pytools
-	$(UV) build --sdist
-
-install: root pytools
-	@pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org .
-
-install-dev: pytools
-	@pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org -e .
-
-uninstall: root pytools
-	@pip3 uninstall $(PACKAGE_NAME)
-
-wheelhouse: pytools
-	@pip3 wheel --wheel-dir=dist/$(PACKAGE_NAME)/ .
-	@tar -C dist/ -cvzf dist/$(PACKAGE_NAME)-$(PACKAGE_FULL_VERSION)-wheelhouse.tar.gz $(PACKAGE_NAME)/
-	@rm -rf dist/$(PACKAGE_NAME)/
-
-bull: pytools
-	@pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org colorama > /dev/null 2>&1
-	@$(BULL)
-define BULL_PYSCRIPT
-from colorama import init, Fore, Back, Style
-
-bull = [r"""
- (___)
- (o o)_____/
-  @@ `    \\
-   \ ____, /
-   //    //
-  ^^    ^^
-"""]
-
-init()
-
-def colorize(chars, color):
-	for char in chars:
-		bull[0] = bull[0].replace(char, color+char+Style.RESET_ALL)
-
-colorize("o", Fore.RED)
-colorize("()", Style.BRIGHT)
-colorize("_/\\`,", Fore.YELLOW+Style.DIM)
-colorize("@", Style.DIM+Fore.RED)
-
-print(bull[0])
-endef
-export BULL_PYSCRIPT
-BULL := python3 -c "$$BULL_PYSCRIPT"
