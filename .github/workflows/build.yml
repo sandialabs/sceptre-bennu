@@ -1,0 +1,169 @@
+name: Build and test bennu and pybennu
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+  workflow_dispatch:
+
+jobs:
+  build-bennu:
+    # NOTE: compilation currently fails with Ubuntu 24.04
+    runs-on: ubuntu-22.04
+    steps:
+      - name: checkout the repo
+        uses: actions/checkout@v4
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y build-essential cmake g++ gcc libasio-dev libboost-date-time-dev libboost-filesystem-dev libboost-program-options-dev libboost-python-dev libboost-system-dev libboost-thread-dev libfreetype6-dev libssl-dev libzmq5-dev
+      - name: configure bennu
+        run: |
+          mkdir build
+          cd build/
+          cmake ../
+      - name: build bennu
+        run: |
+          cd build/
+          make -j$(nproc)
+      - name: test bennu
+        run: |
+          cd build/
+          sudo make install
+          sudo ldconfig
+          bennu-test-ep-server --d 1 >ep.out 2>&1 &
+          bennu-field-device --f ../data/configs/ep/dnp3-server.xml >fd-server.out 2>&1 &
+          bennu-field-device --f ../data/configs/ep/dnp3-client.xml >fd-client.out 2>&1 &
+          sleep 5
+          bennu-probe --c query >probe.out
+          grep "brkr" probe.out
+          sleep 10
+          bennu-probe --c read --t brkr >>probe.out
+          bennu-probe --c read --t load-power >>probe.out
+          sleep 3
+          cat probe.out
+          grep "brkr:true" probe.out
+          grep "load-power:400.5" probe.out
+          bennu-probe --c write --t load-breaker-toggle --s false >>probe.out
+          bennu-probe --c write --t load-mw-setpoint --v 999 >>probe.out
+          sleep 8
+          bennu-probe --c read --t brkr >>probe.out
+          bennu-probe --c read --t load-power >>probe.out
+          sleep 3
+          cat probe.out
+          grep "brkr:false" probe.out
+          grep "load-power:999" probe.out
+          echo -e "help\nexit" | bennu-brash >brash.out 2>&1
+          grep "SCEPTRE Field-Device" brash.out
+          bennu-watcherd --help
+          bennu-simulink-provider --help
+          bennu-field-deviced --help
+          bennu-simulink-provider-helics --help
+      - name: build deb for bennu
+        run: |
+          cd build/
+          sudo make package
+          cp ./*.deb ../bennu.deb
+      - name: check bennu deb installs
+        run: |
+          sudo dpkg -i bennu.deb
+      - name: upload deb packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: bennu deb
+          if-no-files-found: error
+          path: bennu.deb
+
+  build-pybennu-dependencies:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: checkout the repo
+        uses: actions/checkout@v4
+      - name: install build dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y zstd checkinstall build-essential cmake git \
+          wget python3-dev python3-pip libfreetype6-dev liblapack-dev libboost-dev ninja-build pipx
+      - name: build libzmq deb
+        run: |
+          cd src/pybennu
+          make libzmq-deb
+      - name: check libzmq deb installs
+        run: |
+          cd src/pybennu
+          make libzmq-install
+      - name: build helics deb
+        run: |
+          cd src/pybennu
+          make helics-deb
+      - name: check helics deb installs
+        run: |
+          cd src/pybennu
+          make helics-install
+      - name: upload deb packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: pybennu deb dependencies
+          if-no-files-found: error
+          path: src/pybennu/build/*.deb
+      - name: deb file metadata
+        shell: bash
+        run: |
+          for deb in src/pybennu/build/*.deb; do
+            dpkg-deb --info "$deb"
+          done
+
+  build-pybennu-wheel:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: checkout the repo
+        uses: actions/checkout@v4
+      - name: install build dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y build-essential cmake git \
+          wget python3-dev python3-pip libfreetype6-dev liblapack-dev libboost-dev ninja-build pipx
+      - name: build wheel
+        run: |
+          cd src/pybennu
+          make dist
+      - name: upload wheel
+        uses: actions/upload-artifact@v4
+        with:
+          name: pybennu wheel
+          if-no-files-found: error
+          path: src/pybennu/dist/pybennu*.whl
+
+  release:
+    runs-on: ubuntu-22.04
+    if: github.ref == format('refs/heads/{0}', github.event.repository.default_branch) && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+    # if: github.event_name == 'workflow_dispatch'
+    needs:
+      - build-pybennu-wheel
+      - build-pybennu-dependencies
+      - build-bennu
+    permissions:
+      contents: write
+    steps:
+      - uses: rlespinasse/github-slug-action@v5.2.0
+        with:
+          short-length: 7
+      - name: Get current date
+        id: date
+        run: echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+      - name: get artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: ./artifacts
+          merge-multiple: true
+      - name: show artifacts
+        run: |
+          ls -lh ./artifacts
+      - uses: ncipollo/release-action@v1
+        with:
+          artifacts: "./artifacts/*"
+          tag: release-${{ steps.date.outputs.date }}-${{ env.GITHUB_SHA_SHORT }}
+          commit: ${{ env.GITHUB_SHA }}
+          generateReleaseNotes: true
+          makeLatest: true
