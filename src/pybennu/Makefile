@@ -171,18 +171,6 @@ dist: pytools
 sdist: pytools
 	$(UV) build --sdist
 
-# Install pybennu locally
-install: root pytools
-	@pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org .
-
-# Install pybennu locally in dev mode
-install-dev: pytools
-	@pip3 install --trusted-host pypi.org --trusted-host files.pythonhosted.org -e .
-
-# Uninstall pybennu locally
-uninstall: root pytools
-	@pip3 uninstall $(PACKAGE_NAME)
-
 # Create wheelhouse of pybennu and all dependencies in a .tar.gz
 wheelhouse: pytools
 	@pip3 wheel --wheel-dir=dist/$(PACKAGE_NAME)/ .
