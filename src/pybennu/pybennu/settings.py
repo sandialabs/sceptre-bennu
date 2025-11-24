@@ -236,11 +236,15 @@ class ModbusRegister(BaseModel):
         description="Data type for the register, also determines width (32 bits will be two registers wide)."
     )
     unit_type: str = Field(
+        default="",
+        validate_default=True,
         title="Unit Type",
         description="Human-readable unit for the measurement. This will be appended after the value when humanized.",
         examples=["kW", "%", "A", "V"],
     )
     description: str = Field(
+        default="",
+        validate_default=True,
         description="Human-readable description of the register's purpose.",
         examples=["Bus Power, Bidirectional", "Read-only version of some_reg", "Genset Voltage", "Battery SOC (State of Charge)"],
     )
