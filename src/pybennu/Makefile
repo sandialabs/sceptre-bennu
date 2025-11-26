@@ -1,84 +1,23 @@
-.SUFFIXES:
-.SUFFIXES: .rst .pdf
-
 .ONESHELL:
-
-##
-# Tools
-##
-
-packagetools =
-ifeq (,$(shell which checkinstall))
-	packagetools += checkinstall
-endif
-
-pytools =
-PYTHON = python3
-ifeq (,$(shell which ${PYTHON}))
-	pytools += $(PYTHON)
-endif
-PIP = pip3
-ifeq (,$(shell which ${PIP}))
-	pytools += $(PIP)
-endif
-PIPX = pipx
-ifeq (,$(shell which ${PIPX}))
-	pytools += $(PIPX)
-endif
-UV = pipx run uv
-
-##
-# Variables
-##
+SHELL := /bin/bash
+.SHELLFLAGS := -eu -o pipefail -c
+.PHONY: help dist sdist wheelhouse clean clean-build clean-pyc
 
 BUILD_DIR = $(CURDIR)/build
 DIST_DIR = $(CURDIR)/dist
-
-##
-# Packaging
-##
-
 PACKAGE_MAINTAINER = Sandia National Laboratories <emulytics@sandia.gov>
-
 NPROCS := $(shell nproc)
 ZMQ_VERSION ?= 4.3.4
 ZMQ_PREFIX ?= /usr/local
 HELICS_VERSION ?= 3.6.1
 
-##
-# Utility functions
-##
-
-# Iterate values of $(1) and prefix each of it with $(2).
-# When using with an empty scalars ("") returns nothing instead of
-# "$(2) ''".
-define iter
-	$(if $(1),$(foreach item,$(1),$(2) '$(item)'),)
-endef
-
-##
-# Targets
-##
-.PHONY: packagetools pytools root clean clean-build clean-pyc deb dist sdist install install-dev uninstall wheelhouse bull
+# Use pipx to run latest versions of pip and uv
+PIP = pipx run --spec pip python -m pip
+UV = pipx run uv
 
 # Show this help
 help:
 	@cat $(MAKEFILE_LIST) | docker run --rm -i xanders/make-help
-
-packagetools:
-ifdef packagetools
-	$(error Cannot find packagetools: fpm (Install with 'sudo gem install fpm'))
-endif
-
-pytools:
-ifdef pytools
-	$(error Cannot find pytools: $(pytools).)
-endif
-
-root:
-ifneq (root,$(shell whoami))
-	$(error Must run as root.)
-endif
 
 ##
 ## --- Library dependencies (debs) ---
@@ -126,11 +65,11 @@ build/libzmq-install: build/libzmq_$(ZMQ_VERSION)-1_amd64.deb
 
 helics-build: build/helics/build
 build/helics/build: build/libzmq-install
-	mkdir -p ./build/helics 
+	mkdir -p ./build/helics
 	cd ./build/helics
 	wget -O helics.tgz https://github.com/GMLC-TDC/HELICS/releases/download/v$(HELICS_VERSION)/Helics-v$(HELICS_VERSION)-source.tar.gz
-	tar -xaf helics.tgz 
-	rm helics.tgz 
+	tar -xaf helics.tgz
+	rm helics.tgz
 	mkdir -p build
 	touch build
 	cd build
@@ -164,18 +103,20 @@ build/helics-install: build/helics_$(HELICS_VERSION)-1_amd64.deb
 ##
 
 # Build pybennu wheel
-dist: pytools
+dist:
 	$(UV) build --wheel
 
 # Build pybennu source distribution
-sdist: pytools
+sdist:
 	$(UV) build --sdist
 
 # Create wheelhouse of pybennu and all dependencies in a .tar.gz
-wheelhouse: pytools
-	@pip3 wheel --wheel-dir=dist/$(PACKAGE_NAME)/ .
-	@tar -C dist/ -cvzf dist/$(PACKAGE_NAME)-$(PACKAGE_FULL_VERSION)-wheelhouse.tar.gz $(PACKAGE_NAME)/
-	@rm -rf dist/$(PACKAGE_NAME)/
+# Build and install libzmq and helics debs first so wheels
+# are built against the proper libraries
+wheelhouse:
+	$(PIP) wheel --wheel-dir=dist/pybennu/ .
+	tar -C dist/ -cvzf dist/pybennu-wheelhouse.tar.gz pybennu/
+	rm -rf dist/pybennu/
 
 ##
 ## --- Cleanup ---
@@ -191,7 +132,6 @@ clean-build:
 	@rm -rfv .eggs
 
 clean-pyc:
-#	@find . -name "*.py[cod]" -exec rm -fv {} +
 	@find . -name "*~" -exec rm -fv {} +
 	@find . -name "__pycache__" -exec rm -rfv {} +
 	@find . -name ".cache" -exec rm -rfv {} +

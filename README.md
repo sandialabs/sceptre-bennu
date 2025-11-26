@@ -83,7 +83,7 @@ The pybennu source is under `src/pybennu`.
     ```sh
     sudo apt install build-essential cmake git wget python3-dev python3-pip \
         libfreetype6-dev liblapack-dev libboost-dev \
-        ninja-build pipx
+        ninja-build pipx checkinstall
     ```
 
 -   Build and install libzmq and helics libraries
@@ -105,7 +105,7 @@ The pybennu source is under `src/pybennu`.
     cd src/pybennu
 
     # It is recommended to install in a python virtual environment
-    # Depending on your pip version, you may first need to upgrade with: pip install -U pip
+    # Depending on your pip version, you may need to upgrade pip first: pip install -U pip
     pip install .
     ```
 
@@ -169,6 +169,8 @@ The pybennu source is under `src/pybennu`.
     sdist          # Build pybennu source distribution
 
     wheelhouse     # Create wheelhouse of pybennu and all dependencies in a .tar.gz
+                   # Build and install libzmq and helics debs first so wheels
+                   # are built against the proper libraries
 
     --- Cleanup ---
 
@@ -178,13 +180,13 @@ The pybennu source is under `src/pybennu`.
 -   build pybennu wheel
 
     ```sh
-    # requires pipx to be installed
+    # requires pipx
     make dist
     ```
 
 -   build wheels for pybennu and all dependencies
 
     ```sh
-    # you may need to upgrade pip first with: pip install -U pip
+    # requires pipx
     make wheelhouse
     ```
