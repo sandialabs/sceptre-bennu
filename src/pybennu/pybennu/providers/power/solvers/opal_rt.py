@@ -1,26 +1,7 @@
 """
-SCEPTRE Provider for OPAL-RT.
+SCEPTRE Provider for OPAL-RT simulator.
 
-OPAL-RT publishes PMU data to SCEPTRE endpoint using C37.118 protocol.
-
-Code for this provider was based on work done on RTDS provider.
-
-
-## Note on boolean tags in OPC
-
-In OPC, there will be 3 tags for a boolean point named "G1CB1":
-- G1CB1_binary_output_closed
-- G1CB1_binary_output_closed_opset
-- G1CB1_binary_output_closed_optype
-
-To write to a point: set "G1CB1_binary_output_closed" to "1" in Quick Client in TOPServer in OPC
-
-This will write "G1CB1.closed" to SCEPTRE.
-
-To read status of a point from OPC, read "G1CB1_binary_output_closed_opset".
-This is because DNP3 can't have values that are written and read, apparently.
-So, G1CB1_binary_output_closed is "write", G1CB1_binary_output_closed_opset is "read".
-The quality of "G1CB1_binary_output_closed" will show up as "Bad" in QuickClient, since it has no value.
+Documentation: https://sandialabs.github.io/sceptre-docs/13-providers.html
 """
 
 from __future__ import annotations
@@ -524,7 +505,7 @@ class OPALRT(Provider):
                             #     "description": "",
                             # },
                         }
-                        pmu.log.info(f"Generated new ES document {es_body}")
+                        # pmu.log.info(f"Generated new ES document {es_body}")
                         es_bodies.append(es_body)
 
                     self.es.enqueue(es_bodies)

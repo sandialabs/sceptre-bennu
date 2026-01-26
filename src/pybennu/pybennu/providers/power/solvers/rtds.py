@@ -1,49 +1,7 @@
 """
 SCEPTRE Provider for the Real-Time Dynamic Simulator (RTDS).
 
-## Overview
-
-Data is read via C37.118 protocol from Phasor Measurement Unit (PMU) interface on the RTDS GTNET card.
-
-Data is written via GTNET-SKT protocol to the RTDS GTNET card.
-See docstring in pybennu/gtnet_skt.py for details on the GTNET-SKT protocol.
-
-
-## CSV files
-Data read from the PMUs is saved to CSV files in the directory specified by the
-csv-file-path configuration option, if csv-enabled is True.
-
-CSV header example:
-```
-rtds_time,sceptre_time,freq,dfreq,VA_real,VA_angle,VB_real,VB_angle,VC_real,VC_angle,IA_real,IA_angle,IB_real,IB_angle,IC_real,IC_angle,NA_real,NA_angle,NA_real,NA_angle
-```
-
-CSV filename example: PMU1_BUS4-1_25-04-2022_23-49-22.csv
-
-
-## Elasticsearch
-
-Data read from the PMUs is exported to the Elasticsearch server specified by the
-elastic-host configuration option, if elastic-enabled is True.
-
-Index name: `<basename>-<YYYY.MM.DD>` (e.g. rtds-clean-2023.06.08)
-
-Index name is configurable in power-provider_config.ini using 'elastic-index-basename'.
-By default (if you copy config.ini), it's 'rtds-clean', e.g. 'rtds-clean-2023.06.08'.
-If elastic-index-basename isn't set, then it defaults to 'rtds-default', e.g. 'rtds-default-2023.06.08'.
-
-See pybennu/elastic.py for details on the index mapping.
-
-
-## Notes
-
-NOTE: in the bennu VM, rtds.py is located in dist-packages.
-Just in case you need to modify it on the fly ;)
-/usr/lib/python3/dist-packages/pybennu/providers/power/solvers/rtds.py
-
-If observing C37.118 traffic in Wireshark, configure manual decode for
-each PMU port and set the protocol to "SYNCHROPHASOR" (synphasor).
-Wireshark -> "Analyze..." -> "Decode As..."
+Documentation: https://sandialabs.github.io/sceptre-docs/13-providers.html
 """
 
 import json

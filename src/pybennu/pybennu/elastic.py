@@ -1,49 +1,3 @@
-"""
-
-## Elasticsearch
-
-Data read from the PMUs is exported to the Elasticsearch server specified by the
-elastic-host configuration option, if elastic-enabled is True.
-
-Index name: `<basename>-<YYYY.MM.DD>` (e.g. rtds-clean-2023.06.08)
-
-Index name is configurable in power-provider_config.ini using 'elastic-index-basename'.
-By default (if you copy config.ini), it's 'rtds-clean', e.g. 'rtds-clean-2023.06.08'.
-If elastic-index-basename isn't set, then it defaults to 'rtds-default', e.g. 'rtds-default-2023.06.08'.
-
-### Index mapping
-
-| field                    | type          | example                   | description |
-| ------------------------ | ------------- | ------------------------- | ----------- |
-| @timestamp               | date          | 2022-04-20:11:22:33.000   | Timestamp from SCEPTRE. This should match the value of sceptre_time. |
-| rtds_time                | date          | 2022-04-20:11:22:33.000   | Timestamp from RTDS. |
-| sceptre_time             | date          | 2022-04-20:11:22:33.000   | Timestamp from SCEPTRE provider (the power-provider VM in the emulation). |
-| time_drift               | double        | 433.3                     | The difference in milliseconds in times between the RTDS and SCEPTRE (the "drift" between the two systems). This value will always be positive, even if the RTDS is ahead of SCEPTRE. This is calculated as abs(sceptre_time - rtds_time) * 1000. |
-| event.ingested           | date          | 2022-04-20:11:22:33.000   | Timestamp of when the data was ingested into Elasticsearch. |
-| ecs.version              | keyword       | 8.11.0                    | [Elastic Common Schema (ECS)](https://www.elastic.co/guide/en/ecs/current/ecs-field-reference.html) version this schema adheres to. |
-| agent.type               | keyword       | sceptre-provider          | Type of system providing the data. |
-| agent.version            | keyword       | unknown                   | Version of the provider. |
-| observer.hostname        | keyword       | power-provider            | Hostname of the system providing the data. |
-| observer.geo.timezone    | keyword       | America/Denver            | Timezone of the system providing the data. |
-| network.protocol         | keyword       | dnp3                      | Network protocol used to retrieve the data. Currently, this will be either dnp3 or c37.118. |
-| network.transport        | keyword       | tcp                       | Transport layer (Layer 4 of OSI model) protocol used to retrieve the data. Currently, this is usually `tcp`, but it could be udp if UDP is used for C37.118 or GTNET-SKT. |
-| pmu.name                 | keyword       | PMU1                      | Name of the PMU. |
-| pmu.label                | keyword       | BUS4-1                    | Label for the PMU. |
-| pmu.ip                   | ip            | 172.24.9.51               | IP address of the PMU. |
-| pmu.port                 | integer       | 4714                      | TCP port of the PMU. |
-| pmu.id                   | long          | 41                        | PDC ID of the PMU. |
-| measurement.stream       | byte          | 1                         | Stream ID of this measurement from the PMU. |
-| measurement.status       | keyword       | ok                        | Status of this measurement from the PMU. |
-| measurement.time         | double        | 1686089097.13333          | Absolute time of when the measurement occurred. This timestamp can be used as a sequence number, and will match across all PMUs from the same RTDS case. It should match `rtds_time`, after being converted to a date. |
-| measurement.frequency    | double        | 60.06                     | Nominal system frequency. |
-| measurement.dfreq        | double        | 8.835189510136843e-05     | Rate of change of frequency (ROCOF). |
-| measurement.channel      | keyword       | PHASOR CH 1:VA            | Channel name of this measurement from the PMU. |
-| measurement.phasor.id    | byte          | 0                         | ID of the phasor. For example, if there are 4 phasors, then the ID of the first phasor will be 0. |
-| measurement.phasor.real  | double        | 132786.5                  | Phase magnitude? |
-| measurement.phasor.angle | double        | -1.5519471168518066       | Phase angle? |
-
-"""
-
 import atexit
 import logging
 import platform
@@ -59,10 +13,7 @@ from elasticsearch import Elasticsearch, helpers
 from pybennu.utils import utc_now, get_bennu_version
 from pybennu.settings import PybennuSettings
 
-# TODO: update field docs
-#   - new field groups
-#   - new fields in existing groups
-
+# Schema docs: https://sandialabs.github.io/sceptre-docs/13-providers.html
 
 # Field type mapping for Elasticsearch.
 # NOTE: the table of fields is in the docstring at the top of this file
