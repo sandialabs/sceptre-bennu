@@ -54,7 +54,7 @@ RUN wget -O helics.tgz https://github.com/GMLC-TDC/HELICS/releases/download/v${H
 # install Python bennu package
 ADD src/pybennu /tmp/bennu/src/pybennu
 WORKDIR /tmp/bennu/src/pybennu
-RUN pipx run uv pip install --no-cache --native-tls --system .
+RUN pipx run uv pip install --no-cache --system-certs --system .
 
 
 # ** create final image **

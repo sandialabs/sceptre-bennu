@@ -42,7 +42,7 @@ dependencies = [
     'sysv_ipc==1.1.0;platform_system=="Linux"',
     # force install the below from source so they are built with the
     # local libzmq libraries with draft support
-    'pyzmq @ git+https://github.com/zeromq/pyzmq.git@v27.1.0',
+    'pyzmq @ git+https://github.com/zeromq/pyzmq.git@v27.2.0',
     'helics @ git+https://github.com/GMLC-TDC/pyhelics.git@v3.6.1',
 ]
 
@@ -66,5 +66,5 @@ pybennu-siren = "pybennu.siren.siren:main"
 module-root = "."
 
 [build-system]
-requires = ["uv_build>=0.9.7,<0.10.0"]
+requires = ["uv_build>=0.9.7"]
 build-backend = "uv_build"
