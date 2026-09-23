@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 
@@ -16,10 +17,27 @@ namespace bennu {
 namespace comms {
 namespace iec60870 {
 
+// The two command types the client issues, tracked so the async
+// select-before-operate handshake can resend the correct command on execute.
+enum PendingCommandType
+{
+    ePendingDouble,     // C_DC_NA_1 (binary output)
+    ePendingSetpoint    // C_SE_NC_1 (analog output)
+};
+
+// A command awaiting its EXECUTE phase after a SELECT was sent. Held between the
+// SELECT send and the arrival of the SELECT's positive ACT_CON.
+struct PendingCommand
+{
+    PendingCommandType type;
+    int value;          // Double point value (for ePendingDouble)
+    float fValue;       // Setpoint value (for ePendingSetpoint)
+};
+
 class ClientConnection : public std::enable_shared_from_this<ClientConnection>
 {
 public:
-    ClientConnection(const std::string& rtuEndpoint);
+    ClientConnection(const std::string& rtuEndpoint, bool sboEnabled = false);
 
     void start(std::shared_ptr<ClientConnection> clientConnection);
 
@@ -78,13 +96,19 @@ public:
     static int convertBoolToDPValue(bool value);
 
 private:
+    // Send the EXECUTE phase (selectCommand=false) for a pending command at the
+    // given IOA, if one exists. Called when a SELECT's positive ACT_CON arrives.
+    void sendExecute(std::uint16_t address);
+
     bool mRunning;
+    bool mSboEnabled;                           // Select-before-operate mode enabled
     std::string mRtuEndpoint;                   // IP/Port or DevName of remote RTU
     CS104_Connection mConnection;               // 104 connection object
     std::map<std::uint16_t, std::string> mBinaryAddressToTagMapping;
     std::map<std::uint16_t, std::string> mAnalogAddressToTagMapping;
     std::map<std::string, comms::RegisterDescriptor> mRegisters;
-    
+    std::map<std::uint16_t, PendingCommand> mPendingCommands;    // IOA -> command awaiting execute
+    std::mutex mPendingMutex;                    // Guards mPendingCommands
 
 };
 

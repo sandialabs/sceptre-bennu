@@ -60,6 +60,12 @@
                 <rpoll-rate>1</rpoll-rate>
                 <endpoint>tcp://127.0.0.1:2404</endpoint>
                 <event-logging>rtu-1-104-outstation.log</event-logging>
+                <!-- Select-before-operate (SBO) for control commands. Optional;
+                     defaults to false (direct-operate). The connecting master must
+                     use the same mode. sbo-timeout-secs is how long a SELECT stays
+                     valid before an EXECUTE must follow (default 30). -->
+                <!-- <sbo-enabled>true</sbo-enabled> -->
+                <!-- <sbo-timeout-secs>30</sbo-timeout-secs> -->
                 <binary-input>
                     <address>100</address>
                     <tag>I_generator-1_bus-1.active</tag>

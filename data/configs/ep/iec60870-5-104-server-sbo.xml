@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- IEC 60870-5-104 outstation with select-before-operate enabled. Used by
+     test/test_fd_104_sbo.cpp. Mirrors iec60870-5-104-server.xml but with SBO on. -->
+<SCEPTRE>
+    <field-device>
+        <name>rtu-1</name>
+        <cycle-time>500</cycle-time>
+        <tags>
+            <external-tag>
+                <name>I_generator-1_bus-1.active</name>
+                <io>I2</io>
+                <type>binary</type>
+            </external-tag>
+            <external-tag>
+                <name>O_generator-1_bus-1.active</name>
+                <io>O1</io>
+                <type>binary</type>
+            </external-tag>
+        </tags>
+
+        <comms>
+            <iec60870-5-104-server>
+                <rpoll-rate>1</rpoll-rate>
+                <endpoint>tcp://127.0.0.1:2404</endpoint>
+                <event-logging>rtu-1-104-outstation-sbo.log</event-logging>
+                <sbo-enabled>true</sbo-enabled>
+                <sbo-timeout-secs>30</sbo-timeout-secs>
+                <binary-input>
+                    <address>100</address>
+                    <tag>I_generator-1_bus-1.active</tag>
+                </binary-input>
+                <binary-output>
+                    <address>0</address>
+                    <tag>O_generator-1_bus-1.active</tag>
+                </binary-output>
+            </iec60870-5-104-server>
+        </comms>
+
+        <input>
+            <endpoint>udp://239.0.0.1:40000</endpoint>
+            <binary>
+                <id>I2</id>
+                <name>generator-1_bus-1.active</name>
+            </binary>
+        </input>
+
+        <output>
+            <endpoint>tcp://127.0.0.1:5555</endpoint>
+            <binary>
+                <id>O1</id>
+                <name>generator-1_bus-1.active</name>
+            </binary>
+        </output>
+    </field-device>
+</SCEPTRE>

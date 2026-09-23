@@ -7,8 +7,9 @@ namespace bennu {
 namespace comms {
 namespace iec60870 {
 
-ClientConnection::ClientConnection(const std::string& rtuEndpoint) :
+ClientConnection::ClientConnection(const std::string& rtuEndpoint, bool sboEnabled) :
     mRunning(false),
+    mSboEnabled(sboEnabled),
     mRtuEndpoint(rtuEndpoint)
 {
 }
@@ -97,10 +98,27 @@ StatusMessage ClientConnection::writeBinary(const std::string& tag, bool bvalue)
     // Convert boolean to double point value
     int value = ClientConnection::convertBoolToDPValue(bvalue);
 
-    // Write double point using protocol
+    if (mSboEnabled)
+    {
+        // Select-before-operate: send SELECT now, defer EXECUTE until the
+        // positive ACT_CON arrives (handled in asduReceivedHandler).
+        {
+            std::lock_guard<std::mutex> lock(mPendingMutex);
+            mPendingCommands[rd.mRegisterAddress] = PendingCommand{ePendingDouble, value, 0.0f};
+        }
+        std::cout << "Send SELECT double command C_DC_NA_1: " << tag << " -- " << bvalue << std::endl;
+        InformationObject dc = (InformationObject)
+                DoubleCommand_create(NULL, rd.mRegisterAddress, value, true, 0);
+        CS104_Connection_sendProcessCommandEx(mConnection, CS101_COT_ACTIVATION, 1, dc);
+        InformationObject_destroy(dc);
+        // Note: local data is updated only once the EXECUTE is sent.
+        return sm;
+    }
+
+    // Direct operate (SBO disabled): send EXECUTE (selectCommand=false).
     std::cout << "Send double command C_DC_NA_1: " << tag << " -- " << bvalue << std::endl;
     InformationObject dc = (InformationObject)
-            DoubleCommand_create(NULL, rd.mRegisterAddress, value, true, 0);
+            DoubleCommand_create(NULL, rd.mRegisterAddress, value, false, 0);
     CS104_Connection_sendProcessCommandEx(mConnection, CS101_COT_ACTIVATION, 1, dc);
     InformationObject_destroy(dc);
 
@@ -121,15 +139,73 @@ StatusMessage ClientConnection::writeAnalog(const std::string& tag, double value
         sm.message = msg.data();
         return sm;
     }
-    // Write analog using protocol
+    if (mSboEnabled)
+    {
+        // Select-before-operate: send SELECT now, defer EXECUTE until the
+        // positive ACT_CON arrives (handled in asduReceivedHandler).
+        {
+            std::lock_guard<std::mutex> lock(mPendingMutex);
+            mPendingCommands[rd.mRegisterAddress] = PendingCommand{ePendingSetpoint, 0, static_cast<float>(value)};
+        }
+        std::cout << "Send SELECT setpoint command C_SE_NC_1: " << tag << " -- " << value << std::endl;
+        InformationObject sc = (InformationObject)
+                SetpointCommandShort_create(NULL, rd.mRegisterAddress, static_cast<float>(value), true, 0);
+        CS104_Connection_sendProcessCommandEx(mConnection, CS101_COT_ACTIVATION, 1, sc);
+        InformationObject_destroy(sc);
+        // Note: local data is updated only once the EXECUTE is sent.
+        return sm;
+    }
+
+    // Direct operate (SBO disabled): send EXECUTE (selectCommand=false).
     std::cout << "Send setpoint command C_SE_NC_1: " << tag << " -- " << value << std::endl;
     InformationObject sc = (InformationObject)
-            SetpointCommandShort_create(NULL, rd.mRegisterAddress, value, true, 0);
+            SetpointCommandShort_create(NULL, rd.mRegisterAddress, static_cast<float>(value), false, 0);
     CS104_Connection_sendProcessCommandEx(mConnection, CS101_COT_ACTIVATION, 1, sc);
+    InformationObject_destroy(sc);
 
     // Update local data so we don't have to wait until the next poll
     updateAnalog(rd.mRegisterAddress, value);
     return sm;
+}
+
+/*
+ * Send the EXECUTE phase for a pending select-before-operate command at the given
+ * IOA. Called from asduReceivedHandler when a SELECT's positive ACT_CON arrives.
+ */
+void ClientConnection::sendExecute(std::uint16_t address)
+{
+    PendingCommand pending;
+    {
+        std::lock_guard<std::mutex> lock(mPendingMutex);
+        auto iter = mPendingCommands.find(address);
+        if (iter == mPendingCommands.end())
+        {
+            return;
+        }
+        pending = iter->second;
+        mPendingCommands.erase(iter);
+    }
+
+    if (pending.type == ePendingDouble)
+    {
+        std::cout << "Send EXECUTE double command C_DC_NA_1: IOA " << address << " -- " << pending.value << std::endl;
+        InformationObject dc = (InformationObject)
+                DoubleCommand_create(NULL, address, pending.value, false, 0);
+        CS104_Connection_sendProcessCommandEx(mConnection, CS101_COT_ACTIVATION, 1, dc);
+        InformationObject_destroy(dc);
+        // Update local data now that the operate has been issued.
+        updateBinary(address, pending.value == IEC60870_DOUBLE_POINT_ON);
+    }
+    else // ePendingSetpoint
+    {
+        std::cout << "Send EXECUTE setpoint command C_SE_NC_1: IOA " << address << " -- " << pending.fValue << std::endl;
+        InformationObject sc = (InformationObject)
+                SetpointCommandShort_create(NULL, address, pending.fValue, false, 0);
+        CS104_Connection_sendProcessCommandEx(mConnection, CS101_COT_ACTIVATION, 1, sc);
+        InformationObject_destroy(sc);
+        // Update local data now that the operate has been issued.
+        updateAnalog(address, pending.fValue);
+    }
 }
 
 /*
@@ -183,8 +259,36 @@ bool ClientConnection::asduReceivedHandler(void* parameter, int address, CS101_A
             CS101_ASDU_getTypeID(asdu),
             CS101_ASDU_getNumberOfElements(asdu));
 
+    IEC60870_5_TypeID typeId = CS101_ASDU_getTypeID(asdu);
+
+    // Command responses (ACT_CON / ACT_TERM) for the control command types we send.
+    if (typeId == C_DC_NA_1 || typeId == C_SE_NC_1) {
+        CS101_CauseOfTransmission cot = CS101_ASDU_getCOT(asdu);
+        if (cot == CS101_COT_ACTIVATION_CON) {
+            InformationObject io = CS101_ASDU_getElement(asdu, 0);
+            if (io) {
+                uint16_t addr = InformationObject_getObjectAddress(io);
+                if (CS101_ASDU_isNegative(asdu)) {
+                    // SELECT (or execute) was rejected; drop any pending operate.
+                    printf("  command IOA %i rejected (negative ACT_CON)\n", addr);
+                    {
+                        std::lock_guard<std::mutex> lock(gClientConnection->mPendingMutex);
+                        gClientConnection->mPendingCommands.erase(addr);
+                    }
+                } else {
+                    // Positive confirmation. If a select is pending for this IOA,
+                    // this is the SELECT's ACT_CON -- follow up with the EXECUTE.
+                    printf("  command IOA %i confirmed (positive ACT_CON)\n", addr);
+                    gClientConnection->sendExecute(addr);
+                }
+                InformationObject_destroy(io);
+            }
+        }
+        return true;
+    }
+
     // Analog values
-    if (CS101_ASDU_getTypeID(asdu) == M_ME_NC_1) {
+    if (typeId == M_ME_NC_1) {
 
         printf("  measured short values:\n");
 
