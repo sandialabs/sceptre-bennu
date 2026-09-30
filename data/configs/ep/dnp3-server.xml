@@ -40,22 +40,65 @@
 		<endpoint>tcp://127.0.0.1:20000</endpoint>
                 <address>10</address>
                 <event-logging>rtu-1-dnp3-outstation.log</event-logging>
+                <!--
+                    Optional: per-type event buffer capacity (default 100).
+                    Only matters for points assigned to an event class
+                    (Class1/2/3). If the master doesn't poll event classes the
+                    buffer fills and every response sets IIN2.3 (event buffer
+                    overflow).
+                <event-buffer-size>100</event-buffer-size>
+                -->
+                <!--
+                    Point options (all optional unless noted):
+                      address   DNP3 point index (required)
+                      tag       field-device tag (required)
+                      class     Class0 | Class1 | Class2 | Class3 (default Class0)
+                                Class0 = static data only, no events.
+                                Class1-3 = also generate events in that class.
+                      sgvar     static group/variation (inputs only)
+                                binary-input: Group1Var1 | Group1Var2 (default)
+                                analog-input: Group30Var1-6 (default Group30Var6)
+                      egvar     event group/variation (inputs only)
+                                binary-input: Group2Var1-3 (default Group2Var2)
+                                analog-input: Group32Var1-8 (default Group32Var6)
+                      deadband  analog-input event deadband (default 0.0)
+                      sbo       outputs only: 1 = require select-before-operate,
+                                reject direct operate (default 0)
+                -->
                 <binary-input>
                     <address>2</address>
                     <tag>brkr</tag>
+                    <!--
+                    <class>Class1</class>
+                    <sgvar>Group1Var2</sgvar>
+                    <egvar>Group2Var2</egvar>
+                    -->
                 </binary-input>
                 <binary-output>
                     <address>5</address>
                     <tag>load-breaker-toggle</tag>
+                    <!--
+                    <class>Class1</class>
+                    <sbo>1</sbo>
+                    -->
                 </binary-output>
                 <analog-input>
                     <address>0</address>
                     <tag>load-power</tag>
+                    <!--
+                    <class>Class2</class>
+                    <sgvar>Group30Var6</sgvar>
+                    <egvar>Group32Var6</egvar>
+                    <deadband>0.5</deadband>
+                    -->
                 </analog-input>
                 <analog-output>
                     <address>1</address>
                     <tag>load-mw-setpoint</tag>
                     <sbo>1</sbo>
+                    <!--
+                    <class>Class2</class>
+                    -->
                 </analog-output>
             </dnp3-server>
         </comms>
