@@ -82,8 +82,9 @@ void DataHandler::parseServerTree(std::shared_ptr<Server> server, const ptree& t
             std::string tag = iter->second.get<std::string>("tag");
 
             bool sbo = iter->second.get<bool>("sbo", false);
+            std::string clazz = iter->second.get<std::string>("class", "");
 
-            server->addBinaryOutput(address, tag, sbo);
+            server->addBinaryOutput(address, tag, sbo, clazz);
             std::cout << "add dnp3 binary-output " << tag << std::endl;
         }
         auto analogInputs = tree.equal_range("analog-input");
@@ -123,11 +124,15 @@ void DataHandler::parseServerTree(std::shared_ptr<Server> server, const ptree& t
             std::string tag = iter->second.get<std::string>("tag");
 
             bool sbo = iter->second.get<bool>("sbo", false);
+            std::string clazz = iter->second.get<std::string>("class", "");
 
-            server->addAnalogOutput(address, tag, sbo);
+            server->addAnalogOutput(address, tag, sbo, clazz);
             std::cout << "add dnp3 analog-output " << tag << std::endl;
         }
-	std::string endpoint = tree.get<std::string>("endpoint");
+        // Per-type event buffer capacity (default 100)
+        server->setEventBufferSize(tree.get<std::uint16_t>("event-buffer-size", 100));
+
+        std::string endpoint = tree.get<std::string>("endpoint");
         std::uint16_t address = tree.get<uint16_t>("address");
         // Initialize DNP3 server (outstation). Won't start server until enable() is called
         server->init(endpoint, address);
