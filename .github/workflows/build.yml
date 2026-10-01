@@ -60,6 +60,10 @@ jobs:
           bennu-simulink-provider --help
           bennu-field-deviced --help
           bennu-simulink-provider-helics --help
+      - name: run unit tests
+        run: |
+          cd build/
+          ctest --output-on-failure
       - name: build deb for bennu
         run: |
           cd build/
