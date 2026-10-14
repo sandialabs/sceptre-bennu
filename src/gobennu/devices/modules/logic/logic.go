@@ -82,8 +82,8 @@ func (this LogicModule) Execute() error {
 
 	statuses, err := this.memory.GetBinaryPoints()
 	if err != nil {
-		// TODO: decide how to handle error. Note that some statuses may still get
-		// returned with a non-nil error.
+		// Some statuses may still be returned with a non-nil error.
+		logger.Error(err, "getting binary points")
 	}
 
 	for tag, status := range statuses {
@@ -92,22 +92,27 @@ func (this LogicModule) Execute() error {
 
 	values, err := this.memory.GetAnalogPoints()
 	if err != nil {
-		// TODO: decide how to handle error. Note that some values may still get
-		// returned with a non-nil error.
+		// Some values may still be returned with a non-nil error.
+		logger.Error(err, "getting analog points")
 	}
 
 	for tag, value := range values {
 		env[tag] = value
 	}
 
+	var errs []string
+
 	for _, v := range this.order {
-		result, err := expr.Run(this.logic[v], env)
-		if err != nil {
-			return fmt.Errorf("running logic for tag '%s': %w", v, err)
+		result, runErr := expr.Run(this.logic[v], env)
+		if runErr != nil {
+			// One bad rule must not disable the rest; keep going.
+			logger.Error(runErr, "running logic", "tag", v)
+			errs = append(errs, fmt.Sprintf("running logic for tag '%s': %v", v, runErr))
+			continue
 		}
 
 		if strings.HasPrefix(v, "sprintf") {
-			fmt.Printf("LOGIC OUTPUT: %s\n", result)
+			fmt.Printf("LOGIC OUTPUT: %s\n", result) //nolint:forbidigo // intentional operator-visible output
 			continue
 		}
 
@@ -119,17 +124,40 @@ func (this LogicModule) Execute() error {
 	}
 
 	for tag, value := range results {
-		if _, ok := statuses[tag]; ok {
-			this.memory.UpdateBinaryTag(tag, value.(bool))
-			continue
+		var updateErr error
+
+		_, isStatus := statuses[tag]
+		_, isValue := values[tag]
+
+		switch {
+		case isStatus:
+			if b, isBool := value.(bool); isBool {
+				updateErr = this.memory.UpdateBinaryTag(tag, b)
+			} else {
+				logger.Error(nil, "logic result is not a bool", "tag", tag, "value", value)
+			}
+		case isValue:
+			switch n := value.(type) {
+			case float64:
+				updateErr = this.memory.UpdateAnalogTag(tag, n)
+			case int:
+				updateErr = this.memory.UpdateAnalogTag(tag, float64(n))
+			case int64:
+				updateErr = this.memory.UpdateAnalogTag(tag, float64(n))
+			default:
+				logger.Error(nil, "logic result is not a number", "tag", tag, "value", value)
+			}
+		default:
+			logger.V(9).Info("logic result not in datastore (this is OK)", "tag", tag)
 		}
 
-		if _, ok := values[tag]; ok {
-			this.memory.UpdateAnalogTag(tag, value.(float64))
-			continue
+		if updateErr != nil {
+			logger.Error(updateErr, "updating tag", "tag", tag)
 		}
+	}
 
-		logger.V(9).Info("logic result not in datastore (this is OK)", "tag", tag)
+	if len(errs) > 0 {
+		return fmt.Errorf("%s", strings.Join(errs, "; "))
 	}
 
 	return nil

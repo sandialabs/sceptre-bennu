@@ -30,7 +30,8 @@ func (this *CommsModule) HandleTreeData(e *etree.Element) error {
 		case "sunspec-tcp-server":
 			server := sunspec.NewSunSpecRTU(this.memory)
 
-			if err := server.HandleTreeData(child); err != nil {
+			err := server.HandleTreeData(child)
+			if err != nil {
 				return err
 			}
 
@@ -45,7 +46,8 @@ func (this *CommsModule) HandleTreeData(e *etree.Element) error {
 
 func (this CommsModule) Start(ctx context.Context) error {
 	for _, outstation := range this.outstations {
-		if err := outstation.Start(ctx); err != nil {
+		err := outstation.Start(ctx)
+		if err != nil {
 			return err
 		}
 	}

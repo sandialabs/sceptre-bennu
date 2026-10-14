@@ -1,6 +1,7 @@
 package io
 
 import (
+	"errors"
 	"fmt"
 
 	"bennu/devices/modules/memory"
@@ -30,10 +31,11 @@ func NewOutputModule(memory *memory.Memory) *OutputModule {
 
 func (this *OutputModule) Init(u distributed.Updater) error {
 	if !this.configured {
-		return fmt.Errorf("output module not configured yet")
+		return errors.New("output module not configured yet")
 	}
 
-	if err := u.Init(distributed.Endpoint(this.endpoint)); err != nil {
+	err := u.Init(distributed.Endpoint(this.endpoint))
+	if err != nil {
 		return fmt.Errorf("initializing updater: %w", err)
 	}
 
@@ -48,11 +50,13 @@ func (this *OutputModule) HandleTreeData(e *etree.Element) error {
 		case "endpoint":
 			this.endpoint = child.Text()
 		case "binary":
-			if err := this.handleBinaryInput(child); err != nil {
+			err := this.handleBinaryInput(child)
+			if err != nil {
 				return err
 			}
 		case "analog":
-			if err := this.handleAnalogInput(child); err != nil {
+			err := this.handleAnalogInput(child)
+			if err != nil {
 				return err
 			}
 		}
@@ -69,7 +73,7 @@ func (this OutputModule) Update() error {
 	// memory to coordinate batch updates.
 	this.memory.Lock()
 
-	err := this.memory.UpdateBinaryDevices(
+	applyBinary, err := this.memory.UpdateBinaryDevices(
 		// This function will get called multiple times, once for each binary tag
 		// that has been updated recently.
 		func(point string, status bool) error {
@@ -84,7 +88,7 @@ func (this OutputModule) Update() error {
 		logger.Error(err, "updating binary devices")
 	}
 
-	err = this.memory.UpdateAnalogDevices(
+	applyAnalog, err := this.memory.UpdateAnalogDevices(
 		// This function will get called multiple times, once for each analog tag
 		// that has been updated recently.
 		func(point string, value float64) error {
@@ -101,9 +105,14 @@ func (this OutputModule) Update() error {
 
 	this.memory.Unlock()
 
-	if err := batch.Commit(); err != nil {
+	err = batch.Commit()
+	if err != nil {
 		return fmt.Errorf("committing batch update: %w", err)
 	}
+
+	// Only mark writes as applied once the provider accepted them.
+	applyBinary()
+	applyAnalog()
 
 	return nil
 }

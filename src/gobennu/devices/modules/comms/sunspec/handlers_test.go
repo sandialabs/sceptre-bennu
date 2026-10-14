@@ -137,5 +137,5 @@ func TestModbusWriteHandler(t *testing.T) {
 	assert := assert.New(t)
 	assert.Equal([]byte{0x9c, 0x40, 0x00, 0x01}, out) // start register = 40000 (0x9c40), count = 1
 	assert.Equal(&mbserver.Success, err)
-	assert.Equal(float64(1), val)
+	assert.InDelta(float64(1), val, 0)
 }
