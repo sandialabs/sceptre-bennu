@@ -1,4 +1,5 @@
 #include <functional>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 
@@ -20,11 +21,10 @@ public:
 
     void handler(const std::string& reply)
     {
-        auto response = reply;
         std::string delim{","}, status, msg;
         try
         {
-            auto split = bennu::distributed::split(response, delim);
+            auto split = bennu::distributed::split(reply, delim);
             std::cout << "Reply:" << std::endl;
             if (split.size() > 1)
             {
@@ -49,7 +49,7 @@ int main(int argc, char** argv)
 {
     std::string program = "Command line probe for querying/reading/writing values to/from a bennu FEP or provider";
     po::options_description desc(program);
-    desc.add_options()("help", "show this help menu")("endpoint", po::value<std::string>()->default_value("tcp://127.0.0.1:1330"), "FEP (:1330) or Provider (:5555) endpoint")("command", po::value<std::string>(), "Command: query|read|write")("tag", po::value<std::string>(), "Full name of the tag, e.g. bus1.active")("value", po::value<float>(), "Value for a analog write")("status", po::value<bool>(), "Status for a boolean write");
+    desc.add_options()("help", "show this help menu")("endpoint", po::value<std::string>()->default_value("tcp://127.0.0.1:1330"), "FEP (:1330) or Provider (:5555) endpoint")("command", po::value<std::string>(), "Command: query|read|write")("tag", po::value<std::string>(), "Full name of the tag, e.g. bus1.active")("value", po::value<double>(), "Value for a analog write")("status", po::value<bool>(), "Status for a boolean write");
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);
@@ -140,8 +140,8 @@ int main(int argc, char** argv)
         }
         else
         {
-            auto value = vm["value"].as<float>();
-            ss << value;
+            auto value = vm["value"].as<double>();
+            ss << std::setprecision(10) << value;
         }
     }
     else
@@ -152,6 +152,5 @@ int main(int argc, char** argv)
 
     fflush(stdout);
     std::string msg{ss.str()};
-    probe.send(msg);
-    return 0;
+    return probe.send(msg) ? 0 : 1;
 }

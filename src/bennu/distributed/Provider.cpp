@@ -1,6 +1,7 @@
 #include "Provider.hpp"
 
 #include <functional>
+#include "bennu/utility/Log.hpp"
 
 #include "bennu/distributed/Utils.hpp"
 
@@ -36,8 +37,8 @@ zmq::message_t Provider::messageHandler(const zmq::message_t& request)
     {
         auto split = distributed::split(req, opDelim);
         op = split[0];
-        payload = split[1];
-        printf("Received %s request for payload %s\n", op.data(), payload.data());
+        payload = split.at(1);
+        BENNU_LOG_DEBUG("Received %s request for payload %s\n", op.data(), payload.data());
     }
     catch (std::exception& e)
     {
@@ -67,7 +68,7 @@ zmq::message_t Provider::messageHandler(const zmq::message_t& request)
                 try
                 {
                     auto split = distributed::split(point, valDelim);
-                    tags.insert({split[0], split[1]});
+                    tags.insert({split.at(0), split.at(1)});
                 }
                 catch (std::exception& e)
                 {
@@ -86,7 +87,7 @@ zmq::message_t Provider::messageHandler(const zmq::message_t& request)
     {
         reply += "ERR=Unknown command type '" + op + "'";
     }
-    printf("Sending reply for payload %s -- %s\n", payload.data(), reply.data());
+    BENNU_LOG_DEBUG("Sending reply for payload %s -- %s\n", payload.data(), reply.data());
     zmq::message_t repMsg(reply + '\0'); // must include null byte
     return repMsg;
 }

@@ -1,11 +1,16 @@
 #include "Subscriber.hpp"
 
+#include <chrono>
+#include <cstring>
+
+#include "bennu/utility/Log.hpp"
+
 namespace bennu {
 namespace distributed {
 
-Subscriber::Subscriber(const Endpoint& endpoint) :
+Subscriber::Subscriber(const Endpoint& endpoint, SubscriptionHandler handler) :
     mSocket(zmq::socket_t(Context::the()->getContext(), ZMQ_DISH)),
-    mHandler(std::bind(&Subscriber::defaultHandler, this, std::placeholders::_1))
+    mHandler(std::move(handler))
 {
     try
     {
@@ -25,14 +30,9 @@ Subscriber::~Subscriber()
     mSocket.close();
 }
 
-void Subscriber::defaultHandler(std::string& data)
-{
-    // TODO: add default handler
-    return;
-}
-
 void Subscriber::run()
 {
+    auto lastLog = std::chrono::steady_clock::now();
     while (mSocket.connected())
     {
         zmq::message_t msg;
@@ -45,8 +45,19 @@ void Subscriber::run()
             printf("E: Server: %s\n", e.what());
             break;
         }
-        std::string data(msg.data<char>());
+        // the buffer is not guaranteed to be NUL-terminated (pybennu publisher)
+        std::string data(msg.data<char>(), strnlen(msg.data<char>(), msg.size()));
         mHandler(data);
+        ++mDatagrams;
+        if (utility::logEnabled(utility::LOG_DEBUG))
+        {
+            auto now = std::chrono::steady_clock::now();
+            if (now - lastLog >= std::chrono::seconds(10))
+            {
+                lastLog = now;
+                BENNU_LOG_DEBUG("D: Subscriber: datagrams_received=%llu\n", (unsigned long long)mDatagrams);
+            }
+        }
     }
 }
 

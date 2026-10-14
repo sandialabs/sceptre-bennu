@@ -50,7 +50,8 @@ public:
     }
 
 private:
-    void mReplaceAllRhs(std::string& data, std::string toSearch, std::string replaceStr);
+    void mPrepare();
+    void mReplaceAllRhs(std::string& data, const std::string& toSearch, const std::string& replaceStr);
     std::vector<std::string> mSplitExpression(std::string phrase, std::string delimiter);
     std::vector<std::string> mSplitStr(std::string phrase, std::string delimiter);
     std::vector<std::string> mSortByLargest(std::vector<std::string> vector);
@@ -58,6 +59,21 @@ private:
     std::map<std::string, int> mDelayedTags;
     std::string mLogic;
     std::string mCurrentLogic;
+
+    // built once on first scanInputs (tags are fixed by then)
+    struct Tag
+    {
+        std::string name;
+        bool binary;
+    };
+    struct Line
+    {
+        std::string text;
+        std::vector<size_t> tags;
+    }; // tags: indexes into mTags, longest name first
+    bool mPrepared = false;
+    std::vector<Tag> mTags;
+    std::vector<Line> mLines;
     std::shared_ptr<field_device::DataManager> mDataManager;
 };
 

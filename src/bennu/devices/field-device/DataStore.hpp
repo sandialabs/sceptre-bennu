@@ -94,11 +94,11 @@ public:
 
     void printData()
     {
+        std::scoped_lock<std::shared_mutex> lock(mMutex);
         if (mData.size())
         {
             printf("\n============ DATA ============\n");
         }
-        std::scoped_lock<std::shared_mutex> lock(mMutex);
         for (const auto& kv : mData)
         {
             std::string val;

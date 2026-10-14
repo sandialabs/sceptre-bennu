@@ -1,4 +1,5 @@
 #include <csignal>
+#include <cstdlib>
 #include <iostream>
 #include <sstream>
 #include <thread>
@@ -35,7 +36,7 @@ int main(int argc, char** argv)
     {
         std::string program = "A simulation startup for bennu field devices.";
         po::options_description desc(program);
-        desc.add_options()("help", "show this help menu")("file", po::value<std::string>(), "Configuration file to load");
+        desc.add_options()("help", "show this help menu")("file", po::value<std::string>(), "Configuration file to load")("log-level", po::value<std::string>(), "Log level: error, warn, info (default), debug (or 0-3)");
 
         po::store(po::parse_command_line(argc, argv, desc), vm);
         po::notify(vm);
@@ -50,6 +51,12 @@ int main(int argc, char** argv)
     {
         std::cerr << "ERROR: " << e.what() << std::endl;
         return 1;
+    }
+
+    // must precede Parser::load: libs read the level lazily from the env
+    if (vm.count("log-level"))
+    {
+        setenv("BENNU_LOG_LEVEL", vm["log-level"].as<std::string>().c_str(), 1);
     }
 
     std::signal(SIGINT, signalHandler);

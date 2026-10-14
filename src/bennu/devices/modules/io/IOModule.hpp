@@ -28,6 +28,10 @@ public:
     bool handleTreeData(const boost::property_tree::ptree& tree);
 
 protected:
+    // hook called for each point parsed in handleTreeData
+    virtual void onPoint(const std::string&)
+    {}
+
     std::shared_ptr<field_device::DataManager> mDataManager;
 };
 

@@ -64,6 +64,21 @@ jobs:
         run: |
           cd build/
           ctest --output-on-failure
+      - name: throughput regression guard (800 tags)
+        # 800 output tags change every 1 s cycle; fails if a cycle takes over 2 s
+        # (before batching it took ~400 s). See docs/performance.md.
+        run: |
+          pkill -f bennu-test-ep-server || true
+          pkill -f bennu-field-device || true
+          python3 -m pip install pyzmq
+          python3 docker/test/throughput/gen.py 800 1000 tcp://127.0.0.1:5555 > /tmp/tp.xml
+          THROUGHPUT_MAX_CYCLE_S=2.0 python3 docker/test/throughput/provider.py tcp://127.0.0.1:5555 20 p0 &
+          pp=$!
+          bennu-field-device --f /tmp/tp.xml > /tmp/tp-fd.out 2>&1 &
+          fp=$!
+          rc=0; wait $pp || rc=$?
+          kill $fp 2>/dev/null || true
+          exit $rc
       - name: build deb for bennu
         run: |
           cd build/

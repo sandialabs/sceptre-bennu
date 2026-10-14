@@ -1,6 +1,7 @@
 #include "IOModule.hpp"
 
 #include <iostream>
+#include "bennu/utility/Log.hpp"
 
 namespace bennu {
 namespace io {
@@ -22,7 +23,8 @@ bool IOModule::handleTreeData(const ptree& tree)
             std::string id = binIter->second.get<std::string>("id");
             std::string point = binIter->second.get<std::string>("name");
             mDataManager->addExternalData<bool>(id, point);
-            std::cout << "add binary " << id << std::endl;
+            onPoint(point);
+            BENNU_LOG_DEBUG("add binary %s\n", id.c_str());
             continue;
         }
 
@@ -32,7 +34,8 @@ bool IOModule::handleTreeData(const ptree& tree)
             std::string id = analIter->second.get<std::string>("id");
             std::string point = analIter->second.get<std::string>("name");
             mDataManager->addExternalData<double>(id, point);
-            std::cout << "add analog " << id << std::endl;
+            onPoint(point);
+            BENNU_LOG_DEBUG("add analog %s\n", id.c_str());
             continue;
         }
 

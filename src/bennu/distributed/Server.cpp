@@ -1,6 +1,7 @@
 #include "Server.hpp"
 
 #include <functional>
+#include "bennu/utility/Log.hpp"
 
 namespace bennu {
 namespace distributed {
@@ -44,7 +45,7 @@ void Server::run()
             printf("E: Server recv: %s", e.what());
             break;
         }
-        printf("Server ---- Received request\n");
+        BENNU_LOG_DEBUG("Server ---- Received request\n");
 
         zmq::message_t reply(mHandler(request));
         try
@@ -56,7 +57,7 @@ void Server::run()
             printf("E: Server send: %s", e.what());
             break;
         }
-        printf("Server ---- Sent reply\n");
+        BENNU_LOG_DEBUG("Server ---- Sent reply\n");
     }
 }
 
