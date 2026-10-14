@@ -2,6 +2,7 @@ package sunspec
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -72,9 +73,10 @@ func (this *SunSpecRTU) HandleTreeData(e *etree.Element) error {
 				return err
 			}
 		case "event-logging":
-			// TODO
+			// Not implemented; ignored.
 		case "register":
-			if err := this.handleRegister(child); err != nil {
+			err := this.handleRegister(child)
+			if err != nil {
 				return err
 			}
 		}
@@ -116,7 +118,7 @@ func (this *SunSpecRTU) handleRegister(e *etree.Element) error {
 	}
 
 	if addr == 0 || tag == "" {
-		return fmt.Errorf("both address and tag must be provided")
+		return errors.New("both address and tag must be provided")
 	}
 
 	this.scalings[addr] = scale

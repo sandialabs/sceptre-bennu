@@ -137,7 +137,8 @@ func TestLogicModule(t *testing.T) {
 		if h, ok := bennu.TreeDataHandlers[child.Tag]; ok {
 			t.Logf("processing tag %s", child.Tag)
 
-			if err := h.HandleTreeData(child); err != nil {
+			err := h.HandleTreeData(child)
+			if err != nil {
 				t.Error(err)
 			}
 		}
@@ -155,7 +156,8 @@ func TestLogicModule(t *testing.T) {
 
 	t.Log("executing logic")
 
-	if err := lModule.Execute(); err != nil {
+	err := lModule.Execute()
+	if err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
@@ -174,4 +176,115 @@ func TestLogicModule(t *testing.T) {
 		t.Logf("updating tag: %s, value: %f", tag, value)
 		return nil
 	})
+}
+
+// Integer-literal results (expr returns int) must not panic the logic module.
+func TestLogicIntResult(t *testing.T) {
+	mem := memory.NewMemory()
+	l := logic.NewLogicModule(mem)
+
+	doc := etree.NewDocument()
+	doc.ReadFromString(`<tags><internal-tag><name>Hz</name><value>60</value></internal-tag></tags>`)
+	err := mem.HandleTreeData(doc.Root())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	doc = etree.NewDocument()
+	doc.ReadFromString(`<logic>Hz = 0</logic>`)
+	err = l.HandleTreeData(doc.Root())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = l.Execute()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	v, err := mem.GetAnalogValueForTag("Hz")
+	if err != nil || v != 0 {
+		t.Fatalf("Hz = %v, %v; want 0", v, err)
+	}
+}
+
+// A failed commit must leave the write pending; only apply() marks it done.
+func TestPendingWriteSurvivesFailedCommit(t *testing.T) {
+	mem := memory.NewMemory()
+
+	doc := etree.NewDocument()
+	doc.ReadFromString(`<tags><external-tag><name>kv</name><io>io1</io><type>analog</type></external-tag></tags>`)
+	err := mem.HandleTreeData(doc.Root())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	mem.AddAnalogDevice("dev")
+	mem.AddAnalogModule("io1", "dev")
+
+	err = mem.UpdateAnalogTag("kv", 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	yielded := 0
+	yield := func(string, float64) error { yielded++; return nil }
+
+	// Commit "fails": apply is never called.
+	_, err = mem.UpdateAnalogDevices(yield)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if v, _ := mem.GetAnalogDeviceValue("dev"); v != 0 {
+		t.Fatalf("device value = %v before commit; want 0", v)
+	}
+
+	// Next cycle retries the same write, and apply commits it.
+	apply, err := mem.UpdateAnalogDevices(yield)
+	if err != nil || yielded != 2 {
+		t.Fatalf("retry: err=%v yielded=%d; want nil, 2", err, yielded)
+	}
+
+	apply()
+
+	if v, _ := mem.GetAnalogDeviceValue("dev"); v != 5 {
+		t.Fatalf("device value = %v after apply; want 5", v)
+	}
+
+	_, err = mem.UpdateAnalogDevices(yield)
+	if err != nil || yielded != 2 {
+		t.Fatalf("after apply: err=%v yielded=%d; want nil, 2", err, yielded)
+	}
+}
+
+// One failing rule must not stop later rules from running and being written back.
+func TestLogicContinuesPastFailingRule(t *testing.T) {
+	mem := memory.NewMemory()
+	l := logic.NewLogicModule(mem)
+
+	doc := etree.NewDocument()
+	doc.ReadFromString(
+		`<tags><internal-tag><name>a</name><value>1</value></internal-tag><internal-tag><name>b</name><value>1</value></internal-tag></tags>`,
+	)
+	err := mem.HandleTreeData(doc.Root())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	doc = etree.NewDocument()
+	doc.ReadFromString("<logic>\na = nope.field\nb = 7\n</logic>")
+	err = l.HandleTreeData(doc.Root())
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	err = l.Execute()
+	if err == nil {
+		t.Fatal("expected error from failing rule")
+	}
+
+	if v, _ := mem.GetAnalogValueForTag("b"); v != 7 {
+		t.Fatalf("b = %v; want 7", v)
+	}
 }

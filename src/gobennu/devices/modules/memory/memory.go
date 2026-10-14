@@ -1,6 +1,7 @@
 package memory
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -73,11 +74,13 @@ func (this *Memory) HandleTreeData(e *etree.Element) error {
 	for _, child := range e.ChildElements() {
 		switch child.Tag {
 		case "external-tag":
-			if err := this.handleExternalTag(child); err != nil {
+			err := this.handleExternalTag(child)
+			if err != nil {
 				return err
 			}
 		case "internal-tag":
-			if err := this.handleInternalTag(child); err != nil {
+			err := this.handleInternalTag(child)
+			if err != nil {
 				return err
 			}
 		}
@@ -118,7 +121,9 @@ func (this *Memory) handleInternalTag(e *etree.Element) error {
 	var (
 		name  string
 		ttype string
-		value interface{}
+		bval  bool
+		fval  float64
+		sval  string
 	)
 
 	for _, child := range e.ChildElements() {
@@ -128,33 +133,29 @@ func (this *Memory) handleInternalTag(e *etree.Element) error {
 		case "status":
 			ttype = "binary"
 
-			if child.Text() == "true" {
-				value = true
-			} else {
-				value = false
-			}
+			bval = child.Text() == "true"
 		case "value":
 			ttype = "analog"
 
 			var err error
 
-			value, err = strconv.ParseFloat(child.Text(), 64)
+			fval, err = strconv.ParseFloat(child.Text(), 64)
 			if err != nil {
 				return err
 			}
 		case "string":
 			ttype = "string"
-			value = child.Text()
+			sval = child.Text()
 		}
 	}
 
 	switch ttype {
 	case "binary":
-		this.internalBinaryTags[name] = value.(bool)
+		this.internalBinaryTags[name] = bval
 	case "analog":
-		this.internalAnalogTags[name] = value.(float64)
+		this.internalAnalogTags[name] = fval
 	case "string":
-		this.internalStringTags[name] = value.(string)
+		this.internalStringTags[name] = sval
 	}
 
 	return nil
@@ -213,13 +214,13 @@ func (this *Memory) getBinaryStatusForTag(tag string) (bool, error) {
 
 	// backed by an IO module
 	if ok {
-		device, ok := this.binaryModules[module]
-		if !ok {
+		device, found := this.binaryModules[module]
+		if !found {
 			return false, fmt.Errorf("unknown IO module for tag %s", tag)
 		}
 
-		status, ok := this.getBinaryDeviceStatus(device)
-		if !ok {
+		status, found := this.getBinaryDeviceStatus(device)
+		if !found {
 			return false, fmt.Errorf("unable to get status from IO module for tag %s", tag)
 		}
 
@@ -247,13 +248,13 @@ func (this *Memory) getAnalogValueForTag(tag string) (float64, error) {
 
 	// backed by an IO module
 	if ok {
-		device, ok := this.analogModules[module]
-		if !ok {
+		device, found := this.analogModules[module]
+		if !found {
 			return 0, fmt.Errorf("unknown IO module for tag %s", tag)
 		}
 
-		value, ok := this.getAnalogDeviceValue(device)
-		if !ok {
+		value, found := this.getAnalogDeviceValue(device)
+		if !found {
 			return 0, fmt.Errorf("unable to get value from IO module for tag %s", tag)
 		}
 
@@ -353,26 +354,33 @@ func (this *Memory) UpdateStringTag(tag string, value string) error {
 	return fmt.Errorf("string tag %s does not exist", tag)
 }
 
-func (this *Memory) UpdateBinaryDevices(yield func(string, bool) error) error {
+// UpdateBinaryDevices yields every changed pending write. Device state and the
+// pending entries are only updated by the returned apply func, which the caller
+// must invoke after the yielded writes have been committed; if the commit fails,
+// don't call it and the writes stay pending for the next cycle.
+func (this *Memory) UpdateBinaryDevices(yield func(string, bool) error) (func(), error) {
 	this.mutex.Lock()
 	defer this.mutex.Unlock()
 
-	var updateErr error
+	var (
+		updateErr error
+		applied   = make(map[string]bool)
+	)
 
 	for tag, status := range this.updatedBinaryTags {
 		module, ok := this.binaryTags[tag]
 		if !ok {
-			continue // TODO: more to do here?
+			continue // not backed by a usable IO module yet; skip it
 		}
 
 		device, ok := this.binaryModules[module]
 		if !ok {
-			continue // TODO: more to do here?
+			continue // not backed by a usable IO module yet; skip it
 		}
 
 		current, err := this.getBinaryStatusForTag(tag)
 		if err != nil {
-			continue // TODO: more to do here?
+			continue // not backed by a usable IO module yet; skip it
 		}
 
 		// Only update binary devices if the status has actually changed.
@@ -381,40 +389,65 @@ func (this *Memory) UpdateBinaryDevices(yield func(string, bool) error) error {
 			continue
 		}
 
-		if err := yield(device, status); err != nil {
+		err = yield(device, status)
+		if err != nil {
 			updateErr = err
 		} else {
-			this.setBinaryDeviceStatus(device, status)
-			delete(this.updatedBinaryTags, tag)
+			applied[tag] = status
 		}
 	}
 
 	// Since we don't check to see if `updateErr` is nil before setting it in the
 	// for-loop above, we will always be returning the last yield error encountered
 	// (assuming there were multiple yield errors).
-	return updateErr
+	apply := func() {
+		this.mutex.Lock()
+		defer this.mutex.Unlock()
+
+		for tag, v := range applied {
+			if module, ok := this.binaryTags[tag]; ok {
+				if device, found := this.binaryModules[module]; found {
+					_ = this.setBinaryDeviceStatus(device, v) // device was just looked up, so this can't fail
+				}
+			}
+
+			// Don't drop a newer write that was queued after this one was yielded.
+			if this.updatedBinaryTags[tag] == v {
+				delete(this.updatedBinaryTags, tag)
+			}
+		}
+	}
+
+	return apply, updateErr
 }
 
-func (this *Memory) UpdateAnalogDevices(yield func(string, float64) error) error {
+// UpdateAnalogDevices yields every changed pending write. Device state and the
+// pending entries are only updated by the returned apply func, which the caller
+// must invoke after the yielded writes have been committed; if the commit fails,
+// don't call it and the writes stay pending for the next cycle.
+func (this *Memory) UpdateAnalogDevices(yield func(string, float64) error) (func(), error) {
 	this.mutex.Lock()
 	defer this.mutex.Unlock()
 
-	var updateErr error
+	var (
+		updateErr error
+		applied   = make(map[string]float64)
+	)
 
 	for tag, value := range this.updatedAnalogTags {
 		module, ok := this.analogTags[tag]
 		if !ok {
-			continue // TODO: more to do here?
+			continue // not backed by a usable IO module yet; skip it
 		}
 
 		device, ok := this.analogModules[module]
 		if !ok {
-			continue // TODO: more to do here?
+			continue // not backed by a usable IO module yet; skip it
 		}
 
 		current, err := this.getAnalogValueForTag(tag)
 		if err != nil {
-			continue // TODO: more to do here?
+			continue // not backed by a usable IO module yet; skip it
 		}
 
 		// Only update analog devices if the value has actually changed.
@@ -423,23 +456,44 @@ func (this *Memory) UpdateAnalogDevices(yield func(string, float64) error) error
 			continue
 		}
 
-		if err := yield(device, value); err != nil {
+		err = yield(device, value)
+		if err != nil {
 			updateErr = err
 		} else {
-			this.setAnalogDeviceValue(device, value)
-			delete(this.updatedAnalogTags, tag)
+			applied[tag] = value
 		}
 	}
 
 	// Since we don't check to see if `updateErr` is nil before setting it in the
 	// for-loop above, we will always be returning the last yield error encountered
 	// (assuming there were multiple yield errors).
-	return updateErr
+	apply := func() {
+		this.mutex.Lock()
+		defer this.mutex.Unlock()
+
+		for tag, v := range applied {
+			if module, ok := this.analogTags[tag]; ok {
+				if device, found := this.analogModules[module]; found {
+					_ = this.setAnalogDeviceValue(device, v) // device was just looked up, so this can't fail
+				}
+			}
+
+			// Don't drop a newer write that was queued after this one was yielded.
+			if this.updatedAnalogTags[tag] == v {
+				delete(this.updatedAnalogTags, tag)
+			}
+		}
+	}
+
+	return apply, updateErr
 }
 
 func (this *Memory) Freeze() error {
 	this.Lock()
 	defer this.Unlock()
+
+	this.mutex.Lock()
+	defer this.mutex.Unlock()
 
 	this.frozen = true
 
@@ -455,6 +509,9 @@ func (this *Memory) Freeze() error {
 func (this *Memory) Unfreeze() error {
 	this.Lock()
 	defer this.Unlock()
+
+	this.mutex.Lock()
+	defer this.mutex.Unlock()
 
 	for k, v := range this.frozenUpdatedBinaryTags {
 		this.updatedBinaryTags[k] = v
@@ -552,7 +609,7 @@ func (this *Memory) SetBinaryDeviceStatus(device string, status bool) error {
 
 func (this *Memory) setBinaryDeviceStatus(device string, status bool) error {
 	if !this.isBinaryDevice(device) {
-		return fmt.Errorf("binary device does not exist")
+		return errors.New("binary device does not exist")
 	}
 
 	this.binaryDeviceStatuses[device] = status
@@ -568,7 +625,7 @@ func (this *Memory) SetAnalogDeviceValue(device string, value float64) error {
 
 func (this *Memory) setAnalogDeviceValue(device string, value float64) error {
 	if !this.isAnalogDevice(device) {
-		return fmt.Errorf("analog device does not exist")
+		return errors.New("analog device does not exist")
 	}
 
 	this.analogDeviceValues[device] = value
@@ -585,13 +642,13 @@ func (this *Memory) GetBinaryPoints() (map[string]bool, error) {
 func (this *Memory) getBinaryPoints() (map[string]bool, error) {
 	var (
 		points = make(map[string]bool)
-		errors []string
+		errs   []string
 	)
 
 	for tag := range this.binaryTags {
-		status, err := this.GetBinaryStatusForTag(tag)
+		status, err := this.getBinaryStatusForTag(tag)
 		if err != nil {
-			errors = append(errors, fmt.Sprintf("getting status for %s", tag))
+			errs = append(errs, fmt.Sprintf("getting status for %s", tag))
 			continue
 		}
 
@@ -602,8 +659,8 @@ func (this *Memory) getBinaryPoints() (map[string]bool, error) {
 		points[tag] = status
 	}
 
-	if errors != nil {
-		return points, fmt.Errorf(strings.Join(errors, ", "))
+	if errs != nil {
+		return points, errors.New(strings.Join(errs, ", "))
 	}
 
 	return points, nil
@@ -619,13 +676,13 @@ func (this *Memory) GetAnalogPoints() (map[string]float64, error) {
 func (this *Memory) getAnalogPoints() (map[string]float64, error) {
 	var (
 		points = make(map[string]float64)
-		errors []string
+		errs   []string
 	)
 
 	for tag := range this.analogTags {
-		value, err := this.GetAnalogValueForTag(tag)
+		value, err := this.getAnalogValueForTag(tag)
 		if err != nil {
-			errors = append(errors, fmt.Sprintf("getting value for %s", tag))
+			errs = append(errs, fmt.Sprintf("getting value for %s", tag))
 			continue
 		}
 
@@ -636,8 +693,8 @@ func (this *Memory) getAnalogPoints() (map[string]float64, error) {
 		points[tag] = value
 	}
 
-	if errors != nil {
-		return points, fmt.Errorf(strings.Join(errors, ", "))
+	if errs != nil {
+		return points, errors.New(strings.Join(errs, ", "))
 	}
 
 	return points, nil
@@ -649,12 +706,12 @@ func (this *Memory) GetPoints() (map[string]interface{}, error) {
 
 	var (
 		points = make(map[string]interface{})
-		errors []string
+		errs   []string
 	)
 
 	statuses, err := this.getBinaryPoints()
 	if err != nil {
-		errors = append(errors, err.Error())
+		errs = append(errs, err.Error())
 	}
 
 	for tag, status := range statuses {
@@ -663,15 +720,15 @@ func (this *Memory) GetPoints() (map[string]interface{}, error) {
 
 	values, err := this.getAnalogPoints()
 	if err != nil {
-		errors = append(errors, err.Error())
+		errs = append(errs, err.Error())
 	}
 
 	for tag, value := range values {
 		points[tag] = value
 	}
 
-	if errors != nil {
-		return points, fmt.Errorf(strings.Join(errors, ", "))
+	if errs != nil {
+		return points, errors.New(strings.Join(errs, ", "))
 	}
 
 	return points, nil
@@ -681,7 +738,7 @@ func (this *Memory) GetDevicePoints() []string {
 	this.mutex.RLock()
 	defer this.mutex.RUnlock()
 
-	var points []string
+	points := make([]string, 0, len(this.binaryDeviceStatuses)+len(this.analogDeviceValues))
 
 	for p := range this.binaryDeviceStatuses {
 		points = append(points, p)

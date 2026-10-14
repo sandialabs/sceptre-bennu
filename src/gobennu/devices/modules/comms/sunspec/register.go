@@ -55,42 +55,47 @@ func (this Register) Length() int {
 func (this Register) Bytes(v interface{}, s int) []byte {
 	var value interface{}
 
+	// A mismatched type used to panic; it now encodes as zero.
+	f, _ := v.(float64)
+	str, _ := v.(string)
+
 	switch this.regType {
 	case "acc16", "uint16":
-		value = uint16(v.(float64) * math.Pow(10, -float64(s)))
+		value = uint16(f * math.Pow(10, -float64(s)))
 	case "acc32", "uint32":
-		value = uint32(v.(float64) * math.Pow(10, -float64(s)))
+		value = uint32(f * math.Pow(10, -float64(s)))
 	case "acc64":
-		value = uint64(v.(float64) * math.Pow(10, -float64(s)))
+		value = uint64(f * math.Pow(10, -float64(s)))
 	case "bitfield16", "enum16":
-		value = uint16(v.(float64))
+		value = uint16(f)
 	case "bitfield32", "enum32":
-		value = uint32(v.(float64))
+		value = uint32(f)
 	case "float32":
-		value = float32(v.(float64))
+		value = float32(f)
 	case "int16":
-		value = int16(v.(float64) * math.Pow(10, -float64(s)))
+		value = int16(f * math.Pow(10, -float64(s)))
 	case "int32":
-		value = int32(v.(float64) * math.Pow(10, -float64(s)))
+		value = int32(f * math.Pow(10, -float64(s)))
 	case "string8":
 		var value [16]byte
 
-		copy(value[:], v.(string))
+		copy(value[:], str)
 
 		return value[:]
 	case "string16":
 		var value [32]byte
 
-		copy(value[:], v.(string))
+		copy(value[:], str)
 
 		return value[:]
 	case "sunssf":
-		value = int16(v.(float64))
+		value = int16(f)
 	}
 
 	buf := new(bytes.Buffer)
 
-	if err := binary.Write(buf, binary.BigEndian, value); err != nil {
+	err := binary.Write(buf, binary.BigEndian, value)
+	if err != nil {
 		return nil
 	}
 
@@ -104,7 +109,8 @@ func (this Register) Value(d []byte, s int) (float64, error) {
 	case "acc16", "uint16":
 		var value uint16
 
-		if err := binary.Read(buf, binary.BigEndian, &value); err != nil {
+		err := binary.Read(buf, binary.BigEndian, &value)
+		if err != nil {
 			return 0, err
 		}
 
@@ -112,7 +118,8 @@ func (this Register) Value(d []byte, s int) (float64, error) {
 	case "acc32", "uint32":
 		var value uint32
 
-		if err := binary.Read(buf, binary.BigEndian, &value); err != nil {
+		err := binary.Read(buf, binary.BigEndian, &value)
+		if err != nil {
 			return 0, err
 		}
 
@@ -120,7 +127,8 @@ func (this Register) Value(d []byte, s int) (float64, error) {
 	case "acc64":
 		var value uint64
 
-		if err := binary.Read(buf, binary.BigEndian, &value); err != nil {
+		err := binary.Read(buf, binary.BigEndian, &value)
+		if err != nil {
 			return 0, err
 		}
 
@@ -128,7 +136,8 @@ func (this Register) Value(d []byte, s int) (float64, error) {
 	case "bitfield16", "enum16":
 		var value uint16
 
-		if err := binary.Read(buf, binary.BigEndian, &value); err != nil {
+		err := binary.Read(buf, binary.BigEndian, &value)
+		if err != nil {
 			return 0, err
 		}
 
@@ -136,7 +145,8 @@ func (this Register) Value(d []byte, s int) (float64, error) {
 	case "bitfield32", "enum32":
 		var value uint32
 
-		if err := binary.Read(buf, binary.BigEndian, &value); err != nil {
+		err := binary.Read(buf, binary.BigEndian, &value)
+		if err != nil {
 			return 0, err
 		}
 
@@ -144,7 +154,8 @@ func (this Register) Value(d []byte, s int) (float64, error) {
 	case "float32":
 		var value float32
 
-		if err := binary.Read(buf, binary.BigEndian, &value); err != nil {
+		err := binary.Read(buf, binary.BigEndian, &value)
+		if err != nil {
 			return 0, err
 		}
 
@@ -152,7 +163,8 @@ func (this Register) Value(d []byte, s int) (float64, error) {
 	case "int16":
 		var value int16
 
-		if err := binary.Read(buf, binary.BigEndian, &value); err != nil {
+		err := binary.Read(buf, binary.BigEndian, &value)
+		if err != nil {
 			return 0, err
 		}
 
@@ -160,7 +172,8 @@ func (this Register) Value(d []byte, s int) (float64, error) {
 	case "int32":
 		var value int32
 
-		if err := binary.Read(buf, binary.BigEndian, &value); err != nil {
+		err := binary.Read(buf, binary.BigEndian, &value)
+		if err != nil {
 			return 0, err
 		}
 

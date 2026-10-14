@@ -2,6 +2,7 @@ package sunspec
 
 import (
 	"encoding/binary"
+	"errors"
 	"fmt"
 
 	"bennu/utils/logger"
@@ -10,7 +11,7 @@ import (
 )
 
 func (this SunSpecRTU) readHandler() mbserver.FunctionHandler {
-	return func(s *mbserver.Server, frame mbserver.Framer) ([]byte, *mbserver.Exception) {
+	return func(_ *mbserver.Server, frame mbserver.Framer) ([]byte, *mbserver.Exception) {
 		var (
 			data  = frame.GetData()
 			start = int(binary.BigEndian.Uint16(data[0:2]))
@@ -25,7 +26,7 @@ func (this SunSpecRTU) readHandler() mbserver.FunctionHandler {
 		for i := start; i < start+count; {
 			tag, ok := this.registers[i]
 			if !ok {
-				logger.Error(fmt.Errorf("IllegalDataAddress"), fmt.Sprintf("register does not exist: %d", i))
+				logger.Error(errors.New("IllegalDataAddress"), fmt.Sprintf("register does not exist: %d", i))
 				return []byte{}, &mbserver.IllegalDataAddress
 			}
 
@@ -64,10 +65,10 @@ func (this SunSpecRTU) readHandler() mbserver.FunctionHandler {
 				return []byte{}, &mbserver.SlaveDeviceFailure
 			}
 
-			size = size + (reg.Length() * 2)
+			size += reg.Length() * 2
 			data = append(data, reg.Bytes(value, this.scalings[i])...)
 
-			i = i + reg.Length()
+			i += reg.Length()
 		}
 
 		return append([]byte{byte(size)}, data...), &mbserver.Success
@@ -75,7 +76,7 @@ func (this SunSpecRTU) readHandler() mbserver.FunctionHandler {
 }
 
 func (this SunSpecRTU) writeHandler() mbserver.FunctionHandler {
-	return func(s *mbserver.Server, frame mbserver.Framer) ([]byte, *mbserver.Exception) {
+	return func(_ *mbserver.Server, frame mbserver.Framer) ([]byte, *mbserver.Exception) {
 		var (
 			data  = frame.GetData()
 			start = int(binary.BigEndian.Uint16(data[0:2]))
@@ -95,7 +96,7 @@ func (this SunSpecRTU) writeHandler() mbserver.FunctionHandler {
 		for i := start; i < start+count; {
 			tag, ok := this.registers[i]
 			if !ok {
-				logger.Error(fmt.Errorf("IllegalDataAddress"), fmt.Sprintf("register does not exist: %d", i))
+				logger.Error(errors.New("IllegalDataAddress"), fmt.Sprintf("register does not exist: %d", i))
 				return []byte{}, &mbserver.IllegalDataAddress
 			}
 
@@ -112,17 +113,19 @@ func (this SunSpecRTU) writeHandler() mbserver.FunctionHandler {
 
 			// If updating the analog tag fails, then convert the analog value to a
 			// binary status and try updating the binary tag.
-			if err := this.memory.UpdateAnalogTag(tag, value); err != nil {
+			err = this.memory.UpdateAnalogTag(tag, value)
+			if err != nil {
 				status := value != 0
 
-				if err := this.memory.UpdateBinaryTag(tag, status); err != nil {
+				err = this.memory.UpdateBinaryTag(tag, status)
+				if err != nil {
 					logger.Error(err, fmt.Sprintf("updating tag %s for register %d", tag, i))
 					return []byte{}, &mbserver.SlaveDeviceFailure
 				}
 			}
 
 			b = e
-			i = i + reg.Length()
+			i += reg.Length()
 		}
 
 		return data[0:4], &mbserver.Success
@@ -130,8 +133,8 @@ func (this SunSpecRTU) writeHandler() mbserver.FunctionHandler {
 }
 
 func notImplementedHandler() mbserver.FunctionHandler {
-	return func(s *mbserver.Server, frame mbserver.Framer) ([]byte, *mbserver.Exception) {
-		logger.Error(fmt.Errorf("IllegalFunction"), "non-implemented function called")
+	return func(_ *mbserver.Server, _ mbserver.Framer) ([]byte, *mbserver.Exception) {
+		logger.Error(errors.New("IllegalFunction"), "non-implemented function called")
 		return []byte{}, &mbserver.IllegalFunction
 	}
 }

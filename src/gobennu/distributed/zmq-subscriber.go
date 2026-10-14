@@ -39,14 +39,16 @@ func (this *ZMQSubscriber) Init(opts ...Option) error {
 
 	logger.Info("connecting", "subscribe", this.options.endpoint)
 
-	if err := this.socket.Bind(this.options.endpoint); err != nil {
+	err = this.socket.Bind(this.options.endpoint)
+	if err != nil {
 		return errors.Wrap(err, "connecting to subscriber endpoint")
 	}
 
 	e := swig.NewEndpoint()
 	e.SetStr(this.options.endpoint)
 
-	if err := this.socket.Join(e.Hash()); err != nil {
+	err = this.socket.Join(e.Hash())
+	if err != nil {
 		return errors.Wrap(err, "joining DISH group")
 	}
 
@@ -89,27 +91,25 @@ func (this *ZMQSubscriber) Start(ctx context.Context) error {
 				// but we go ahead and loop over it since the slice could be
 				// empty (easier to read than checking for zero length).
 				for _, socket := range sockets {
-					// We do a switch statement here, even though we only have one
-					// socket, because the switch statement will cast the socket
-					// to the correct type (zmq.DISH) for us (when we fall into the
-					// case block, s will already be cast to zmq.DISH).
-					switch s := socket.Socket; s {
-					case this.socket:
-						msg, err := s.RecvMessage(0)
-						if err != nil {
-							logger.Error(err, "receiving RADIO publish")
-							continue
-						}
+					if socket.Socket != this.socket {
+						continue
+					}
 
-						logger.V(9).Info("received publish", "msg", msg[0])
+					msg, recvErr := socket.Socket.RecvMessage(0)
+					if recvErr != nil {
+						logger.Error(recvErr, "receiving RADIO publish")
+						continue
+					}
 
-						for _, point := range strings.Split(msg[0], ",") {
-							logger.V(9).Info("received point", "point", point)
+					logger.V(9).Info("received publish", "msg", msg[0])
 
-							if data, err := NewPointDataFromPoint(point); err == nil {
-								for _, handler := range this.handlers[data.Name] {
-									handler <- data
-								}
+					for _, point := range strings.Split(msg[0], ",") {
+						logger.V(9).Info("received point", "point", point)
+
+						data, pointErr := NewPointDataFromPoint(point)
+						if pointErr == nil {
+							for _, handler := range this.handlers[data.Name] {
+								handler <- data
 							}
 						}
 					}

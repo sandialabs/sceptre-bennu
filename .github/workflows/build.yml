@@ -158,6 +158,32 @@ jobs:
           if-no-files-found: error
           path: src/pybennu/dist/pybennu*.whl
 
+  test-gobennu:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: checkout the repo
+        uses: actions/checkout@v4
+      - name: install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install --no-install-recommends -y build-essential pkg-config git wget cmake
+      - name: build libzmq with draft API
+        run: |
+          wget -q https://github.com/zeromq/libzmq/releases/download/v4.3.4/zeromq-4.3.4.tar.gz
+          tar xf zeromq-4.3.4.tar.gz
+          cd zeromq-4.3.4
+          ./configure --prefix=/usr/local --enable-drafts
+          make -j$(nproc)
+          sudo make install
+          sudo ldconfig
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.21"
+      - name: go test
+        run: |
+          cd src/gobennu
+          go test ./...
+
   release:
     # Create a new release when PRs targeting the default branch are merged
     # Also create a release when the workflow is triggered manually on the default branch
@@ -176,6 +202,7 @@ jobs:
       - build-pybennu-wheel
       - build-pybennu-dependencies
       - build-bennu
+      - test-gobennu
     permissions:
       contents: write
     steps:

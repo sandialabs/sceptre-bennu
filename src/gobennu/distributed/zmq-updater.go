@@ -4,12 +4,16 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 
 	"bennu/utils/logger"
 
 	zmq "github.com/pebbe/zmq4/draft"
 	"github.com/pkg/errors"
 )
+
+// How long to wait on the provider before giving up on a request.
+var requestTimeout = 5 * time.Second
 
 type ZMQUpdater struct {
 	// Used for locking access to the socket, since ZMQ sockets are not
@@ -31,18 +35,43 @@ func (this *ZMQUpdater) Init(opts ...Option) error {
 		o(&this.options)
 	}
 
-	var err error
+	return this.connect()
+}
 
-	this.socket, err = zmq.NewSocket(zmq.REQ)
+// connect (re)creates the REQ socket. A REQ socket that timed out is stuck
+// waiting for its reply, so a fresh one is needed to retry (Lazy Pirate).
+func (this *ZMQUpdater) connect() error {
+	if this.socket != nil {
+		_ = this.socket.SetLinger(0) // best effort; the socket is being discarded
+		_ = this.socket.Close()
+		this.socket = nil
+	}
+
+	socket, err := zmq.NewSocket(zmq.REQ)
 	if err != nil {
 		return err
 	}
 
+	for _, setErr := range []error{
+		socket.SetLinger(0),
+		socket.SetSndtimeo(requestTimeout),
+		socket.SetRcvtimeo(requestTimeout),
+	} {
+		if setErr != nil {
+			_ = socket.Close()
+			return setErr
+		}
+	}
+
 	logger.Info("connecting", "request", this.options.endpoint)
 
-	if err := this.socket.Connect(this.options.endpoint); err != nil {
+	err = socket.Connect(this.options.endpoint)
+	if err != nil {
+		_ = socket.Close()
 		return err
 	}
+
+	this.socket = socket
 
 	return nil
 }
@@ -67,10 +96,15 @@ func (this *ZMQUpdater) sendUpdateMessage(msg string) error {
 	this.Lock()
 	defer this.Unlock()
 
-	this.socket.SendMessage(fmt.Sprintf("WRITE=%s\x00", msg))
+	_, err := this.socket.SendMessage(fmt.Sprintf("WRITE=%s\x00", msg))
+	if err != nil {
+		this.reconnect()
+		return errors.WithMessage(err, "sending provider request")
+	}
 
 	resp, err := this.socket.RecvMessage(0)
 	if err != nil {
+		this.reconnect()
 		return errors.WithMessage(err, "receiving provider response")
 	}
 
@@ -90,6 +124,13 @@ func (this *ZMQUpdater) sendUpdateMessage(msg string) error {
 	}
 
 	return nil
+}
+
+func (this *ZMQUpdater) reconnect() {
+	err := this.connect()
+	if err != nil {
+		logger.Error(err, "reconnecting to provider")
+	}
 }
 
 type zmqBatchUpdater struct {

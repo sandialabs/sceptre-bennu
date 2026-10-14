@@ -12,7 +12,8 @@ type TreeDataHandler interface {
 
 func ParseConfigFile(config string) error {
 	doc := etree.NewDocument()
-	if err := doc.ReadFromFile(config); err != nil {
+	err := doc.ReadFromFile(config)
+	if err != nil {
 		return err
 	}
 
@@ -20,7 +21,8 @@ func ParseConfigFile(config string) error {
 
 	for _, child := range root.ChildElements() {
 		if h, ok := TreeDataHandlers[child.Tag]; ok {
-			if err := h.HandleTreeData(child); err != nil {
+			err = h.HandleTreeData(child)
+			if err != nil {
 				return err
 			}
 		}

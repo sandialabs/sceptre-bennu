@@ -53,23 +53,28 @@ func (this *FieldDevice) HandleTreeData(e *etree.Element) error {
 
 			this.cycleTime = duration
 		case "tags":
-			if err := this.memory.HandleTreeData(child); err != nil {
+			err := this.memory.HandleTreeData(child)
+			if err != nil {
 				return err
 			}
 		case "input":
-			if err := this.inputs.HandleTreeData(child); err != nil {
+			err := this.inputs.HandleTreeData(child)
+			if err != nil {
 				return err
 			}
 		case "output":
-			if err := this.outputs.HandleTreeData(child); err != nil {
+			err := this.outputs.HandleTreeData(child)
+			if err != nil {
 				return err
 			}
 		case "logic":
-			if err := this.logic.HandleTreeData(child); err != nil {
+			err := this.logic.HandleTreeData(child)
+			if err != nil {
 				return err
 			}
 		case "comms":
-			if err := this.comms.HandleTreeData(child); err != nil {
+			err := this.comms.HandleTreeData(child)
+			if err != nil {
 				return err
 			}
 		default:
@@ -85,19 +90,22 @@ func (this *FieldDevice) HandleTreeData(e *etree.Element) error {
 
 	logger.V(9).Info("initializing input module")
 
-	if err := this.inputs.Init(sub); err != nil {
+	err := this.inputs.Init(sub)
+	if err != nil {
 		return err
 	}
 
 	logger.V(9).Info("starting input module")
 
-	if err := this.inputs.Start(ctx); err != nil {
+	err = this.inputs.Start(ctx)
+	if err != nil {
 		return err
 	}
 
 	logger.V(9).Info("initializing output module")
 
-	if err := this.outputs.Init(cli); err != nil {
+	err = this.outputs.Init(cli)
+	if err != nil {
 		return err
 	}
 
@@ -112,32 +120,15 @@ func (this *FieldDevice) HandleTreeData(e *etree.Element) error {
 			case now := <-ticker.C:
 				logger.V(9).Info("cycle time ticker", "time", now)
 
-				logger.V(9).Info("freezing memory")
-
-				this.memory.Freeze()
-
-				logger.V(9).Info("executing logic")
-
-				if err := this.logic.Execute(); err != nil {
-					logger.Error(err, "executing logic")
-				}
-
-				logger.V(9).Info("updating outputs")
-
-				if err := this.outputs.Update(); err != nil {
-					logger.Error(err, "updating outputs")
-				}
-
-				logger.V(9).Info("unfreezing memory")
-
-				this.memory.Unfreeze()
+				this.runCycle()
 			}
 		}
 	}()
 
 	logger.V(9).Info("starting comms module")
 
-	if err := this.comms.Start(ctx); err != nil {
+	err = this.comms.Start(ctx)
+	if err != nil {
 		return err
 	}
 
@@ -147,4 +138,40 @@ func (this *FieldDevice) HandleTreeData(e *etree.Element) error {
 
 func init() {
 	bennu.TreeDataHandlers["field-device"] = NewFieldDevice()
+}
+
+// runCycle runs one freeze/logic/output/unfreeze cycle. Unfreeze is deferred so
+// a failure or panic in an earlier step can't leave memory frozen forever.
+func (this *FieldDevice) runCycle() {
+	logger.V(9).Info("freezing memory")
+
+	err := this.memory.Freeze()
+	if err != nil {
+		logger.Error(err, "freezing memory")
+
+		return
+	}
+
+	defer func() {
+		logger.V(9).Info("unfreezing memory")
+
+		unfreezeErr := this.memory.Unfreeze()
+		if unfreezeErr != nil {
+			logger.Error(unfreezeErr, "unfreezing memory")
+		}
+	}()
+
+	logger.V(9).Info("executing logic")
+
+	err = this.logic.Execute()
+	if err != nil {
+		logger.Error(err, "executing logic")
+	}
+
+	logger.V(9).Info("updating outputs")
+
+	err = this.outputs.Update()
+	if err != nil {
+		logger.Error(err, "updating outputs")
+	}
 }

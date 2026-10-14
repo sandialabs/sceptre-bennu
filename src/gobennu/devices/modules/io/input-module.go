@@ -2,6 +2,7 @@ package io
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"bennu/devices/modules/memory"
@@ -34,11 +35,13 @@ func (this *InputModule) HandleTreeData(e *etree.Element) error {
 		case "endpoint":
 			this.endpoint = child.Text()
 		case "binary":
-			if err := this.handleBinaryInput(child); err != nil {
+			err := this.handleBinaryInput(child)
+			if err != nil {
 				return err
 			}
 		case "analog":
-			if err := this.handleAnalogInput(child); err != nil {
+			err := this.handleAnalogInput(child)
+			if err != nil {
 				return err
 			}
 		}
@@ -50,17 +53,21 @@ func (this *InputModule) HandleTreeData(e *etree.Element) error {
 
 func (this *InputModule) Init(s distributed.Subscriber) error {
 	if !this.configured {
-		return fmt.Errorf("input module not configured yet")
+		return errors.New("input module not configured yet")
 	}
 
-	if err := s.Init(distributed.Endpoint(this.endpoint)); err != nil {
+	err := s.Init(distributed.Endpoint(this.endpoint))
+	if err != nil {
 		return fmt.Errorf("initializing subscriber: %w", err)
 	}
 
 	// Subscribe to device points for both this input module (r/o)
 	// and the output module (r/w).
 	for _, device := range this.memory.GetDevicePoints() {
-		s.SubscribeToPoint(device, this.handler)
+		err = s.SubscribeToPoint(device, this.handler)
+		if err != nil {
+			return fmt.Errorf("subscribing to %s: %w", device, err)
+		}
 	}
 
 	this.subscriber = s
@@ -77,12 +84,19 @@ func (this InputModule) Start(ctx context.Context) error {
 			case point := <-this.handler:
 				logger.V(2).Info("handling publication", "point-data", fmt.Sprintf("%+v", point))
 
-				if this.memory.IsBinaryDevice(point.Name) {
-					this.memory.SetBinaryDeviceStatus(point.Name, point.Status)
-				} else if this.memory.IsAnalogDevice(point.Name) {
-					this.memory.SetAnalogDeviceValue(point.Name, point.Value)
-				} else {
+				var err error
+
+				switch {
+				case this.memory.IsBinaryDevice(point.Name):
+					err = this.memory.SetBinaryDeviceStatus(point.Name, point.Status)
+				case this.memory.IsAnalogDevice(point.Name):
+					err = this.memory.SetAnalogDeviceValue(point.Name, point.Value)
+				default:
 					logger.V(9).Info("point not managed", "point", point.Name)
+				}
+
+				if err != nil {
+					logger.Error(err, "handling publication", "point", point.Name)
 				}
 			}
 		}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"os"
 
 	"bennu"
@@ -47,7 +48,7 @@ func main() {
 		logger.V(9).Info("parsing config file", "file", c.String("config-file"))
 
 		err := bennu.ParseConfigFile(c.String("config-file"))
-		if err != nil && err != context.Canceled {
+		if err != nil && !errors.Is(err, context.Canceled) {
 			logger.Error(err, "parsing config")
 			return err
 		}
@@ -55,5 +56,6 @@ func main() {
 		return nil
 	}
 
-	app.Run(os.Args)
+	// The action logs its own errors.
+	_ = app.Run(os.Args)
 }

@@ -7,13 +7,13 @@ type options struct {
 }
 
 func newOptions(opts ...Option) options {
-	options := options{}
+	result := options{}
 
 	for _, o := range opts {
-		o(&options)
+		o(&result)
 	}
 
-	return options
+	return result
 }
 
 func Endpoint(e string) Option {
