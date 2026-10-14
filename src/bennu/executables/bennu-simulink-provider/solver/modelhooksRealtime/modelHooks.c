@@ -93,7 +93,7 @@ void init(rtwCAPI_ModelMappingInfo* _modelMap)
   }
 
   /* Create a FIFO queue for passing UpdatePoints from provider to solver */
-  unlink(UPDATES_FIFO); /* just incase fifo still exists from last run */
+  unlink(UPDATES_FIFO); /* just in case fifo still exists from last run */
   if (-1 == mkfifo(UPDATES_FIFO, 0666)) {
     printf("Fatal: Unable to create update FIFO at %s\n", UPDATES_FIFO);
     exit(EXIT_ERROR);
@@ -173,8 +173,8 @@ void step(time_T* time)
     sem_post(publishSemaphore);
 
   }
-  
-  // Using rate trasition blocks in simulink guarantees that the majorTimeStep 
+
+  // Using rate transition blocks in simulink guarantees that the majorTimeStep
   // will be zero for the rate specified in the rate transition block
   if (majorTimeStep == 0) {
     sem_wait(publishSemaphore);

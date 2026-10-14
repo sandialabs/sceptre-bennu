@@ -109,7 +109,7 @@ namespace ccss_devices {
         /** @brief Loads CID configuration file
 
             @param filename Name of the CID file to load
-            @param subs Subscritpion list (output parameter)
+            @param subs Subscription list (output parameter)
         */
         void import_config( string const &filename );
       private:

@@ -25,6 +25,13 @@ docker build --pull --tag sceptre-bennu:testing .
 docker run -it sceptre-bennu:testing bennu-field-deviced --help
 ```
 
+## Documentation
+
+-   [docs/protocol.md](docs/protocol.md): provider/field-device REQ/REP and RADIO/DISH protocol
+-   [docs/logging.md](docs/logging.md): log levels for C++, pybennu and gobennu
+-   [docs/testing.md](docs/testing.md): ctest, pytest, go test, Docker harness, CI
+-   [docs/performance.md](docs/performance.md): 800-tag analysis and throughput numbers
+
 ## Installation (Ubuntu)
 
 ### From source

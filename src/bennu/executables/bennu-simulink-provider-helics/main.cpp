@@ -58,7 +58,7 @@ struct Dto
             std::exit(EXIT_ERROR);
         }
         tag = dto.substr(0, pos);
-        dto.erase(0, pos + 1); // Remove up to, inluding, the first ":" from dto
+        dto.erase(0, pos + 1); // Remove up to, including, the first ":" from dto
 
         pos = tag.find(".");
         if (std::string::npos != pos)
@@ -75,7 +75,7 @@ struct Dto
             std::exit(EXIT_ERROR);
         }
         type = dto.substr(0, pos);
-        dto.erase(0, pos + 1); // Remove up to, inluding, the second ":" from dto
+        dto.erase(0, pos + 1); // Remove up to, including, the second ":" from dto
 
         data = dto; // data is the remaining part of the dto
     }
