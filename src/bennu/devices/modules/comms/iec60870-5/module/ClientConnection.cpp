@@ -43,7 +43,7 @@ void ClientConnection::start(std::shared_ptr<ClientConnection> clientConnection)
         {
             CS104_Connection_sendStartDT(mConnection);
             mRunning = true;
-            // Send intial interrogation (no need for client to poll; server has reverse polling loop)
+            // Send initial interrogation (no need for client to poll; server has reverse polling loop)
             CS104_Connection_sendInterrogationCommand(mConnection, CS101_COT_ACTIVATION, 1, IEC60870_QOI_STATION);
             std::cout << "Started IEC60870-5-104-CLIENT -- RTU Connection: " << mRtuEndpoint << std::endl;
         }

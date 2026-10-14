@@ -1,7 +1,7 @@
 /**
    static_vector defines an STL compliant container that exposes an std::vector
    API while maintaining a static sized internal data store.  This may be useful
-   when dealing with embedded systems or other applications requiring a staticly
+   when dealing with embedded systems or other applications requiring a statically
    sized sequential data store.
 */
 #ifndef __CCSS_PROTOCOLS_UTILITY_STATIC_VECTOR__

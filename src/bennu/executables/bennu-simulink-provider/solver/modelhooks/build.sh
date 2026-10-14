@@ -1,7 +1,7 @@
 # TODO: make this script take as input the .slx to build
 
 if [ $# -ne 1 ]; then
-  echo "Usage: ./bulid processModle.slx"
+  echo "Usage: ./build processModle.slx"
   exit
 fi
 

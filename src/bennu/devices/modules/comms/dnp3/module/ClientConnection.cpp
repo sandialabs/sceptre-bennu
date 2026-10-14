@@ -262,7 +262,7 @@ void ClientConnection::start
 
     if (scanRateAll != 0)
     {
-        // Add All Classes reccurring scan to master
+        // Add All Classes recurring scan to master
         mMaster->AddClassScan(opendnp3::ClassField::AllClasses(), opendnp3::TimeDuration::Seconds(static_cast<std::uint64_t>(scanRateAll)), pHandler);
     }
 
