@@ -1,16 +1,32 @@
 #!/usr/bin/python3
 import json
-import pkg_resources as pkg
-from os.path import join
 
-from pybennu.siren.hil_device import virtualsensor
-from pybennu.siren.hil_device import HIL_Device
 from u3 import U3
 
+from pybennu.siren.hil_device import HIL_Device, virtualsensor
 
-io_points = ['FIO0', 'FIO1', 'FIO2', 'FIO3', 'FIO4', 'FIO5', 'FIO6', 'FIO7',
-             'EIO0', 'EIO1', 'EIO2', 'EIO3', 'EIO4', 'EIO5', 'EIO6', 'EIO7',
-             'CIO0', 'CIO1', 'CIO2', 'CIO3']
+io_points = [
+    "FIO0",
+    "FIO1",
+    "FIO2",
+    "FIO3",
+    "FIO4",
+    "FIO5",
+    "FIO6",
+    "FIO7",
+    "EIO0",
+    "EIO1",
+    "EIO2",
+    "EIO3",
+    "EIO4",
+    "EIO5",
+    "EIO6",
+    "EIO7",
+    "CIO0",
+    "CIO1",
+    "CIO2",
+    "CIO3",
+]
 
 
 class LabJackU3(HIL_Device):
@@ -20,7 +36,7 @@ class LabJackU3(HIL_Device):
         device: An instantiated new U3 object from the U3 module.
         label_mapping: The mapping of labels to IO points.
 
-    References:  
+    References:
         For possible values of ModBus registers see
         https://labjack.com/support/software/api/modbus/ud-modbus
 
@@ -38,14 +54,14 @@ class LabJackU3(HIL_Device):
         with open(device_config) as f:
             self.label_mapping = json.load(f)
 
-        self.device.configU3(FIOAnalog = 255, EIOAnalog = 255)
-        for key in self.label_mapping['to_gryffin'].keys():
-            if 'digital' in key:
-                io_point = io_points.index(self.label_mapping['to_gryffin'][key])
+        self.device.configU3(FIOAnalog=255, EIOAnalog=255)
+        for key in self.label_mapping["to_gryffin"].keys():
+            if "digital" in key:
+                io_point = io_points.index(self.label_mapping["to_gryffin"][key])
                 self.device.configDigital(io_point)
-        for key in self.label_mapping['to_hardware'].keys():
-            if 'digital' in key:
-                io_point = io_points.index(self.label_mapping['to_hardware'][key])
+        for key in self.label_mapping["to_hardware"].keys():
+            if "digital" in key:
+                io_point = io_points.index(self.label_mapping["to_hardware"][key])
                 self.device.configDigital(io_point)
 
     def config_to_analog(self, *args):
@@ -87,20 +103,22 @@ class LabJackU3(HIL_Device):
             label: The IO point to write to. Int.
             value: The value the IO point will be written to. Float.
         """
-        if (isinstance(self.label_mapping[label], int)):
+        if isinstance(self.label_mapping[label], int):
             register = self.label_mapping[label]
             min_data = 0
             max_data = 330
             min_voltage = 0
             max_voltage = 3.3
         else:
-            register = self.label_mapping[label]['label']
-            min_data = self.label_mapping[label]['min_data']
-            max_data = self.label_mapping[label]['max_data']
-            min_voltage = self.label_mapping[label]['min_voltage']
-            max_voltage = self.label_mapping[label]['max_voltage']
+            register = self.label_mapping[label]["label"]
+            min_data = self.label_mapping[label]["min_data"]
+            max_data = self.label_mapping[label]["max_data"]
+            min_voltage = self.label_mapping[label]["min_voltage"]
+            max_voltage = self.label_mapping[label]["max_voltage"]
 
-        scaled_value = virtualsensor(value, min_data, max_data, min_voltage, max_voltage)
+        scaled_value = virtualsensor(
+            value, min_data, max_data, min_voltage, max_voltage
+        )
         self.device.writeRegister(register, value)
 
     def read_digital(self, label):
@@ -127,7 +145,7 @@ class LabJackU3(HIL_Device):
 
     def __del__(self):
         """Closes the device so another program can use it."""
-        #self.device.close() TODO(ask mksavic why this doesn't work)
+        # self.device.close() TODO(ask mksavic why this doesn't work)
         pass
 
 

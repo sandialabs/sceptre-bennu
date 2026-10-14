@@ -5,8 +5,8 @@ import math
 import sys
 
 from labjack import ljm
+
 from pybennu.siren.hil_device.hil_device import HIL_Device
-from pybennu.siren.hil_device.hil_device import MsgType
 
 
 class LabJackT4(HIL_Device):
@@ -23,7 +23,7 @@ class LabJackT4(HIL_Device):
 
         # Open the first LabJack T4 device found.
         try:
-            id = 'Any'
+            id = "Any"
             if self.device_id is not None:
                 id = self.device_id
             print("Opening labjack connection")
@@ -37,7 +37,7 @@ class LabJackT4(HIL_Device):
         self.streaming = False
         try:
             ljm.eStreamStop(self.handle)
-        except Exception as e:
+        except Exception:
             pass
 
         self.logger.info(ljm.getHandleInfo(self.handle))
@@ -45,14 +45,12 @@ class LabJackT4(HIL_Device):
     @property
     def config_to_analog(self, *args):
         # LabJack T7 uses the LJM library so this function is not needed.
-        raise AttributeError(
-            "'LabJackT7' object has no attribute 'config_to_analog'")
+        raise AttributeError("'LabJackT7' object has no attribute 'config_to_analog'")
 
     @property
     def config_to_digital(self, *args):
         # LabJack T7 uses the LJM library so this function is not needed.
-        raise AttributeError(
-            "'LabJackT7' object has no attribute 'config_to_digital'")
+        raise AttributeError("'LabJackT7' object has no attribute 'config_to_digital'")
 
     def read_analog(self, label):
         try:
@@ -76,8 +74,7 @@ class LabJackT4(HIL_Device):
             # Check Pin type. Analog Inputs can be used like Digital Inputs
             if pin.startswith("AIN"):
                 return 1 if (ljm.eReadName(self.handle, pin) >= 2.5) else 0
-            else:
-                return ljm.eReadName(self.handle, pin)
+            return ljm.eReadName(self.handle, pin)
         except Exception as e:
             self.logger.error(e)
 
@@ -97,14 +94,19 @@ class LabJackT4(HIL_Device):
                     close_val = ljm.eReadName(self.handle, pins[idx])
                     close_digital = self.convert_volts_to_digital(close_val)
                     close_pin = close_pin | close_digital
-                    trip_pin = trip_pin | self.convert_volts_to_digital(ljm.eReadName(self.handle, pins[idx + 1]))
+                    trip_pin = trip_pin | self.convert_volts_to_digital(
+                        ljm.eReadName(self.handle, pins[idx + 1])
+                    )
                 if pins[0] not in self.flip_flop_state:
                     self.flip_flop_state[pins[0]] = 0
-                flip_flop_value = self.flippity_floppity(close_pin, trip_pin, self.flip_flop_state[pins[0]])
+                flip_flop_value = self.flippity_floppity(
+                    close_pin, trip_pin, self.flip_flop_state[pins[0]]
+                )
                 self.flip_flop_state[pins[0]] = flip_flop_value
                 return flip_flop_value
-            else:
-                self.logger.error('Flip flop configuration types should be a list of pairs, i.e. [close1, trip1, close2, trip2')
+            self.logger.error(
+                "Flip flop configuration types should be a list of pairs, i.e. [close1, trip1, close2, trip2"
+            )
         except Exception as e:
             self.logger.error(e)
         return 0
@@ -140,17 +142,17 @@ class LabJackT4(HIL_Device):
                 ljm.eStreamStop(self.handle)
 
             scale = 1
-            if 'scale' in self.label_mapping[label]:
-                scale = self.label_mapping[label]['scale']
+            if "scale" in self.label_mapping[label]:
+                scale = self.label_mapping[label]["scale"]
 
             # How many points from a single wave cycle to calculate.
-            shape = self.label_mapping[label]['shape']
-            if shape == 'sine':
+            shape = self.label_mapping[label]["shape"]
+            if shape == "sine":
                 resolution = 100
-            elif shape == 'square':
+            elif shape == "square":
                 resolution = 2
             else:
-                raise NotImplementedError()
+                raise NotImplementedError
 
             # Raise centerline since LJ only does [0, 5] volts.
             centerline = 2.5
@@ -159,23 +161,28 @@ class LabJackT4(HIL_Device):
             scan_rate = resolution * (freq * scale)
 
             # Calculate the samples of the wave.
-            if shape == 'sine':
+            if shape == "sine":
                 amplitude = 2
-                samples = [((math.sin(2 * math.pi * x / resolution) * amplitude) + centerline) for x in range(resolution)]
-            elif shape == 'square':
+                samples = [
+                    ((math.sin(2 * math.pi * x / resolution) * amplitude) + centerline)
+                    for x in range(resolution)
+                ]
+            elif shape == "square":
                 samples = [(x * 4.5) for x in range(resolution)]
             else:
                 raise NotImplementedError
 
             # Setup stream.
-            pin = self.label_mapping[label]['pin']
-            ljm.eWriteName(self.handle, 'STREAM_OUT0_TARGET', ljm.nameToAddress(pin)[0])
-            ljm.eWriteName(self.handle, 'STREAM_OUT0_BUFFER_SIZE', 512) # 256 values
-            ljm.eWriteName(self.handle, 'STREAM_OUT0_ENABLE', 1)
-            ljm.eWriteNameArray(self.handle, 'STREAM_OUT0_BUFFER_F32', resolution, samples)
-            ljm.eWriteName(self.handle, 'STREAM_OUT0_SET_LOOP', 1)
-            ljm.eReadName(self.handle, 'STREAM_OUT0_BUFFER_STATUS')
-            ljm.eWriteName(self.handle, 'STREAM_OUT0_LOOP_SIZE', resolution)
+            pin = self.label_mapping[label]["pin"]
+            ljm.eWriteName(self.handle, "STREAM_OUT0_TARGET", ljm.nameToAddress(pin)[0])
+            ljm.eWriteName(self.handle, "STREAM_OUT0_BUFFER_SIZE", 512)  # 256 values
+            ljm.eWriteName(self.handle, "STREAM_OUT0_ENABLE", 1)
+            ljm.eWriteNameArray(
+                self.handle, "STREAM_OUT0_BUFFER_F32", resolution, samples
+            )
+            ljm.eWriteName(self.handle, "STREAM_OUT0_SET_LOOP", 1)
+            ljm.eReadName(self.handle, "STREAM_OUT0_BUFFER_STATUS")
+            ljm.eWriteName(self.handle, "STREAM_OUT0_LOOP_SIZE", resolution)
 
             # Start stream.
             ljm.eStreamStart(self.handle, 1, 1, [4800], scan_rate)
@@ -187,7 +194,7 @@ class LabJackT4(HIL_Device):
             self.logger.error(e)
 
     def cleanup(self):
-        self.logger.info('Closing connection.')
+        self.logger.info("Closing connection.")
         ljm.close(self.handle)
 
     def __del__(self):

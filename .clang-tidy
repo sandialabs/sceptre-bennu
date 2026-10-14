@@ -1,0 +1,10 @@
+# Moderate set; vendored code is excluded by HeaderFilterRegex and the cpp-tidy target.
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  performance-*,
+  modernize-use-nullptr,
+  modernize-use-override,
+  readability-container-size-empty
+HeaderFilterRegex: 'src/bennu/(devices/field-device|devices/modules/(io|logic|shell)|devices/modules/comms/[a-z0-9-]+/[^/]+$|distributed|utility|parsers|loaders)'

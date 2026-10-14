@@ -34,7 +34,7 @@ bool FieldDevice::handleTreeData(const ptree& tree)
         auto inputs = tree.equal_range("input");
         for (auto iter = inputs.first; iter != inputs.second; ++iter)
         {
-            std::shared_ptr<io::InputModule> mod {new io::InputModule()};
+            std::shared_ptr<io::InputModule> mod{new io::InputModule()};
             mod->setDataManager(mDataManager);
             mod->handleTreeData(iter->second);
             mInputModules.push_back(mod);
@@ -43,7 +43,7 @@ bool FieldDevice::handleTreeData(const ptree& tree)
         auto outputs = tree.equal_range("output");
         for (auto iter = outputs.first; iter != outputs.second; ++iter)
         {
-            std::shared_ptr<io::OutputModule> mod {new io::OutputModule()};
+            std::shared_ptr<io::OutputModule> mod{new io::OutputModule()};
             mod->setDataManager(mDataManager);
             mod->handleTreeData(iter->second);
             mOutputModules.push_back(mod);

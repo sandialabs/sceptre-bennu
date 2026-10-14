@@ -5,13 +5,13 @@ This is an example of building a custom payload builder
 that can be used in the pymodbus library. Below is a
 simple binary coded decimal builder and decoder.
 """
-from struct import pack, unpack
+
+from struct import pack
+
 from pymodbus.constants import Endian
-from pymodbus.interfaces import IPayloadBuilder
-from pymodbus.utilities import pack_bitstring
-from pymodbus.utilities import unpack_bitstring
 from pymodbus.exceptions import ParameterException
 from pymodbus.payload import BinaryPayloadDecoder
+from pymodbus.utilities import pack_bitstring, unpack_bitstring
 
 '''
 def convert_from_bcd(bcd):
@@ -48,32 +48,33 @@ def convert_from_bcd(bcd):
     return decimal
 '''
 
+
 def convert_from_bcd(payload):
     place, decimal = 10000000, 0
     for nibble in payload:
         shift = 4
         for x in range(2):
-            nibble_2 = (nibble >> shift) & 0xf
+            nibble_2 = (nibble >> shift) & 0xF
             decimal += nibble_2 * place
-            #nibble >>= 4
+            # nibble >>= 4
             shift = 0
             place /= 10
     return int(decimal)
 
 
-class BcdPayloadDecoder(object):
+class BcdPayloadDecoder:
     """
     A utility that helps decode binary coded decimal payload
     messages from a modbus reponse message. What follows is
     a simple example::
 
         decoder = BcdPayloadDecoder(payload)
-        first   = decoder.decode_int(2)
-        second  = decoder.decode_int(5) / 100
+        first = decoder.decode_int(2)
+        second = decoder.decode_int(5) / 100
     """
 
     def __init__(self, payload):
-        """ Initialize a new payload decoder
+        """Initialize a new payload decoder
 
         :param payload: The payload to decode with
         """
@@ -82,7 +83,7 @@ class BcdPayloadDecoder(object):
 
     @staticmethod
     def fromRegisters(registers, endian=Endian.Little):
-        """ Initialize a payload decoder with the result of
+        """Initialize a payload decoder with the result of
         reading a collection of registers from a modbus device.
 
         The registers are treated as a list of 2 byte values.
@@ -93,15 +94,15 @@ class BcdPayloadDecoder(object):
         :param endian: The endianess of the payload
         :returns: An initialized PayloadDecoder
         """
-        if isinstance(registers, list): # repack into flat binary
-            payload = b''.join(pack('!H', x) for x in registers)
+        if isinstance(registers, list):  # repack into flat binary
+            payload = b"".join(pack("!H", x) for x in registers)
             p_type = type(payload)
             return BinaryPayloadDecoder(payload, endian)
-        raise ParameterException('Invalid collection of registers supplied')
+        raise ParameterException("Invalid collection of registers supplied")
 
     @staticmethod
     def fromCoils(coils, endian=Endian.Little):
-        """ Initialize a payload decoder with the result of
+        """Initialize a payload decoder with the result of
         reading a collection of coils from a modbus device.
 
         The coils are treated as a list of bit(boolean) values.
@@ -113,34 +114,32 @@ class BcdPayloadDecoder(object):
         if isinstance(coils, list):
             payload = pack_bitstring(coils)
             return BinaryPayloadDecoder(payload, endian)
-        raise ParameterException('Invalid collection of coils supplied')
+        raise ParameterException("Invalid collection of coils supplied")
 
     def reset(self):
-        """ Reset the decoder pointer back to the start
-        """
+        """Reset the decoder pointer back to the start"""
         self._pointer = 0x00
 
     def decode_int(self, size=1):
-        """ Decodes a int or long from the buffer
-        """
+        """Decodes a int or long from the buffer"""
         self._pointer += size
-        handle = self._payload[self._pointer - size:self._pointer]
+        handle = self._payload[self._pointer - size : self._pointer]
         return convert_from_bcd(handle)
 
     def decode_bits(self):
-        """ Decodes a byte worth of bits from the buffer
-        """
+        """Decodes a byte worth of bits from the buffer"""
         self._pointer += 1
-        handle = self._payload[self._pointer - 1:self._pointer]
+        handle = self._payload[self._pointer - 1 : self._pointer]
         return unpack_bitstring(handle)
 
     def decode_string(self, size=1):
-        """ Decodes a string from the buffer
+        """Decodes a string from the buffer
 
         :param size: The size of the string to decode
         """
         self._pointer += size
-        return self._payload[self._pointer - size:self._pointer]
+        return self._payload[self._pointer - size : self._pointer]
+
 
 # --------------------------------------------------------------------------- #
 # Exported Identifiers

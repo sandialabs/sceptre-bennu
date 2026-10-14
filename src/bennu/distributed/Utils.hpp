@@ -35,12 +35,11 @@ private:
     {}
 
     zmq::context_t mContext;
-
 };
 
 struct Endpoint
 {
-   std::string str;
+    std::string str;
 
     /*
      *  ZMQ RADIO/DISH Group has a max character limit of 15.
@@ -58,12 +57,12 @@ struct Endpoint
         {
             delim = "/";
             size_t start = str2.find(delim) + 2;
-            str2.erase(start, pos - (start-1));
+            str2.erase(start, pos - (start - 1));
         }
         auto hash = std::hash<std::string>{}(str2);
         std::stringstream ss;
         ss << std::hex << hash;
-        return ss.str().substr(0, ss.str().length()-1);
+        return ss.str().substr(0, ss.str().length() - 1);
     }
 };
 

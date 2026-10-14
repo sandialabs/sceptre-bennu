@@ -2,18 +2,19 @@ import atexit
 import logging
 import time
 
+from pymodbus import pymodbus_apply_logging_config
 from pymodbus.client import ModbusTcpClient
 from pymodbus.exceptions import ModbusException
-from pymodbus import pymodbus_apply_logging_config
 
-from pybennu.settings import ModbusRegister
 from pybennu import utils
+from pybennu.settings import ModbusRegister
 
 
 class ModbusWrapper:
     """
     Wrapper class for Modbus operations.
     """
+
     def __init__(self, ip: str, port: int, timeout: float = 5.0, debug: bool = False):
         self.ip: str = ip
         self.port: int = port
@@ -77,7 +78,9 @@ class ModbusWrapper:
             except ModbusException:
                 pass
 
-            self.log.warning(f"Failed to connect, waiting {delay} seconds before retrying connection...")
+            self.log.warning(
+                f"Failed to connect, waiting {delay} seconds before retrying connection..."
+            )
             self.disconnect()
             time.sleep(delay)
 
@@ -124,26 +127,27 @@ class ModbusWrapper:
         #     self.log.debug(f"Reading {r.reg_type} register {r.name} (num: {r.num})")
 
         if "r" not in r.access:
-            raise ValueError(f"Attempt to read write-only register {r.name} (access: {r.access})")
+            raise ValueError(
+                f"Attempt to read write-only register {r.name} (access: {r.access})"
+            )
 
         # TODO: what exception is raised by PyModbus if response is an error?
         # TODO: handle different register widths (16 bit vs 32 bit)
         # TODO: read multiple registers
-        if r.reg_type == 'input':
+        if r.reg_type == "input":
             # read 2 registers for a 32-bit register (2x 16-bit)
             result = self.client.read_input_registers(r.num, count=2)
             return self.decode_float(result.registers)
-        elif r.reg_type == 'holding':
+        if r.reg_type == "holding":
             result = self.client.read_holding_registers(r.num, count=2)
             return self.decode_float(result.registers)
-        elif r.reg_type == 'discrete':
+        if r.reg_type == "discrete":
             result = self.client.read_discrete_inputs(r.num, count=1)
             return result.bits[0]
-        elif r.reg_type == 'coil':
+        if r.reg_type == "coil":
             result = self.client.read_coils(r.num, count=1)
             return result.bits[0]
-        else:
-            raise TypeError(f"Unknown reg_type: {r.reg_type} (register: {r})")
+        raise TypeError(f"Unknown reg_type: {r.reg_type} (register: {r})")
 
     def write_register(self, r: ModbusRegister, value) -> None:
         """
@@ -160,23 +164,29 @@ class ModbusWrapper:
             pymodbus.exceptions.ModbusException: error with Modbus communications
         """
         if self.debug:
-            self.log.debug(f"Writing {r.reg_type} register {r.name} with value '{value}' (num: {r.num})")
+            self.log.debug(
+                f"Writing {r.reg_type} register {r.name} with value '{value}' (num: {r.num})"
+            )
 
         if "w" not in r.access:
-            raise ValueError(f"Attempt to write to read-only register {r.name} (access: {r.access})")
+            raise ValueError(
+                f"Attempt to write to read-only register {r.name} (access: {r.access})"
+            )
 
         # TODO: types other than float and bool
         # TODO: other types of registers
         # TODO: what exception is raised by PyModbus if response is an error?
-        if r.reg_type == 'holding':  # Holding Registers
+        if r.reg_type == "holding":  # Holding Registers
             encoded_value = self.encode_float(float(value))
             self.client.write_registers(r.num, encoded_value)
-        elif r.reg_type == 'coil':  # Coil
+        elif r.reg_type == "coil":  # Coil
             # The ZMQ messages are strings "true" or "false"
             if isinstance(value, str):
                 value = utils.str_to_bool(value)
             self.client.write_coil(r.num, bool(value))
-        elif r.reg_type in ['discrete', 'input']:
-            raise NotImplementedError(f"reg_type {r.reg_type} is not supported for writing for register {r.name}")
+        elif r.reg_type in ["discrete", "input"]:
+            raise NotImplementedError(
+                f"reg_type {r.reg_type} is not supported for writing for register {r.name}"
+            )
         else:
             raise TypeError(f"Unknown reg_type: {r.reg_type} (register: {r})")

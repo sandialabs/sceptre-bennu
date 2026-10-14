@@ -16,7 +16,7 @@ namespace distributed {
 class Subscriber
 {
 public:
-    typedef std::function<void (std::string& data)> SubscriptionHandler;
+    typedef std::function<void(std::string& data)> SubscriptionHandler;
 
     Subscriber(const Endpoint& endpoint);
 

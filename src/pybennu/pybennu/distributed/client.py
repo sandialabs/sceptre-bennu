@@ -1,5 +1,4 @@
-"""pybennu client interface.
-"""
+"""pybennu client interface."""
 
 import zmq
 
@@ -7,24 +6,24 @@ import pybennu.distributed.swig._Endpoint as E
 
 
 class Client:
-    """ Client base class.
+    """Client base class.
 
     This class implements functionality to connect to a Provider via ZMQ
     sockets and send request messages. Inheriting classes can implement
     their own reply handler by setting self.reply_handler = <custom handler>.
     """
+
     __kACK = "ACK"
     __kERROR = "ERR"
 
     def __init__(self, endpoint):
-        """ Initialize connection environment.
-        """
+        """Initialize connection environment."""
         self.__endpoint = endpoint
         self.reply_handler = self.__defaultHandler
         self.connect()
 
     def connect(self):
-        """ Connect to Provider listening socket
+        """Connect to Provider listening socket
 
         This function creates a ZMQ REQ socket and "connects" to it.
         """
@@ -34,18 +33,16 @@ class Client:
         self.__socket.connect(E.Endpoint_str_get(self.__endpoint))
 
     def __defaultHandler(self, reply):
-        """ Default reply handler.
-        """
+        """Default reply handler."""
         print("Client received reply: %s" % reply)
 
     def send(self, message):
-        """ Send message to Provider
-        """
+        """Send message to Provider"""
         # send update
-        self.__socket.send_string(message+'\0') # must include null byte
+        self.__socket.send_string(message + "\0")  # must include null byte
         # get response
         msg = self.__socket.recv_string()
-        reply = msg.split('=')
+        reply = msg.split("=")
         status = reply[0]
         data = reply[1]
 

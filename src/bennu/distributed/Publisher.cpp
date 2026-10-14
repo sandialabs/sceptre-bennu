@@ -23,31 +23,31 @@ void Publisher::publish(std::string& msg)
     uint size = msg.length();
     if (size > mMTU)
     {
-	std::string delim{","}, temp, message;
+        std::string delim{","}, temp, message;
         auto parts = distributed::split(msg, delim);
-	uint count = 0;
+        uint count = 0;
         for (const auto& p : parts)
         {
-	    std::string part{p + ","};
-	    count += part.length();
-	    temp = message + part;
-	    // If adding the part is smaller the MTU and we haven't consumed all the msg...
-	    if (temp.length() < mMTU && count <= size)
-	    {
+            std::string part{p + ","};
+            count += part.length();
+            temp = message + part;
+            // If adding the part is smaller the MTU and we haven't consumed all the msg...
+            if (temp.length() < mMTU && count <= size)
+            {
                 message = temp;
             }
-	    // Otherwise, send the message without 'part' and reset message
+            // Otherwise, send the message without 'part' and reset message
             else
             {
-		zmq::message_t partMsg(message+'\0'); // must include null byte
-		publish(partMsg);
-            	message = part;
-	    }
+                zmq::message_t partMsg(message + '\0'); // must include null byte
+                publish(partMsg);
+                message = part;
+            }
         }
     }
     else
     {
-        zmq::message_t message(msg+'\0'); // must include null byte
+        zmq::message_t message(msg + '\0'); // must include null byte
         publish(message);
     }
 }

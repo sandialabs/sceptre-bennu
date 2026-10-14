@@ -1,18 +1,13 @@
 #!/usr/bin/python3
 import json
-import pkg_resources as pkg
-from os.path import join
-from pybennu.siren.hil_device import virtualsensor
-from pybennu.siren.hil_device import HIL_Device
-from time import sleep
-from u6 import U6
-from u6 import BitStateWrite
-from u6 import BitStateRead
 
-io_points = ['FIO0', 'FIO1', 'FIO2', 'FIO3']
-i_points_a = ['AIN0', 'AIN1', 'AIN2', 'AIN3']
-o_points_a = {'DAC0': 5000, 'DAC1': 5002}
+from u6 import U6, BitStateWrite
 
+from pybennu.siren.hil_device import HIL_Device, virtualsensor
+
+io_points = ["FIO0", "FIO1", "FIO2", "FIO3"]
+i_points_a = ["AIN0", "AIN1", "AIN2", "AIN3"]
+o_points_a = {"DAC0": 5000, "DAC1": 5002}
 
 
 class LabJackU6(HIL_Device):
@@ -30,27 +25,25 @@ class LabJackU6(HIL_Device):
         with open(device_config) as f:
             self.label_mapping = json.load(f)
 
-        self.device.configU3(FIOAnalog = 255, EIOAnalog = 255)
-        for key in self.label_mapping['to_gryffin'].keys():
-            if 'digital' in key and 'FIO' in self.label_mapping['to_gryffin'][key]:
-                io_point = io_points.index(self.label_mapping['to_gryffin'][key])
+        self.device.configU3(FIOAnalog=255, EIOAnalog=255)
+        for key in self.label_mapping["to_gryffin"].keys():
+            if "digital" in key and "FIO" in self.label_mapping["to_gryffin"][key]:
+                io_point = io_points.index(self.label_mapping["to_gryffin"][key])
                 self.device.configDigital(io_point)
-        for key in self.label_mapping['to_hardware'].keys():
-            if 'digital' in key and 'FIO' in self.label_mapping['to_hardware'][key]:
-                io_point = io_points.index(self.label_mapping['to_hardware'][key])
+        for key in self.label_mapping["to_hardware"].keys():
+            if "digital" in key and "FIO" in self.label_mapping["to_hardware"][key]:
+                io_point = io_points.index(self.label_mapping["to_hardware"][key])
                 self.device.configDigital(io_point)
-
-
 
     def config_to_analog(self, *args):
         """Configures all FIOs and EI0s to analog."""
-        #self.device.configIO(FIOAnalog=255, EIOAnalog=255)
-        #raise NotImplementedError
+        # self.device.configIO(FIOAnalog=255, EIOAnalog=255)
+        # raise NotImplementedError
         self.device.configAnalog(args)
 
     def config_to_digital(self, *args):
         """Configures all FIOs and EIOs to digital."""
-        #self.device.configIO(FIOAnalog=0, EIOAnalog=0)
+        # self.device.configIO(FIOAnalog=0, EIOAnalog=0)
         self.device.configDigital(args)
 
     def read_analog(self, label):
@@ -62,7 +55,6 @@ class LabJackU6(HIL_Device):
 
         """
 
-
         i_point = i_points_a.index(self.label_mapping[label])
         return self.device.getAIN(i_point, 32)
 
@@ -73,15 +65,15 @@ class LabJackU6(HIL_Device):
              volts: voltage level that is written to the AIN.
 
         """
-            #default values
+        # default values
         mindata = 0
         maxdata = 10000
         minvolt = 0
         maxvolt = 3.3
 
-        dicttype = type({dict:type})
-        #If the mapping leads to another mapping, then don't use the defaults. Use the substructure.
-        if (type(self.label_mapping[label]) == dicttype):
+        dicttype = type({dict: type})
+        # If the mapping leads to another mapping, then don't use the defaults. Use the substructure.
+        if type(self.label_mapping[label]) == dicttype:
             mindata = self.label_mapping[label]["min_data"]
             print("min_data", mindata)
             maxdata = self.label_mapping[label]["max_data"]
@@ -98,7 +90,7 @@ class LabJackU6(HIL_Device):
         print("voltage", voltage)
         self.device.writeRegister(o_points_a[label], voltage)
 
-        #self.device.writeRegister(o_points_a[self.label_mapping[label]], value)
+        # self.device.writeRegister(o_points_a[self.label_mapping[label]], value)
 
     def read_digital(self, label):
         """This is the digital read method. Note that in this implementation,       the register is the pin number
@@ -120,9 +112,9 @@ class LabJackU6(HIL_Device):
         io_point = io_points.index(self.label_mapping[label])
 
         if (io_point >= 0) and (io_point <= 3):
-            #self.device.setFIOState(self, pin, state)
+            # self.device.setFIOState(self, pin, state)
 
-            #self.device.setDOState(io_point, status)
+            # self.device.setDOState(io_point, status)
 
             self.device.getFeedback(BitStateWrite(io_point, status))
 

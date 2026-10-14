@@ -37,7 +37,9 @@ public:
             {
                 std::cout << "\t" << split[0] << std::endl;
             }
-        } catch (std::exception& e) {
+        }
+        catch (std::exception& e)
+        {
             printf("Err: %s", e.what());
         }
     }
@@ -47,13 +49,7 @@ int main(int argc, char** argv)
 {
     std::string program = "Command line probe for querying/reading/writing values to/from a bennu FEP or provider";
     po::options_description desc(program);
-    desc.add_options()
-        ("help", "show this help menu")
-        ("endpoint", po::value<std::string>()->default_value("tcp://127.0.0.1:1330"), "FEP (:1330) or Provider (:5555) endpoint")
-        ("command", po::value<std::string>(), "Command: query|read|write")
-        ("tag", po::value<std::string>(), "Full name of the tag, e.g. bus1.active")
-        ("value", po::value<float>(), "Value for a analog write")
-        ("status", po::value<bool>(), "Status for a boolean write");
+    desc.add_options()("help", "show this help menu")("endpoint", po::value<std::string>()->default_value("tcp://127.0.0.1:1330"), "FEP (:1330) or Provider (:5555) endpoint")("command", po::value<std::string>(), "Command: query|read|write")("tag", po::value<std::string>(), "Full name of the tag, e.g. bus1.active")("value", po::value<float>(), "Value for a analog write")("status", po::value<bool>(), "Status for a boolean write");
 
     po::variables_map vm;
     po::store(po::parse_command_line(argc, argv, desc), vm);

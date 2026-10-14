@@ -50,7 +50,7 @@ public:
     }
 
 private:
-    void mReplaceAllRhs(std::string & data, std::string toSearch, std::string replaceStr);
+    void mReplaceAllRhs(std::string& data, std::string toSearch, std::string replaceStr);
     std::vector<std::string> mSplitExpression(std::string phrase, std::string delimiter);
     std::vector<std::string> mSplitStr(std::string phrase, std::string delimiter);
     std::vector<std::string> mSortByLargest(std::vector<std::string> vector);
@@ -59,10 +59,9 @@ private:
     std::string mLogic;
     std::string mCurrentLogic;
     std::shared_ptr<field_device::DataManager> mDataManager;
-
 };
 
 } // namespace logic
-} // bennu
+} // namespace bennu
 
 #endif // BENNU_FIELDDEVICE_LOGIC_LOGICMODULE_HPP

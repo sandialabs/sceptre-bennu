@@ -2,19 +2,20 @@
 import abc
 import enum
 import logging
-import traceback
 
-LEVELS = {'debug': logging.DEBUG,       # 10
-          'info': logging.INFO,         # 20
-          'warning': logging.WARNING,   # 30
-          'filter': 31,
-          'error': logging.ERROR,       # 40
-          'critical': logging.CRITICAL  # 50
-         }
+LEVELS = {
+    "debug": logging.DEBUG,  # 10
+    "info": logging.INFO,  # 20
+    "warning": logging.WARNING,  # 30
+    "filter": 31,
+    "error": logging.ERROR,  # 40
+    "critical": logging.CRITICAL,  # 50
+}
+
 
 class HIL_Device(abc.ABC):
     @abc.abstractmethod
-    def __init__(self, device_config, device_name, level_name, device_id=''):
+    def __init__(self, device_config, device_name, level_name, device_id=""):
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -61,13 +62,17 @@ class HIL_Device(abc.ABC):
     def validate_label_mapping(self):
         """Ensures that all required values are present in a device's config."""
         for label, mapping in self.label_mapping.items():
-            if 'analog' in label:
+            if "analog" in label:
                 keys = mapping.keys()
-                if ("pin" not in keys or
-                    "min_data" not in keys or "max_data" not in keys or
-                    "min_volt" not in keys or "max_volt" not in keys):
+                if (
+                    "pin" not in keys
+                    or "min_data" not in keys
+                    or "max_data" not in keys
+                    or "min_volt" not in keys
+                    or "max_volt" not in keys
+                ):
                     raise NotImplementedError
-            elif 'digital' in label or 'waveform' in label or 'flip_flop' in label:
+            elif "digital" in label or "waveform" in label or "flip_flop" in label:
                 if not mapping:
                     raise NotImplementedError
             else:
@@ -106,12 +111,12 @@ class HIL_Device(abc.ABC):
         return self.linear_scale(voltage, r_min, r_max, t_min, t_max)
 
     def linear_scale(self, m, r_min, r_max, t_min, t_max):
-        '''Linearly scales m in [r_min, r_max] to a value in [t_min, t_max].
+        """Linearly scales m in [r_min, r_max] to a value in [t_min, t_max].
         Ensures value is always within [t_min, t_max]
 
         For an explanation, see:
         https://stats.stackexchange.com/questions/281162/scale-a-number-between-a-range
-        '''
+        """
         scaled = (m - r_min) / (r_max - r_min) * (t_max - t_min) + t_min
 
         if scaled <= t_min:

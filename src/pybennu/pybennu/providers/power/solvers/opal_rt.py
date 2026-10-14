@@ -12,26 +12,25 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
-from threading import Lock, Thread
 from queue import Queue
+from threading import Lock, Thread
+from typing import Any
 
-from pymodbus.exceptions import ModbusException, ConnectionException
+from pymodbus.exceptions import ConnectionException, ModbusException
 
-from pybennu.settings import PybennuSettings, ModbusRegister
-from pybennu.elastic import ElasticPusher
-from pybennu.pmu_wrapper import PMU
-from pybennu.modbus import ModbusWrapper
-from pybennu.utils import RotatingCSVWriter, utc_now, utc_now_formatted
 from pybennu.distributed.provider import Provider
-
+from pybennu.elastic import ElasticPusher
+from pybennu.modbus import ModbusWrapper
+from pybennu.pmu_wrapper import PMU
+from pybennu.settings import ModbusRegister, PybennuSettings
+from pybennu.utils import RotatingCSVWriter, utc_now, utc_now_formatted
 
 # TODOs
 # - [ ] Add the SCEPTRE tag and other metadata to Elastic docs
 # - [ ] Log most messages to a file with Rotating handler to avoid filling up log (since bennu isn't very smart and won't rotate the file). Separate log files for things like CSV handler?
 
 
-MBResultType = Tuple[str, Any, ModbusRegister, datetime]
+MBResultType = tuple[str, Any, ModbusRegister, datetime]
 
 
 class OPALRT(Provider):
@@ -39,7 +38,9 @@ class OPALRT(Provider):
     SCEPTRE Provider for the OPAL-RT simulator.
     """
 
-    def __init__(self, server_endpoint, publish_endpoint, settings: PybennuSettings) -> None:
+    def __init__(
+        self, server_endpoint, publish_endpoint, settings: PybennuSettings
+    ) -> None:
         Provider.__init__(self, server_endpoint, publish_endpoint)
         self.conf: PybennuSettings = settings
 
@@ -55,12 +56,12 @@ class OPALRT(Provider):
         # a set of values that are from a previous poll and others from a ongoing poll,
         # basically a split-brain/partial-read. Using a lock prevents that from happening.
         self.__current_values_lock: Lock = Lock()
-        self.current_values: Dict[str, Any] = {}
+        self.current_values: dict[str, Any] = {}
 
         # Hack
         # TODO: rotate out values to keep this from eating up memory if running for a long time
         self.__time_map_lock: Lock = Lock()
-        self.time_map: Dict[int, datetime] = {}
+        self.time_map: dict[int, datetime] = {}
 
         # Configure logging to stdout (includes debug messages from pypmu)
         logging.basicConfig(
@@ -74,11 +75,13 @@ class OPALRT(Provider):
         self.log.setLevel(logging.DEBUG if self.conf.debug else logging.INFO)
 
         # Elasticsearch setup
-        self.es: Optional[ElasticPusher] = None
+        self.es: ElasticPusher | None = None
         if self.conf.elastic.enabled:
             self.es = ElasticPusher(conf=self.conf)
         else:
-            self.log.warning("NOTE: Elasticsearch output is DISABLED ('elastic.enabled' is false or unset)")
+            self.log.warning(
+                "NOTE: Elasticsearch output is DISABLED ('elastic.enabled' is false or unset)"
+            )
 
         # Modbus setup
         if self.conf.modbus.enabled:
@@ -86,8 +89,7 @@ class OPALRT(Provider):
                 raise ValueError("No Modbus registers defined and modbus enabled!")
 
             self.mb_registers = {
-                reg.sceptre_tag: reg
-                for reg in self.conf.modbus.registers
+                reg.sceptre_tag: reg for reg in self.conf.modbus.registers
             }
             self.log.info(f"{len(self.mb_registers)} TOTAL Modbus registers configured")
 
@@ -96,9 +98,13 @@ class OPALRT(Provider):
             for tag, reg in self.mb_registers.items():
                 if "r" in reg.access:
                     self.mb_readable_regs[tag] = reg
-            self.log.info(f"{len(self.mb_registers)} READABLE Modbus registers configured")
+            self.log.info(
+                f"{len(self.mb_registers)} READABLE Modbus registers configured"
+            )
 
-            self.mb_data_queue: Queue[Tuple[Dict[str, Any], List[MBResultType]]] = Queue()
+            self.mb_data_queue: Queue[tuple[dict[str, Any], list[MBResultType]]] = (
+                Queue()
+            )
 
             self.mb_client = ModbusWrapper(
                 ip=str(self.conf.modbus.ip),
@@ -107,20 +113,28 @@ class OPALRT(Provider):
                 debug=self.conf.debug,
             )
 
-            self.__modbus_data_thread = Thread(target=self._modbus_data_writer, daemon=True)
+            self.__modbus_data_thread = Thread(
+                target=self._modbus_data_writer, daemon=True
+            )
             self.__modbus_polling_thread = Thread(target=self._modbus_poll, daemon=True)
         else:
-            self.log.warning("NOTE: Modbus is DISABLED ('modbus.enabled' is false or unset)")
+            self.log.warning(
+                "NOTE: Modbus is DISABLED ('modbus.enabled' is false or unset)"
+            )
 
         # PMU setup
         if self.conf.pmu.enabled:
-            self.log.info(f"Configuring PMU streaming for {len(self.conf.pmu.pmus)} PMUs")
+            self.log.info(
+                f"Configuring PMU streaming for {len(self.conf.pmu.pmus)} PMUs"
+            )
 
             if not self.conf.pmu.pmus:
-                raise ValueError("No PMUs defined in configuration (pmu.pmus or pmu.tags)!")
+                raise ValueError(
+                    "No PMUs defined in configuration (pmu.pmus or pmu.tags)!"
+                )
 
-            self.pmus: List[PMU] = []
-            self.pmu_frame_queue: Queue[Tuple[PMU, dict]] = Queue()
+            self.pmus: list[PMU] = []
+            self.pmu_frame_queue: Queue[tuple[PMU, dict]] = Queue()
 
             for p in self.conf.pmu.pmus:
                 pmu = PMU(
@@ -136,11 +150,13 @@ class OPALRT(Provider):
                 self.pmus.append(pmu)
 
             self.__pmu_data_thread = Thread(target=self._pmu_data_writer, daemon=True)
-            self.__pmu_polling_thread = Thread(target=self._start_poll_pmus, daemon=True)
+            self.__pmu_polling_thread = Thread(
+                target=self._start_poll_pmus, daemon=True
+            )
         else:
             self.log.warning("NOTE: PMU is DISABLED ('pmu.enabled' is false or unset)")
 
-        self.log.info(f"Initialized {repr(self)}")
+        self.log.info(f"Initialized {self!r}")
 
     def run(self) -> None:
         """Start threads and the provider."""
@@ -151,7 +167,9 @@ class OPALRT(Provider):
                     self.mb_client.retry_until_connected(self.conf.modbus.retry_delay)
                 else:
                     # Retries are disabled, error out
-                    raise ConnectionError(f"Failed to connect to Modbus server {self.mb_client!s} (timeout: {self.conf.modbus.timeout})")
+                    raise ConnectionError(
+                        f"Failed to connect to Modbus server {self.mb_client!s} (timeout: {self.conf.modbus.timeout})"
+                    )
 
             self.__modbus_data_thread.start()
             self.__modbus_polling_thread.start()
@@ -173,8 +191,7 @@ class OPALRT(Provider):
         if isinstance(value, bool):
             if value is True:
                 return "true"
-            else:
-                return "false"
+            return "false"
 
         return str(value)
 
@@ -186,8 +203,8 @@ class OPALRT(Provider):
 
         # Loop forever and poll modbus registers
         while True:
-            mb_vals: Dict[str, Any] = {}
-            mb_results: List[MBResultType] = []
+            mb_vals: dict[str, Any] = {}
+            mb_results: list[MBResultType] = []
             timestamp = utc_now()  # use same timestamp for all reads
 
             # Instead of pushing one register at a time, we read
@@ -207,26 +224,36 @@ class OPALRT(Provider):
                     mb_results.append((tag, val, reg, timestamp))
                     mb_vals[tag] = val
             except (ValueError, TypeError, NotImplementedError) as ex:
-                self.log.exception(f"Critical error reading Modbus register '{reg.name}' for tag '{tag}'")
+                self.log.exception(
+                    f"Critical error reading Modbus register '{reg.name}' for tag '{tag}'"
+                )
                 raise ex
             except ModbusException as ex:
-                self.log.error(f"Failed to read Modbus register for tag '{tag}' due to Modbus error '{ex!s}'")
+                self.log.error(
+                    f"Failed to read Modbus register for tag '{tag}' due to Modbus error '{ex!s}'"
+                )
 
-                if self.conf.modbus.retry_attempts and retry_count < self.conf.modbus.retry_attempts:
-                    self.log.error(f"Sleeping for {self.conf.modbus.retry_delay} seconds before retrying read...")
+                if (
+                    self.conf.modbus.retry_attempts
+                    and retry_count < self.conf.modbus.retry_attempts
+                ):
+                    self.log.error(
+                        f"Sleeping for {self.conf.modbus.retry_delay} seconds before retrying read..."
+                    )
                     time.sleep(self.conf.modbus.retry_delay)
                     retry_count += 1
                     continue
-                elif self.conf.modbus.retry_attempts:
+                if self.conf.modbus.retry_attempts:
                     # Wait to rebuild Modbus connection in a loop
                     self.mb_client.retry_until_connected(self.conf.modbus.retry_delay)
                     continue
-                else:
-                    # Retries are disabled, error out
-                    raise ex
+                # Retries are disabled, error out
+                raise ex
             except Exception as ex:
                 # Anything not handled above is unexpected and should be handled as a bug
-                self.log.exception(f"Unknown error attempting to read Modbus register for tag '{tag}'")
+                self.log.exception(
+                    f"Unknown error attempting to read Modbus register for tag '{tag}'"
+                )
                 raise ex
 
             # Push the results in the data processor's queue
@@ -299,7 +326,9 @@ class OPALRT(Provider):
                     if isinstance(value, (bool, float, int)):
                         es_body["groundtruth"]["float"] = float(value)
                     else:
-                        self.log.warning(f"Unknown data type '{type(value)}' for tag '{tag}' (description: {reg.description})")
+                        self.log.warning(
+                            f"Unknown data type '{type(value)}' for tag '{tag}' (description: {reg.description})"
+                        )
 
                     if isinstance(value, bool):
                         es_body["groundtruth"]["bool"] = value
@@ -367,7 +396,7 @@ class OPALRT(Provider):
         NOTE: This method is intended to be run in a thread,
         since it's loop that runs forever until killed.
         """
-        self.log.info(f"Started polling thread for {str(pmu)}")
+        self.log.info(f"Started polling thread for {pmu!s}")
         retry_count = 0
 
         pmu.quit()  # Make sure there is not already a running PMU data stream (such as when restarting the provider but not the OPALRT sim)
@@ -382,28 +411,37 @@ class OPALRT(Provider):
             try:
                 data_frame = pmu.get_data_frame()
             except Exception as ex:
-                self.log.error(f"Failed to get data frame from {str(pmu)} due to an exception: {ex}")
+                self.log.error(
+                    f"Failed to get data frame from {pmu!s} due to an exception: {ex}"
+                )
                 if self.conf.debug:  # only log traceback if debugging
-                    self.log.exception(f"traceback for {str(pmu)}")
+                    self.log.exception(f"traceback for {pmu!s}")
 
                 if pmu.protocol == "tcp" and retry_count < self.conf.pmu.retry_attempts:
-                    self.log.error(f"attempting to rebuild TCP connection... (retry count: {retry_count}, retry max: {self.conf.pmu.retry_attempts})")
+                    self.log.error(
+                        f"attempting to rebuild TCP connection... (retry count: {retry_count}, retry max: {self.conf.pmu.retry_attempts})"
+                    )
                     pmu.rebuild_tcp_connection()
                     continue
-                else:
-                    raise ex from None
+                raise ex from None
 
             if not data_frame:
                 if retry_count < self.conf.pmu.retry_attempts:
-                    self.log.error(f"No data in frame from {str(pmu)}, sleeping for {self.conf.pmu.retry_delay} seconds before retrying (retry count: {retry_count}, retry max: {self.conf.pmu.retry_attempts})")
+                    self.log.error(
+                        f"No data in frame from {pmu!s}, sleeping for {self.conf.pmu.retry_delay} seconds before retrying (retry count: {retry_count}, retry max: {self.conf.pmu.retry_attempts})"
+                    )
                     retry_count += 1
                     time.sleep(self.conf.pmu.retry_delay)
                 elif pmu.protocol == "tcp":
-                    self.log.error(f"Failed to request data {retry_count} times from {str(pmu)}, attempting to rebuild connection...")
+                    self.log.error(
+                        f"Failed to request data {retry_count} times from {pmu!s}, attempting to rebuild connection..."
+                    )
                     pmu.rebuild_tcp_connection()
                     retry_count = 0
                 else:
-                    raise ConnectionError(f"Failed to request data {retry_count} times from {str(pmu)}, terminating")
+                    raise ConnectionError(
+                        f"Failed to request data {retry_count} times from {pmu!s}, terminating"
+                    )
 
                 continue
 
@@ -435,7 +473,9 @@ class OPALRT(Provider):
                 if mm["stat"] != "ok":
                     pmu.log.error(f"Bad/unknown PMU status: {mm['stat']}")
                 if mm["stream_id"] != pmu.pdc_id:
-                    pmu.log.warning(f"Unknown PMU stream ID: {mm['stream_id']} (expected {pmu.pdc_id})")
+                    pmu.log.warning(
+                        f"Unknown PMU stream ID: {mm['stream_id']} (expected {pmu.pdc_id})"
+                    )
 
                 # TODO: support PMU "digital" fields (mm["digital"])
                 #   digital is needed for OpalRT (done, but need to test with live experiment)
@@ -450,8 +490,7 @@ class OPALRT(Provider):
                         for i, ph in enumerate(mm["phasors"])
                     },
                     "digital": {  # digital is a list of breaker values (0,1) representing closed/open
-                        i: {"Breaker Status": cb}
-                        for i, cb in enumerate(mm["digital"])
+                        i: {"Breaker Status": cb} for i, cb in enumerate(mm["digital"])
                     },
                 }
                 pmu.log.info(f"Measurements from frame: {line}")
@@ -528,8 +567,12 @@ class OPALRT(Provider):
                     # TODO: better handling of analog values, this is a hack for the HARMONIE LDRD
                     if mm["analog"]:
                         for i, analog_value in enumerate(mm["analog"]):
-                            self.current_values[f"{pmu.name}_ANALOG_{i+1}.real"] = analog_value
-                            self.current_values[f"{pmu.name}_ANALOG_{i+1}.angle"] = analog_value
+                            self.current_values[f"{pmu.name}_ANALOG_{i + 1}.real"] = (
+                                analog_value
+                            )
+                            self.current_values[f"{pmu.name}_ANALOG_{i + 1}.angle"] = (
+                                analog_value
+                            )
 
                     # TODO: "digital" fields
 
@@ -546,19 +589,23 @@ class OPALRT(Provider):
                         name=str(pmu),
                         csv_dir=Path(self.conf.csv.file_path) / str(pmu),
                         header=header,
-                        filename_base=f"{str(pmu)}",
+                        filename_base=f"{pmu!s}",
                         rows_per_file=self.conf.csv.rows_per_file,
                         max_files=self.conf.csv.max_files,
                     )
 
                 # Write data to CSV file
                 if self.conf.csv.enabled:
-                    csv_row = [line["time"], sceptre_ts.timestamp(), line["freq"], line["dfreq"]]
+                    csv_row = [
+                        line["time"],
+                        sceptre_ts.timestamp(),
+                        line["freq"],
+                        line["dfreq"],
+                    ]
                     for ph in line["phasors"].values():
                         for v in ph.values():
                             csv_row.append(v)
                     pmu.csv_writer.write(csv_row)
-
 
     # ===== Provider API =====
 
@@ -637,9 +684,11 @@ class OPALRT(Provider):
                 msg = f"ERR=Tag '{tag}' is not a configured Modbus register for write to OPALRT"
                 self.log.error(f"{msg} (tags being written: {tags})")
                 return msg
-            elif "w" not in reg.access:
+            if "w" not in reg.access:
                 msg = f"ERR=Modbus Register does not have write permissions for tag '{tag}' for write to OPALRT"
-                self.log.error(f"{msg} (reg.access: {reg.access}, tags being written: {tags})")
+                self.log.error(
+                    f"{msg} (reg.access: {reg.access}, tags being written: {tags})"
+                )
                 return msg
 
             # write the value
@@ -648,11 +697,15 @@ class OPALRT(Provider):
                 self.mb_client.write_register(reg, val)
             except ConnectionException:
                 msg = "ERR=Modbus connection failed for write to OPALRT"
-                self.log.error(f"{msg} (tags being written: {tags}, OPALRT Modbus endpoint: {self.conf.modbus.ip}:{self.conf.modbus.port})")
+                self.log.error(
+                    f"{msg} (tags being written: {tags}, OPALRT Modbus endpoint: {self.conf.modbus.ip}:{self.conf.modbus.port})"
+                )
                 return msg
             except ModbusException as ex:
                 msg = f"ERR=Modbus error occurred for write to OPALRT of tag '{tag}' skipping subsequent tags"
-                self.log.error(f"{msg} (tags being written: {tags}, Modbus error: {ex!s})")
+                self.log.error(
+                    f"{msg} (tags being written: {tags}, Modbus error: {ex!s})"
+                )
                 return msg
             except Exception as ex:
                 msg = f"ERR=Modbus write to OPALRT failed due to exception '{ex.__class__.__name__}'"
@@ -677,7 +730,9 @@ class OPALRT(Provider):
             WRITE=<tag name>:<value>[,<tag name>:<value>,...]
             WRITE={tag name:value,tag name:value}
         """
-        self.log.info(f"Beginning periodic publish (publish rate: {self.conf.publish_rate})")
+        self.log.info(
+            f"Beginning periodic publish (publish rate: {self.conf.publish_rate})"
+        )
 
         while True:
             # mutex to prevent threads from writing while we're reading

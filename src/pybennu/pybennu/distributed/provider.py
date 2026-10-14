@@ -91,10 +91,10 @@ class Provider(ABC):
         """
         if not message:
             return "ERR=Message empty"
-        elif '=' not in message:
+        if "=" not in message:
             return "ERR=Invalid message request"
 
-        split = message.split('=')
+        split = message.split("=")
         op = split[0]
         payload = split[1]
         print("Received %s request with payload %s" % (op, payload))
@@ -106,9 +106,9 @@ class Provider(ABC):
             reply += self.read(payload)
         elif op == "WRITE" or op == "write":
             tags = {}
-            for tag in payload.split(','):
+            for tag in payload.split(","):
                 if tag:
-                    split = tag.split(':')
+                    split = tag.split(":")
                     tags[split[0]] = split[1]
             reply += self.write(tags)
         else:

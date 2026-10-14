@@ -13,7 +13,7 @@ namespace distributed {
 class Client
 {
 public:
-    typedef std::function<void (const std::string& reply)> ReplyHandler;
+    typedef std::function<void(const std::string& reply)> ReplyHandler;
 
     Client(const Endpoint& endpoint);
 
@@ -47,7 +47,6 @@ private:
     zmq::socket_t mSocket;
     ReplyHandler mHandler;
     Endpoint mEndpoint;
-
 };
 
 } // namespace distributed

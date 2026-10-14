@@ -1,9 +1,10 @@
 package modules
 
 import (
+	"testing"
+
 	"bennu/devices/modules/logic"
 	"bennu/devices/modules/memory"
-	"testing"
 
 	"bennu"
 

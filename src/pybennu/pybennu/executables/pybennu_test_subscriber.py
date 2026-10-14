@@ -1,10 +1,9 @@
-"""Generic test pybennu subscriber
-"""
+"""Generic test pybennu subscriber"""
 
 import sys
 
-from pybennu.distributed.subscriber import Subscriber
 import pybennu.distributed.swig._Endpoint as E
+from pybennu.distributed.subscriber import Subscriber
 
 
 class TestSubscriber(Subscriber):
@@ -14,7 +13,7 @@ class TestSubscriber(Subscriber):
 
 def main():
     endpoint = E.new_Endpoint()
-    E.Endpoint_str_set(endpoint, 'udp://239.0.0.1:40000')
+    E.Endpoint_str_set(endpoint, "udp://239.0.0.1:40000")
     sub = TestSubscriber(endpoint)
     sub.run()
 
@@ -24,4 +23,3 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         sys.exit()
-

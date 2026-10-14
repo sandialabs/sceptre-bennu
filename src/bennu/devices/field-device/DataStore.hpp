@@ -10,11 +10,12 @@
 namespace bennu {
 namespace field_device {
 
-template<typename P>
+template <typename P>
 class DataStore
 {
 public:
-    DataStore() {}
+    DataStore()
+    {}
 
     ~DataStore()
     {
@@ -32,7 +33,7 @@ public:
         return mData;
     }
 
-    template<typename T>
+    template <typename T>
     void addData(const P& point, const T& value)
     {
         std::scoped_lock<std::shared_mutex> lock(mMutex);
@@ -40,7 +41,7 @@ public:
         mTimestamps[point] = 0;
     }
 
-    template<typename T>
+    template <typename T>
     bool setData(const P& point, const T& value, const double ts = 0)
     {
         std::scoped_lock<std::shared_mutex> lock(mMutex);
@@ -60,8 +61,7 @@ public:
         return false;
     }
 
-
-    template<typename T>
+    template <typename T>
     T getData(const P& point)
     {
         std::scoped_lock<std::shared_mutex> lock(mMutex);
@@ -94,18 +94,36 @@ public:
 
     void printData()
     {
-        if (mData.size()) { printf("\n============ DATA ============\n"); }
+        if (mData.size())
+        {
+            printf("\n============ DATA ============\n");
+        }
         std::scoped_lock<std::shared_mutex> lock(mMutex);
         for (const auto& kv : mData)
         {
             std::string val;
             std::string type;
-            if (std::holds_alternative<int>(kv.second)) { val = std::to_string(std::get<int>(kv.second)); type = "int"; }
-            else if (std::holds_alternative<double>(kv.second)) { val = std::to_string(std::get<double>(kv.second)); type = "double"; }
-            else if (std::holds_alternative<bool>(kv.second)) { val = std::to_string(std::get<bool>(kv.second)); type = "bool"; }
+            if (std::holds_alternative<int>(kv.second))
+            {
+                val = std::to_string(std::get<int>(kv.second));
+                type = "int";
+            }
+            else if (std::holds_alternative<double>(kv.second))
+            {
+                val = std::to_string(std::get<double>(kv.second));
+                type = "double";
+            }
+            else if (std::holds_alternative<bool>(kv.second))
+            {
+                val = std::to_string(std::get<bool>(kv.second));
+                type = "bool";
+            }
             printf("%s -- %s\n", kv.first.data(), val.data());
         }
-        if (mData.size()) { printf("==============================\n\n"); }
+        if (mData.size())
+        {
+            printf("==============================\n\n");
+        }
     }
 
 private:

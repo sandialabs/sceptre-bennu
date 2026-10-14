@@ -35,9 +35,7 @@ int main(int argc, char** argv)
     {
         std::string program = "A simulation startup for bennu field devices.";
         po::options_description desc(program);
-        desc.add_options()
-            ("help", "show this help menu")
-            ("file", po::value<std::string>(), "Configuration file to load");
+        desc.add_options()("help", "show this help menu")("file", po::value<std::string>(), "Configuration file to load");
 
         po::store(po::parse_command_line(argc, argv, desc), vm);
         po::notify(vm);
@@ -48,7 +46,7 @@ int main(int argc, char** argv)
             return 0;
         }
     }
-    catch(po::error& e)
+    catch (po::error& e)
     {
         std::cerr << "ERROR: " << e.what() << std::endl;
         return 1;

@@ -5,35 +5,35 @@ system models from protobuf format to PTI format and back.
 """
 
 import math
-import sys
 import os
-import importlib
+import sys
+
 from numpy import array
 
-from pypower.int2ext import int2ext
 from pybennu.protobuf.power_transmission_pb2 import PowerSystem
+
 
 class PyPowerConverter:
     """Converter class for pypower power system models."""
+
     def __init__(self):
         self.system = PowerSystem()
 
     def convert(self, model):
         """Execute conversion from protobuf to PTI or vice versa."""
-        if '.pb' in model:
+        if ".pb" in model:
             pti_model = self.pb_to_pti(model)
             return pti_model
-        else:
-            pb_model = self.pti_to_pb(model)
-            return pb_model
+        pb_model = self.pti_to_pb(model)
+        return pb_model
 
     def pb_to_pti(self, model):
         """Convert power system model from protobuf to PTI."""
         try:
-            with open(model, 'rb') as file:
+            with open(model, "rb") as file:
                 self.system.ParseFromString(file.read())
-        except IOError:
-            print('Failed to parse the protobuf file ' + model + '.')
+        except OSError:
+            print("Failed to parse the protobuf file " + model + ".")
 
         self.__initialize_indexes(self.system)
         self.__initialize_data(self.system)
@@ -43,7 +43,7 @@ class PyPowerConverter:
             idx = self.gennamidx[gen.name]
             assert idx is not None
 
-            data = self.ppc['gen'][idx]
+            data = self.ppc["gen"][idx]
             assert data.any()
 
             data[1] = gen.mw
@@ -63,16 +63,16 @@ class PyPowerConverter:
             idx = self.busnamidx[bus]
             assert idx is not None
 
-            if not idx in demands:
-                demands[idx] = {'mw': 0.0, 'mvar': 0.0}
+            if idx not in demands:
+                demands[idx] = {"mw": 0.0, "mvar": 0.0}
 
             if load.active:
-                demands[idx]['mw'] += load.mw
-                demands[idx]['mvar'] += load.mvar
+                demands[idx]["mw"] += load.mw
+                demands[idx]["mvar"] += load.mvar
 
         for bus, demand in demands.items():
-            self.ppc['bus'][bus][2] = demand['mw']
-            self.ppc['bus'][bus][3] = demand['mvar']
+            self.ppc["bus"][bus][2] = demand["mw"]
+            self.ppc["bus"][bus][3] = demand["mvar"]
 
         capacities = {}
 
@@ -83,21 +83,21 @@ class PyPowerConverter:
             idx = self.busnamidx[bus]
             assert idx is not None
 
-            if not idx in capacities:
+            if idx not in capacities:
                 capacities[idx] = 0.0
 
             if shunt.active:
                 capacities[idx] += shunt.nominal_mvar
 
         for bus, capacity in capacities.items():
-            self.ppc['bus'][bus][5] = capacity
+            self.ppc["bus"][bus][5] = capacity
 
         for branch in self.system.branches:
             assert branch.name in self.bchnamidx
             idx = self.bchnamidx[branch.name]
             assert idx is not None
 
-            data = self.ppc['branch'][idx]
+            data = self.ppc["branch"][idx]
             assert data.any()
 
             if branch.active:
@@ -111,12 +111,12 @@ class PyPowerConverter:
         """Convert power system model from PTI to protobuf."""
         system = PowerSystem()
 
-        system.name = 'power_system'
+        system.name = "power_system"
 
         g = {}
-        for idx, data in enumerate(ppc['bus']):
+        for idx, data in enumerate(ppc["bus"]):
             bus = system.buses.add()
-            bus.name = 'bus-' + str(int(data[0]))
+            bus.name = "bus-" + str(int(data[0]))
 
             bus.number = int(data[0])
 
@@ -143,7 +143,7 @@ class PyPowerConverter:
             g[int(data[0])] = 0
             if data[2] != 0 or data[3] != 0:
                 load = system.loads.add()
-                load.name = 'load-1_' + bus.name
+                load.name = "load-1_" + bus.name
                 load.mw = data[2]
                 load.mvar = data[3]
                 load.bus = int(data[0])
@@ -152,18 +152,18 @@ class PyPowerConverter:
 
             if data[5] != 0:
                 shunt = system.shunts.add()
-                shunt.name = 'shunt-1_' + bus.name
+                shunt.name = "shunt-1_" + bus.name
                 shunt.actual_mvar = data[5]
                 shunt.nominal_mvar = data[5]
                 shunt.bus = int(data[0])
                 shunt.active = True
 
-        for idx, data in enumerate(ppc['gen']):
+        for idx, data in enumerate(ppc["gen"]):
             gen = system.generators.add()
-            bus_name = 'bus-' + str(int(data[0]))
+            bus_name = "bus-" + str(int(data[0]))
 
             g[int(data[0])] += 1
-            gen.name = 'generator-' + str(g[int(data[0])]) + '_' + bus_name
+            gen.name = "generator-" + str(g[int(data[0])]) + "_" + bus_name
             gen.bus = int(data[0])
 
             if data[7] <= 0:
@@ -188,13 +188,13 @@ class PyPowerConverter:
                     break
 
         br = 1
-        tempBname='' # This is a quick fix for having 2 // branches between 2 buses - note: this does not extend to more than 2 // branches between 2 buses
-        for idx, data in enumerate(ppc['branch']):
+        tempBname = ""  # This is a quick fix for having 2 // branches between 2 buses - note: this does not extend to more than 2 // branches between 2 buses
+        for idx, data in enumerate(ppc["branch"]):
             branch = system.branches.add()
-            branch.name = 'branch-1_' + str(int(data[0])) + '-' + str(int(data[1]))
+            branch.name = "branch-1_" + str(int(data[0])) + "-" + str(int(data[1]))
             if branch.name == tempBname:
-                branch.name = 'branch-2_' + str(int(data[0])) + '-' + str(int(data[1]))
-            tempBname=branch.name
+                branch.name = "branch-2_" + str(int(data[0])) + "-" + str(int(data[1]))
+            tempBname = branch.name
             if data[10] == 0:
                 branch.active = False
             else:
@@ -256,8 +256,8 @@ class PyPowerConverter:
         self.branches = []
 
         for bus in system.buses:
-            assert bus.HasField('name')
-            assert bus.HasField('number')
+            assert bus.HasField("name")
+            assert bus.HasField("number")
 
             data = [0.0] * 13
             data[0] = bus.number
@@ -270,8 +270,8 @@ class PyPowerConverter:
             self.busidxnam[idx] = bus.name
 
         for gen in system.generators:
-            assert gen.HasField('name')
-            assert gen.HasField('bus')
+            assert gen.HasField("name")
+            assert gen.HasField("bus")
 
             data = [0.0] * 21
             data[0] = gen.bus
@@ -283,8 +283,8 @@ class PyPowerConverter:
             self.genidxnam[idx] = gen.name
 
         for load in system.loads:
-            assert load.HasField('name')
-            assert load.HasField('bus')
+            assert load.HasField("name")
+            assert load.HasField("bus")
 
             idx = self.busnumidx[load.bus]
             nam = self.busidxnam[idx]
@@ -292,8 +292,8 @@ class PyPowerConverter:
             self.busnamlodnam[nam] = load.name
 
         for shunt in system.shunts:
-            assert shunt.HasField('name')
-            assert shunt.HasField('bus')
+            assert shunt.HasField("name")
+            assert shunt.HasField("bus")
 
             idx = self.busnumidx[shunt.bus]
             nam = self.busidxnam[idx]
@@ -301,9 +301,9 @@ class PyPowerConverter:
             self.busnamshtnam[nam] = shunt.name
 
         for branch in system.branches:
-            assert branch.HasField('name')
-            assert branch.HasField('source')
-            assert branch.HasField('target')
+            assert branch.HasField("name")
+            assert branch.HasField("source")
+            assert branch.HasField("target")
 
             data = [0.0] * 13
             data[0] = branch.source
@@ -315,24 +315,28 @@ class PyPowerConverter:
             self.bchnamidx[branch.name] = idx
             self.bchidxnam[idx] = branch.name
 
-        self.ppc = {'version': '2', 'baseMVA': 100.0,
-                    'bus': array(self.buses), 'gen': array(self.gens),
-                    'branch': array(self.branches)}
+        self.ppc = {
+            "version": "2",
+            "baseMVA": 100.0,
+            "bus": array(self.buses),
+            "gen": array(self.gens),
+            "branch": array(self.branches),
+        }
         return self.ppc
 
     def __initialize_data(self, system):
         for bus in system.buses:
-            assert bus.HasField('name')
-            assert bus.HasField('active')
-            assert bus.HasField('slack')
-            assert bus.HasField('voltage')
-            assert bus.HasField('angle')
-            assert bus.HasField('base_kv')
+            assert bus.HasField("name")
+            assert bus.HasField("active")
+            assert bus.HasField("slack")
+            assert bus.HasField("voltage")
+            assert bus.HasField("angle")
+            assert bus.HasField("base_kv")
 
             idx = self.busnamidx[bus.name]
             assert idx is not None
 
-            data = self.ppc['bus'][idx]
+            data = self.ppc["bus"][idx]
             assert data.any()
 
             if bus.active:
@@ -351,32 +355,31 @@ class PyPowerConverter:
             data[11] = 0.9
             data[12] = 1.1
         for load in system.loads:
-            assert load.HasField('bus')
-            assert load.HasField('mw')
-            assert load.HasField('mvar')
+            assert load.HasField("bus")
+            assert load.HasField("mw")
+            assert load.HasField("mvar")
 
             bus = self.busnumidx[load.bus]
             assert bus is not None
-            self.ppc['bus'][bus][2] += load.mw
-            self.ppc['bus'][bus][3] += load.mvar
-
+            self.ppc["bus"][bus][2] += load.mw
+            self.ppc["bus"][bus][3] += load.mvar
 
         for gen in system.generators:
-            assert gen.HasField('name')
-            assert gen.HasField('mw')
-            assert gen.HasField('mvar')
-            assert gen.HasField('mvar_max')
-            assert gen.HasField('mvar_min')
-            assert gen.HasField('voltage')
-            assert gen.HasField('active')
-            assert gen.HasField('bus')
-            assert gen.HasField('mw_max')
-            assert gen.HasField('mw_min')
+            assert gen.HasField("name")
+            assert gen.HasField("mw")
+            assert gen.HasField("mvar")
+            assert gen.HasField("mvar_max")
+            assert gen.HasField("mvar_min")
+            assert gen.HasField("voltage")
+            assert gen.HasField("active")
+            assert gen.HasField("bus")
+            assert gen.HasField("mw_max")
+            assert gen.HasField("mw_min")
 
             idx = self.gennamidx[gen.name]
             assert idx is not None
 
-            data = self.ppc['gen'][idx]
+            data = self.ppc["gen"][idx]
             assert data.any()
 
             data[1] = gen.mw
@@ -389,11 +392,10 @@ class PyPowerConverter:
             if gen.active:
                 data[7] = 1
 
-
                 bus = self.busnumidx[gen.bus]
                 assert bus is not None
-                if self.ppc['bus'][bus][1] != 3:
-                    self.ppc['bus'][bus][1] = 2
+                if self.ppc["bus"][bus][1] != 3:
+                    self.ppc["bus"][bus][1] = 2
             else:
                 data[7] = 0
 
@@ -401,27 +403,27 @@ class PyPowerConverter:
             data[9] = gen.mw_min
 
         for shunt in system.shunts:
-            assert shunt.HasField('bus')
-            assert shunt.HasField('nominal_mvar')
+            assert shunt.HasField("bus")
+            assert shunt.HasField("nominal_mvar")
 
             bus = self.busnumidx[shunt.bus]
             assert bus is not None
-            self.ppc['bus'][bus][5] += shunt.nominal_mvar
+            self.ppc["bus"][bus][5] += shunt.nominal_mvar
 
         for branch in system.branches:
-            assert branch.HasField('name')
-            assert branch.HasField('resistance')
-            assert branch.HasField('reactance')
-            assert branch.HasField('charging')
-            assert branch.HasField('mva_max')
-            assert branch.HasField('turns_ratio')
-            assert branch.HasField('phase_angle')
-            assert branch.HasField('active')
+            assert branch.HasField("name")
+            assert branch.HasField("resistance")
+            assert branch.HasField("reactance")
+            assert branch.HasField("charging")
+            assert branch.HasField("mva_max")
+            assert branch.HasField("turns_ratio")
+            assert branch.HasField("phase_angle")
+            assert branch.HasField("active")
 
             idx = self.bchnamidx[branch.name]
             assert idx is not None
 
-            data = self.ppc['branch'][idx]
+            data = self.ppc["branch"][idx]
             assert data.any()
 
             data[2] = branch.resistance
@@ -443,40 +445,45 @@ class PyPowerConverter:
 
         return self.ppc
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     if len(sys.argv) == 2 and os.path.isfile(sys.argv[1]):
         system_file = str(sys.argv[1])
     else:
         if len(sys.argv) != 2:
-            raise AttributeError('Script takes only 1 argumnet, \
-                                 the power system file you wish to convert.')
+            raise AttributeError(
+                "Script takes only 1 argumnet, \
+                                 the power system file you wish to convert."
+            )
         elif not os.path.isfile(sys.argv[1]):
-            raise IOError('Power system file does not exist.')
-        print('Command line usage: python converter.py </path/to/system/definition/file>')
+            raise OSError("Power system file does not exist.")
+        print(
+            "Command line usage: python converter.py </path/to/system/definition/file>"
+        )
 
     system_filename = os.path.splitext(system_file)[0]
-    system_filename = system_filename.replace('-', '_')
+    system_filename = system_filename.replace("-", "_")
     converter = PyPowerConverter()
 
-    if '.pb' in system_file:
+    if ".pb" in system_file:
         pti = str(converter.convert(system_file))
         try:
-            with open('pti_' + system_filename + ".py", "w") as f:
-                f.write('from numpy import array\n\ndef power_system():\n\n')
-                f.write('\tppc = ' + pti)
-                f.write('\n\n\treturn ppc')
-        except IOError:
-            print("Error opening file " + system_filename + '.')
+            with open("pti_" + system_filename + ".py", "w") as f:
+                f.write("from numpy import array\n\ndef power_system():\n\n")
+                f.write("\tppc = " + pti)
+                f.write("\n\n\treturn ppc")
+        except OSError:
+            print("Error opening file " + system_filename + ".")
         print(pti)
     else:
-        #I'm assuming that the PTI file has a function named
+        # I'm assuming that the PTI file has a function named
         #'power_system' that defines the ppc dictionary.
-        exec('from ' + system_filename + ' import power_system')
+        exec("from " + system_filename + " import power_system")
         ppc = power_system()
         pb_obj = converter.convert(ppc)
         try:
             with open(system_filename + ".pb", "wb") as f:
                 f.write(pb_obj.SerializeToString())
-        except IOError:
-            print('Error opening file ' + system_filename + '.')
+        except OSError:
+            print("Error opening file " + system_filename + ".")
         print(pb_obj)

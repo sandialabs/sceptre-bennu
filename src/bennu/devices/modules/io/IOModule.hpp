@@ -29,7 +29,6 @@ public:
 
 protected:
     std::shared_ptr<field_device::DataManager> mDataManager;
-
 };
 
 } // namespace io
