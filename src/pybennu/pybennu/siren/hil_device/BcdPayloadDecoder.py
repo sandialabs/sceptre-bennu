@@ -53,7 +53,7 @@ def convert_from_bcd(payload):
     place, decimal = 10000000, 0
     for nibble in payload:
         shift = 4
-        for x in range(2):
+        for _x in range(2):
             nibble_2 = (nibble >> shift) & 0xF
             decimal += nibble_2 * place
             # nibble >>= 4
@@ -65,7 +65,7 @@ def convert_from_bcd(payload):
 class BcdPayloadDecoder:
     """
     A utility that helps decode binary coded decimal payload
-    messages from a modbus reponse message. What follows is
+    messages from a modbus response message. What follows is
     a simple example::
 
         decoder = BcdPayloadDecoder(payload)
@@ -91,12 +91,12 @@ class BcdPayloadDecoder:
         been decoded by the rest of the library.
 
         :param registers: The register results to initialize with
-        :param endian: The endianess of the payload
+        :param endian: The endianness of the payload
         :returns: An initialized PayloadDecoder
         """
         if isinstance(registers, list):  # repack into flat binary
             payload = b"".join(pack("!H", x) for x in registers)
-            p_type = type(payload)
+            type(payload)
             return BinaryPayloadDecoder(payload, endian)
         raise ParameterException("Invalid collection of registers supplied")
 
@@ -108,7 +108,7 @@ class BcdPayloadDecoder:
         The coils are treated as a list of bit(boolean) values.
 
         :param coils: The coil results to initialize with
-        :param endian: The endianess of the payload
+        :param endian: The endianness of the payload
         :returns: An initialized PayloadDecoder
         """
         if isinstance(coils, list):

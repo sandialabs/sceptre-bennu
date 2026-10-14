@@ -9,7 +9,6 @@ from pymodbus.constants import Endian
 from pymodbus.payload import BinaryPayloadDecoder
 
 from pybennu.siren.hil_device.BcdPayloadDecoder import BcdPayloadDecoder
-from pybennu.siren.hil_device.BcdPayloadEncoder import BcdPayloadEncoder
 from pybennu.siren.hil_device.hil_device import HIL_Device
 
 """
@@ -23,9 +22,9 @@ mw: Watts
 """
 from pymodbus.client.sync import ModbusTcpClient
 import time
- 
+
 SEL = '10.113.5.110'
- 
+
 client = ModbusTcpClient(SEL)
 client.connect()
 state = False
@@ -169,39 +168,18 @@ class modbus(HIL_Device):
             except Exception as e:
                 print(f"ERROR {e}")
                 self.logger.error("Failed to read holding register")
-                result = None
         print("End")
 
         return
 
     def write_analog(self, io_point, volts):
         return
-        bcd_encode = BcdPayloadEncoder()
-        bcd_encode.add_number(152)
-        payload = bcd_encode.build()
-        print(f"Write Payload: {payload}")
-
-        register = 2625  # self.config[io_point]["register"]
-        value = payload  # volts
-
-        """
-        if 'bcd' in self.config[io_point] and self.config[io_point]['bcd']:
-            value = self.convert_to_bcd(int(volts))
-            print(f'*****convert to bcd**** {volts} -> {value}')
-        
-        modbus_result = self.modbus_client.write_registers(register, int(value), unit=self.device_unit)
-        """
-        # Abate modbus_result = self.modbus_client.write_registers(register, payload, unit=self.device_unit)
-        # Abate print(f'Write register result = {modbus_result}')
-        print(
-            f"Write Register: IO_Point - {io_point}, Register - {register}, Value - {value}"
-        )
 
     def read_digital(self, io_point):
         raise NotImplementedError
 
     def write_digital(self, io_point, volts):
-        register = self.config[io_point]["register"]
+        self.config[io_point]["register"]
         # modbus_result = self.modbus_client.write_coil(register, volts, unit=self.device_unit)
         # print(f'Write coil result = {modbus_result}')
         # print(f'Write Coil: IO_Point - {io_point}, Register - {register}, Value - {volts}')
@@ -222,7 +200,7 @@ class modbus(HIL_Device):
             decimal /= 10
             place += 4
         return bcd
-    
+
     def convert_from_bcd(self, bcd):
         """ Converts a bcd value to a decimal value
         :param value: The value to unpack from bcd

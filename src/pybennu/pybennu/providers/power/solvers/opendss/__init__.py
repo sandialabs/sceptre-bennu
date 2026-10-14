@@ -266,8 +266,8 @@ class OpenDSS(Provider):
                 # archive format based on the filename extension, into
                 # the same directory the archive lives.
                 shutil.unpack_archive(filename, directory)
-            except ValueError:
-                raise RuntimeError("unknown format used for config archive")
+            except ValueError as ex:
+                raise RuntimeError("unknown format used for config archive") from ex
 
             # Assume the archive was created with a directory that
             # has the same name as the archive itself. For example,
@@ -296,7 +296,7 @@ class OpenDSS(Provider):
         # used to map circuit elements to their names
         self.elements = {}
 
-        # initialze the system under test using data from OpenDSS
+        # initialize the system under test using data from OpenDSS
         self.__create()
 
         # enable/disable published data jitter
@@ -2205,7 +2205,7 @@ class OpenDSS(Provider):
                     bus2_phases = list(
                         map(int, dss.Properties.Value("2").split(".")[1:])
                     )
-                    element_phases = [i for i in range(1, len(bus2_phases) + 1)]
+                    element_phases = list(range(1, len(bus2_phases) + 1))
 
             for phase in dss.CktElement.NodeOrder():
                 if phase == 0:
@@ -2509,5 +2509,4 @@ class OpenDSS(Provider):
         if not self.jitter:
             return 1.0
 
-        rand_num = random.uniform(0.99, 1.01)
-        return rand_num
+        return random.uniform(0.99, 1.01)

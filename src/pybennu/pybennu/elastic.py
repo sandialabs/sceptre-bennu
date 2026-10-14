@@ -216,7 +216,7 @@ class ElasticPusher:
         """
         Sends data to Elasticsearch using the Elasticsearch Bulk API.
         """
-        # NOTE: this results in insane amount of log utput when running normally,
+        # NOTE: this results in insane amount of log output when running normally,
         # uncomment at your own risk (or if doing serious debugging).
         # self.log.debug(f"Pushing {len(messages)} docs to ES server at {self.conf.elastic.host}")
 
@@ -256,7 +256,7 @@ class ElasticPusher:
         try:
             result = helpers.bulk(es, actions, request_timeout=10)
             if result:
-                # NOTE: this results in insane amount of log utput when running normally,
+                # NOTE: this results in insane amount of log output when running normally,
                 # uncomment at your own risk (or if doing serious debugging).
                 # self.log.debug(f"Finished pushing {len(actions)} docs to ES")
                 return True
@@ -264,7 +264,7 @@ class ElasticPusher:
         except helpers.BulkIndexError as ex:
             self.log.exception("Failed Elasticsearch bulk ingest")
             self.log.error(f"** Errors **\n{pformat(ex.errors)}")
-            raise RuntimeError("errors happened during elastic bulk ingest")
+            raise RuntimeError("errors happened during elastic bulk ingest") from ex
         except Exception:
             self.log.exception("Unknown error during Elasticsearch bulk ingest")
 

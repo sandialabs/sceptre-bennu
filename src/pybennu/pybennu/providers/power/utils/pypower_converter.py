@@ -22,10 +22,8 @@ class PyPowerConverter:
     def convert(self, model):
         """Execute conversion from protobuf to PTI or vice versa."""
         if ".pb" in model:
-            pti_model = self.pb_to_pti(model)
-            return pti_model
-        pb_model = self.pti_to_pb(model)
-        return pb_model
+            return self.pb_to_pti(model)
+        return self.pti_to_pb(model)
 
     def pb_to_pti(self, model):
         """Convert power system model from protobuf to PTI."""
@@ -114,7 +112,7 @@ class PyPowerConverter:
         system.name = "power_system"
 
         g = {}
-        for idx, data in enumerate(ppc["bus"]):
+        for _idx, data in enumerate(ppc["bus"]):
             bus = system.buses.add()
             bus.name = "bus-" + str(int(data[0]))
 
@@ -158,7 +156,7 @@ class PyPowerConverter:
                 shunt.bus = int(data[0])
                 shunt.active = True
 
-        for idx, data in enumerate(ppc["gen"]):
+        for _idx, data in enumerate(ppc["gen"]):
             gen = system.generators.add()
             bus_name = "bus-" + str(int(data[0]))
 
@@ -189,7 +187,7 @@ class PyPowerConverter:
 
         br = 1
         tempBname = ""  # This is a quick fix for having 2 // branches between 2 buses - note: this does not extend to more than 2 // branches between 2 buses
-        for idx, data in enumerate(ppc["branch"]):
+        for _idx, data in enumerate(ppc["branch"]):
             branch = system.branches.add()
             branch.name = "branch-1_" + str(int(data[0])) + "-" + str(int(data[1]))
             if branch.name == tempBname:
@@ -452,7 +450,7 @@ if __name__ == "__main__":
     else:
         if len(sys.argv) != 2:
             raise AttributeError(
-                "Script takes only 1 argumnet, \
+                "Script takes only 1 argument, \
                                  the power system file you wish to convert."
             )
         elif not os.path.isfile(sys.argv[1]):
@@ -479,7 +477,7 @@ if __name__ == "__main__":
         # I'm assuming that the PTI file has a function named
         #'power_system' that defines the ppc dictionary.
         exec("from " + system_filename + " import power_system")
-        ppc = power_system()
+        ppc = power_system()  # noqa: F821 (defined by exec above)
         pb_obj = converter.convert(ppc)
         try:
             with open(system_filename + ".pb", "wb") as f:

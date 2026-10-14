@@ -20,10 +20,12 @@ Examples:
 """
 
 import argparse
+import logging
 import os
 import signal
 import sys
 import threading
+import time
 from configparser import ConfigParser, NoOptionError
 from datetime import datetime
 
@@ -242,19 +244,21 @@ class GroundTruthMonitor(Daemon, Subscriber):
 
     def push_updates_to_elastic(self):
         while True:
-            if self.new_data:
-                with self.__lock:
-                    messages = list(self.new_data)
-                    self.new_data = []
-                index = "bennu-" + datetime.now().strftime("%Y.%m.%d")
-                actions = [
-                    {"_index": index, "type": "doc", "_source": message}
-                    for message in messages
-                ]
-                try:
-                    res = helpers.bulk(self.__es, actions, request_timeout=30)
-                except:
-                    print("something wrong with bulk push to es")
+            if not self.new_data:
+                time.sleep(0.5)
+                continue
+            with self.__lock:
+                messages = list(self.new_data)
+                self.new_data = []
+            index = "bennu-" + datetime.now().strftime("%Y.%m.%d")
+            actions = [
+                {"_index": index, "type": "doc", "_source": message}
+                for message in messages
+            ]
+            try:
+                helpers.bulk(self.__es, actions, request_timeout=30)
+            except Exception:
+                logging.exception("something wrong with bulk push to es")
 
     def __generate_id(self, device):
         """Generate an elasticsearch doc ID
@@ -273,6 +277,9 @@ class GroundTruthMonitor(Daemon, Subscriber):
 def main():
     """Parse args and start GroundTruthMonitor as a daemon"""
 
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
+    )
     parser = argparse.ArgumentParser(description="SCEPTRE Ground Truth Monitor")
     parser.add_argument(
         "-c", "--config-file", dest="config_file", help="Config file to load (.ini)"

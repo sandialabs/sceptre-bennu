@@ -9,6 +9,7 @@ from pybennu.providers.utils.helics_helper import HelicsFederate
 
 logger = logging.getLogger("helics")
 logger.addHandler(logging.StreamHandler())
+logger.propagate = False  # own handler; avoid duplicate lines via root
 logger.setLevel(logging.INFO)
 
 
@@ -79,6 +80,7 @@ class ElectricPowerService(HelicsFederate):
                 if tag in self.state:
                     return self.state[tag]
                 return False if self.get_type(tag) == "bool" else 0
+        return None
 
 
 def main():
@@ -97,6 +99,10 @@ def main():
     )
 
     args = parser.parse_args()
+    logging.basicConfig(
+        level=logging.DEBUG if args.debug else logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
     ep = ElectricPowerService(args.config, args.debug)
     ep.run()
 

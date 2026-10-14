@@ -50,12 +50,13 @@ class Helics(Provider, HelicsFederate):
                 if tag in self.state:
                     return self.state[tag]
                 return False if self.get_type(tag) == "bool" else 0
+        return None
 
     ##############################################################
     ##############  bennu provider methods  ######################
     ##############################################################
     def query(self):
-        return f"ACK={','.join([tag for tag in self.tags])}"
+        return f"ACK={','.join(list(self.tags))}"
 
     def read(self, tag):
         msg = ""

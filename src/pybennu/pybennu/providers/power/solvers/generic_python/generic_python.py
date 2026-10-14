@@ -20,7 +20,7 @@ from pybennu.providers.power.solvers.generic_python.base_simulation import (
 
 
 class GenericPython(Provider):
-    """A genearic python implementation of a discrete event simulation."""
+    """A generic python implementation of a discrete event simulation."""
 
     def __init__(
         self,
@@ -45,15 +45,16 @@ class GenericPython(Provider):
         self.create()
 
     def load_simulation(self, simulation_script: str) -> BaseSimulation:
-        """Load the specific sumulation that you want to run. Must inherit from BaseSimulation"""
+        """Load the specific simulation that you want to run. Must inherit from BaseSimulation"""
         spec = importlib.util.spec_from_file_location("simulation", simulation_script)
         simulation_dir = os.path.dirname(simulation_script)
         sys.path.append(simulation_dir)
         module = importlib.util.module_from_spec(spec)
         try:
             spec.loader.exec_module(module)
-        except Exeption as e:
+        except Exception as e:
             print(f"Failed to load module {simulation_dir}: {e}")
+            raise
 
         if not hasattr(module, "Simulation"):
             print(f'The module {simulation_dir} does not have a "Simulation" class.')
@@ -87,8 +88,7 @@ class GenericPython(Provider):
                     for tag in self.elements[io][tag_type]:
                         # Add tag to list of tags
                         tags += f"{tag},"
-        msg = f"ACK={tags}"
-        return msg
+        return f"ACK={tags}"
 
     def read(self, tag: str) -> str:
         """Implements the read command interface for receiving the Py
@@ -225,7 +225,7 @@ class GenericPython(Provider):
         # Iterate through all the tags in sim_state
         for io in sim_state:
             for tag_type in sim_state[io]:
-                for tag, value in sim_state[io][tag_type].items():
+                for tag, _value in sim_state[io][tag_type].items():
                     if not (len(tag.split(".")) == 2):
                         self.valid_tag_format = False
 

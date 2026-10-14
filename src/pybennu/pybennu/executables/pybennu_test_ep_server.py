@@ -1,6 +1,7 @@
 """Electric Power test pybennu provider."""
 
 import argparse
+import logging
 import sys
 import threading
 import time
@@ -86,7 +87,7 @@ class ElectricPowerService(Provider):
 
     # Must return "ACK=<success message>" or "ERR=<error message>"
     def write(self, tag_dict):
-        tag, value = list(tag_dict.items())[0]
+        tag, value = next(iter(tag_dict.items()))
         if self.__debug:
             print(
                 "ElectricPowerService::write ---- received write for tag %s -- %s"
@@ -135,7 +136,10 @@ def main():
     )
 
     args = parser.parse_args()
-    debug = args.debug
+    logging.basicConfig(
+        level=logging.DEBUG if args.debug else logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
     server_endpoint = E.new_Endpoint()
     publish_endpoint = E.new_Endpoint()
     E.Endpoint_str_set(server_endpoint, args.server_endpoint)

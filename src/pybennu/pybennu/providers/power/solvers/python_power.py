@@ -117,7 +117,7 @@ class PyPower(Provider):
             g[int(data[0])] += 1
 
             gen_name = "generator-" + str(g[int(data[0])]) + "_" + bus_name
-            gen_bus = int(data[0])
+            int(data[0])
 
             if data[7] <= 0:
                 gen_active = False
@@ -268,10 +268,9 @@ class PyPower(Provider):
         with self.__lock:
             for dev_type in self.elements:
                 for dev_name, fields in self.elements[dev_type].items():
-                    for field, value in fields.items():
+                    for field, _value in fields.items():
                         tags += dev_name + "." + field + ","
-        msg = f"ACK={tags}"
-        return msg
+        return f"ACK={tags}"
 
     def read(self, tag):
         """Implements the read command interface for receiving the PyPower
@@ -283,7 +282,7 @@ class PyPower(Provider):
             print("Processing read request")
         try:
             element, field = tag.strip("\x00").split(".")
-            devtype, id_ = element.split("-", 1)
+            devtype, _id = element.split("-", 1)
             if devtype == "generator":
                 devtype = "gen"
             with self.__lock:
@@ -304,6 +303,7 @@ class PyPower(Provider):
             print("Processing write command")
 
         try:
+            updates = []
             for tag, value in tags.items():
                 if self.debug:
                     print(
@@ -327,9 +327,15 @@ class PyPower(Provider):
                 else:
                     val = float(value)
 
-                with self.__lock:
+                self.elements[devtype][
+                    element
+                ]  # unknown element -> KeyError before anything is applied
+                updates.append((devtype, element, field, val))
+
+            with self.__lock:
+                for devtype, element, field, val in updates:
                     self.elements[devtype][element][field] = val
-                    self._dict_to_pcf()
+                self._dict_to_pcf()
 
             self.__solve()
 

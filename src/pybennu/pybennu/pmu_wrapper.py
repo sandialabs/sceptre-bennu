@@ -121,7 +121,7 @@ class PMU:
         def _process_name(cn: str) -> str:
             """Strip 'PHASOR CH *' from channel names, so we get a nice 'VA', 'IA', etc."""
             return re.sub(
-                r"PHASOR CH \d\:", "", cn.strip(), re.IGNORECASE | re.ASCII
+                r"PHASOR CH \d\:", "", cn.strip(), flags=re.IGNORECASE | re.ASCII
             ).strip()
 
         self.channel_names = []  # type: List[str]

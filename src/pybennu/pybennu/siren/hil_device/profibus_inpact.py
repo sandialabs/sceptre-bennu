@@ -58,7 +58,7 @@ class ProfibusInpact(HITL_Device):
         raise NotImplementedError
 
     def read_digital(self, io_point_label):
-        slot, datatype, size, channel = self.parse_label(io_point_label)
+        slot, datatype, _size, channel = self.parse_label(io_point_label)
         slot_data = bitarray(endian="little")
         slot_data.frombytes(self.slots[slot].read())
         if datatype == "I":
@@ -69,7 +69,7 @@ class ProfibusInpact(HITL_Device):
         return slot_data[channel]
 
     def write_digital(self, io_point_label, value):
-        slot, datatype, size, channel = self.parse_label(io_point_label)
+        slot, datatype, _size, channel = self.parse_label(io_point_label)
         slot_data = bitarray(endian="little")
         slot_data.frombytes(self.slots[slot].read())
         if datatype == "I":

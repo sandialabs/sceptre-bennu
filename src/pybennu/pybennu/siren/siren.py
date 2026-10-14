@@ -81,7 +81,7 @@ class siren_start:
     This way when Ctrl-C is pressed quitting the main thread the
     individual device threads will be closed.
 
-    If this isn't used and deamon = false, the program exits immediately
+    If this isn't used and daemon = false, the program exits immediately
     after starting.
 
     If this isn't used and daemon = true, multiple errors are thrown when
@@ -234,7 +234,7 @@ class siren(Subscriber, Client):
                 split = point.split(":")
 
                 # Point is empty, cutoff, or malformed
-                if len(split) < 2 or any([len(s) == 0 for s in split]):
+                if len(split) < 2 or any(len(s) == 0 for s in split):
                     continue
 
                 tag = split[0]
@@ -253,7 +253,7 @@ class siren(Subscriber, Client):
                 #    sensor_range[0] = label[1]
                 #    sensor_range[1] = label[2]
                 #    label = label[0]
-                # Find an approprate scaled voltage to output
+                # Find an appropriate scaled voltage to output
                 # voltage = virtualsensor(data, sensor_range[0], sensor_range[1], 0, 3.2)
 
                 if value.lower() == "false":
@@ -280,6 +280,7 @@ class siren(Subscriber, Client):
         )  # before polling the devices sleep so that siren has a chance to get the values from the provider
         filters = self.device_config.to_endpoint.keys()
         while self.run_thread:
+            updates = {}
             with self.__lock:
                 for _filter in filters:
                     label = self.device_config.to_endpoint[_filter]
@@ -298,8 +299,7 @@ class siren(Subscriber, Client):
                                 self.device.logger.log(
                                     LEVELS["debug"], f"TO PROVIDER {label}:{data}"
                                 )
-                                with contextlib.redirect_stdout(None):
-                                    self.write_analog_point(_filter, data)
+                                updates[_filter] = data
                     elif "digital" in label:
                         data = self.device.read_digital(label)
                         if data is not None:
@@ -311,8 +311,7 @@ class siren(Subscriber, Client):
                                 self.device.logger.log(
                                     LEVELS["debug"], f"TO PROVIDER {label}:{data}"
                                 )
-                                with contextlib.redirect_stdout(None):
-                                    self.write_digital_point(_filter, data)
+                                updates[_filter] = bool(data)
                     elif "flip_flop" in label:
                         data = self.device.read_flip_flop(label)
                         if data is not None:
@@ -324,11 +323,13 @@ class siren(Subscriber, Client):
                                 self.device.logger.log(
                                     LEVELS["debug"], f"TO PROVIDER {label}:{data}"
                                 )
-                                with contextlib.redirect_stdout(None):
-                                    self.write_digital_point(_filter, data)
+                                updates[_filter] = bool(data)
                     else:
                         raise NotImplementedError
 
+            if updates:
+                with contextlib.redirect_stdout(None):
+                    self.write_points(updates)
             sleep(self.device_config.polling_time)
 
     def _to_hardware(self, field, label, data):

@@ -6,11 +6,6 @@ from xml.etree.ElementTree import Element, SubElement
 def to_xml(message):
     """Convert a Protobuf PowerSystem message to XML"""
 
-    buses = dict()
-    gen_ids = dict()
-    load_ids = dict()
-    shunt_ids = dict()
-
     root = Element("Scenario")
     ul = Element("UmbraLoad")
     ul.text = "powerSystem"

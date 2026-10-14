@@ -20,7 +20,7 @@ def convert_to_bcd(decimal):
     """
     place, bcd = 0, 0
     while decimal > 0:
-        type_d = type(decimal)
+        type(decimal)
         nibble = decimal % 10
         bcd += nibble << place
         decimal = int(decimal / 10)
@@ -54,7 +54,7 @@ class BcdPayloadEncoder(IPayloadBuilder):
     def __init__(self, payload=None, endian=Endian.Little):
         """Initialize a new instance of the payload builder
         :param payload: Raw payload data to initialize with
-        :param endian: The endianess of the payload
+        :param endian: The endianness of the payload
         """
         self._payload = payload or []
         self._endian = endian
