@@ -53,7 +53,7 @@ struct Dto
 
     Dto(std::string dto)
     {
-        size_t pos = dto.find(":");
+        size_t pos = dto.find(':');
         if (std::string::npos == pos)
         {
             std::cout << "Error: Shared memory DTO format invalid!" << std::endl;
@@ -61,16 +61,16 @@ struct Dto
             std::exit(EXIT_ERROR);
         }
         tag = dto.substr(0, pos);
-        dto.erase(0, pos + 1); // Remove up to, inluding, the first ":" from dto
+        dto.erase(0, pos + 1); // Remove up to, including, the first ":" from dto
 
-        pos = tag.find(".");
+        pos = tag.find('.');
         if (std::string::npos != pos)
         {
             field = tag.substr(pos + 1); // Get field name AFTER "." with +1
             tag = tag.substr(0, pos);
         }
 
-        pos = dto.find(":");
+        pos = dto.find(':');
         if (std::string::npos == pos)
         {
             std::cout << "Error: Shared memory DTO format invalid!" << std::endl;
@@ -78,7 +78,7 @@ struct Dto
             std::exit(EXIT_ERROR);
         }
         type = dto.substr(0, pos);
-        dto.erase(0, pos + 1); // Remove up to, inluding, the second ":" from dto
+        dto.erase(0, pos + 1); // Remove up to, including, the second ":" from dto
 
         data = dto; // data is the remaining part of the dto
     }
@@ -251,7 +251,7 @@ public:
             std::string tag{it.first};
             std::string value{it.second};
 
-            // recieve write and format newDto
+            // receive write and format newDto
             if (mDebug)
             {
                 std::cout << "BennuSimulinkProvider::write ---- received write for tag: " << tag << " -- " << value << std::endl;
@@ -269,8 +269,12 @@ public:
                 dataType = "DOUBLE";
             }
 
-            char* newDto = (char*)calloc(MAX_MSG_LEN, sizeof(char));
-            sprintf(newDto, "%s:%s:%s", tag.data(), dataType.data(), dataStr.data());
+            char newDto[MAX_MSG_LEN] = {0};
+            if (snprintf(newDto, sizeof(newDto), "%s:%s:%s", tag.data(), dataType.data(), dataStr.data()) >= (int)sizeof(newDto))
+            {
+                result += "ERR=Tag or value too long for simulink provider";
+                break;
+            }
             if (mDebug)
             {
                 std::cout << "BennuSimulinkProvider::write ---- updating: " << newDto << std::endl;

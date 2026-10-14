@@ -2,11 +2,14 @@
 #define BENNU_FIELDDEVICE_DATAMANAGER_HPP
 
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <mutex> // std::scoped_lock
 #include <shared_mutex>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "bennu/devices/field-device/DataStore.hpp"
@@ -152,14 +155,27 @@ public:
         mExternalData->printData();
     }
 
+    // points owned by some OutputModule; set at config load, before any threads run
+    void addOutputPoint(const std::string& point)
+    {
+        mOutputPoints.insert(point);
+    }
+
+    bool isOutputPoint(const std::string& point) const
+    {
+        return mOutputPoints.count(point) > 0;
+    }
+
     void addBinaryTag(const std::string& tag)
     {
         mBinaryTags.push_back(tag);
+        mBinarySet.insert(tag);
     }
 
     void addAnalogTag(const std::string& tag)
     {
         mAnalogTags.push_back(tag);
+        mAnalogSet.insert(tag);
     }
 
     void addUpdatedBinaryTag(const std::string& tag, bool status)
@@ -194,6 +210,18 @@ public:
         return mUpdatedAnalogTags;
     }
 
+    std::map<std::string, bool> snapshotUpdatedBinaryTags()
+    {
+        std::lock_guard<std::shared_mutex> lock(mBinaryMutex);
+        return mUpdatedBinaryTags;
+    }
+
+    std::map<std::string, double> snapshotUpdatedAnalogTags()
+    {
+        std::lock_guard<std::shared_mutex> lock(mAnalogMutex);
+        return mUpdatedAnalogTags;
+    }
+
     bool isUpdatedBinaryTag(const std::string& tag)
     {
         std::scoped_lock<std::shared_mutex> lock(mBinaryMutex);
@@ -206,44 +234,58 @@ public:
         return mUpdatedAnalogTags.count(tag);
     }
 
-    //  Update any internal-tag data values
+    // Apply queued internal-tag updates, then drop them (external tags stay for OutputModule).
+    // Lock is held throughout, so the erased value is exactly the one applied.
     void updateInternalData()
     {
         {
             std::scoped_lock<std::shared_mutex> lock(mBinaryMutex);
-            for (auto& t : mUpdatedBinaryTags)
+            for (auto it = mUpdatedBinaryTags.begin(); it != mUpdatedBinaryTags.end();)
             {
-                if (mInternalData->hasData(t.first))
+                if (mInternalData->setData<bool>(it->first, it->second))
                 {
-                    mInternalData->setData<bool>(t.first, t.second);
+                    it = mUpdatedBinaryTags.erase(it);
+                }
+                else
+                {
+                    ++it;
                 }
             }
         }
         {
             std::scoped_lock<std::shared_mutex> lock(mAnalogMutex);
-            for (auto& t : mUpdatedAnalogTags)
+            for (auto it = mUpdatedAnalogTags.begin(); it != mUpdatedAnalogTags.end();)
             {
-                if (mInternalData->hasData(t.first))
+                if (mInternalData->setData<double>(it->first, it->second))
                 {
-                    mInternalData->setData<double>(t.first, t.second);
+                    it = mUpdatedAnalogTags.erase(it);
+                }
+                else
+                {
+                    ++it;
                 }
             }
         }
     }
 
-    void deleteBinaryTag(const std::string& tag)
+    // erase only if the value is still the one that was written (a newer update stays queued)
+    void deleteBinaryTag(const std::string& tag, bool expected)
     {
+        std::lock_guard<std::shared_mutex> lock(mBinaryMutex);
+        auto it = mUpdatedBinaryTags.find(tag);
+        if (it != mUpdatedBinaryTags.end() && it->second == expected)
         {
-            std::lock_guard<std::shared_mutex> lock(mBinaryMutex);
-            mUpdatedBinaryTags.erase(tag);
+            mUpdatedBinaryTags.erase(it);
         }
     }
 
-    void deleteAnalogTag(const std::string& tag)
+    void deleteAnalogTag(const std::string& tag, double expected)
     {
+        std::lock_guard<std::shared_mutex> lock(mAnalogMutex);
+        auto it = mUpdatedAnalogTags.find(tag);
+        if (it != mUpdatedAnalogTags.end() && it->second == expected)
         {
-            std::lock_guard<std::shared_mutex> lock(mAnalogMutex);
-            mUpdatedAnalogTags.erase(tag);
+            mUpdatedAnalogTags.erase(it);
         }
     }
 
@@ -261,12 +303,12 @@ public:
 
     bool isBinary(const std::string& tag)
     {
-        return std::find(mBinaryTags.begin(), mBinaryTags.end(), tag) != mBinaryTags.end();
+        return mBinarySet.count(tag) != 0;
     }
 
     bool isAnalog(const std::string& tag)
     {
-        return std::find(mAnalogTags.begin(), mAnalogTags.end(), tag) != mAnalogTags.end();
+        return mAnalogSet.count(tag) != 0;
     }
 
 private:
@@ -276,6 +318,9 @@ private:
     std::map<std::string, std::string> mTagToPoint;        // tag ==> point
     std::vector<std::string> mBinaryTags;
     std::vector<std::string> mAnalogTags;
+    std::unordered_set<std::string> mBinarySet; // O(1) isBinary/isAnalog; vectors keep order
+    std::unordered_set<std::string> mAnalogSet;
+    std::unordered_set<std::string> mOutputPoints;
     std::map<std::string, bool> mUpdatedBinaryTags;
     std::map<std::string, double> mUpdatedAnalogTags;
     std::shared_mutex mBinaryMutex;

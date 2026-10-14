@@ -69,19 +69,47 @@ struct Endpoint
 /*
  * Split a string using delimiter. Returns vector of strings.
  */
-inline std::vector<std::string> split(std::string& phrase, std::string& delimiter)
+inline std::vector<std::string> split(const std::string& phrase, const std::string& delimiter)
 {
     std::vector<std::string> list;
-    size_t pos = 0;
-    std::string token;
-    while ((pos = phrase.find(delimiter)) != std::string::npos)
+    size_t start = 0, pos;
+    while ((pos = phrase.find(delimiter, start)) != std::string::npos)
     {
-        token = phrase.substr(0, pos);
-        list.push_back(token);
-        phrase.erase(0, pos + delimiter.length());
+        list.push_back(phrase.substr(start, pos - start));
+        start = pos + delimiter.length();
     }
-    list.push_back(phrase);
+    list.push_back(phrase.substr(start));
     return list;
+}
+
+/*
+ * Split a comma-delimited message into chunks of "part," pieces, each
+ * shorter than mtu where possible. Empty parts are skipped; a single part
+ * longer than mtu is returned alone.
+ */
+inline std::vector<std::string> chunkMessage(const std::string& msg, size_t mtu)
+{
+    std::vector<std::string> chunks;
+    std::string chunk;
+    for (const auto& p : split(msg, ","))
+    {
+        if (p.empty())
+        {
+            continue;
+        }
+        std::string part = p + ",";
+        if (!chunk.empty() && chunk.length() + part.length() >= mtu)
+        {
+            chunks.push_back(chunk);
+            chunk.clear();
+        }
+        chunk += part;
+    }
+    if (!chunk.empty())
+    {
+        chunks.push_back(chunk);
+    }
+    return chunks;
 }
 
 } // namespace distributed

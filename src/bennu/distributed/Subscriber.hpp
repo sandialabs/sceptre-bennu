@@ -18,22 +18,18 @@ class Subscriber
 public:
     typedef std::function<void(std::string& data)> SubscriptionHandler;
 
-    Subscriber(const Endpoint& endpoint);
+    // Handler is fixed at construction: the receive thread starts in the ctor.
+    Subscriber(const Endpoint& endpoint, SubscriptionHandler handler);
 
     ~Subscriber();
-
-    void setHandler(SubscriptionHandler handler)
-    {
-        mHandler = handler;
-    }
 
     void run();
 
 private:
-    void defaultHandler(std::string& data);
     zmq::socket_t mSocket;
     const std::string mGroup;
     SubscriptionHandler mHandler;
+    uint64_t mDatagrams = 0; // receive-thread only
     std::shared_ptr<std::thread> mSubscriberThread;
 };
 

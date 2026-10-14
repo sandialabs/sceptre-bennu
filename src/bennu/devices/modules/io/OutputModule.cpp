@@ -1,5 +1,7 @@
 #include "OutputModule.hpp"
 
+#include "bennu/utility/Log.hpp"
+
 namespace bennu {
 namespace io {
 
@@ -11,50 +13,93 @@ OutputModule::OutputModule() :
 void OutputModule::start(const distributed::Endpoint& endpoint)
 {
     mClient.reset(new distributed::Client(endpoint));
+    setSender([this](const std::string& p) { return mClient->writePoints(p); },
+              [this]() { return mClient->replied(); });
 }
 
 void OutputModule::scanOutputs()
 {
-    auto bTags = mDataManager->getUpdatedBinaryTags();
-    std::vector<std::string> bTagsToDelete;
-    for (auto& t : bTags)
+    // snapshot under lock; tags without a point (internal) stay in the map for updateInternalData
+    std::vector<std::pair<std::string, bool>> bins;
+    std::vector<std::pair<std::string, double>> anals;
+    std::vector<std::string> binTags, analTags;
+    std::string point;
+    for (auto& t : mDataManager->snapshotUpdatedBinaryTags())
     {
-        std::string point;
-        if (mDataManager->getPointByTag(t.first, point))
+        if (mDataManager->getPointByTag(t.first, point) && sends(point))
         {
-            // write to provider
-            mClient->writePoint(point, t.second);
-            // write to rtu datastore
-            mDataManager->setDataByTag<bool>(t.first, t.second);
-            // mark tag for deletion
-            bTagsToDelete.push_back(t.first);
+            bins.emplace_back(point, t.second);
+            binTags.push_back(t.first);
         }
     }
-    // delete binary tags
-    for (std::string tag : bTagsToDelete)
+    for (auto& t : mDataManager->snapshotUpdatedAnalogTags())
     {
-        mDataManager->deleteBinaryTag(tag);
+        if (mDataManager->getPointByTag(t.first, point) && sends(point))
+        {
+            anals.emplace_back(point, t.second);
+            analTags.push_back(t.first);
+        }
+    }
+    if (bins.empty() && anals.empty())
+    {
+        return;
     }
 
-    auto aTags = mDataManager->getUpdatedAnalogTags();
-    std::vector<std::string> aTagsToDelete;
-    for (auto& t : aTags)
+    if (!mSend(distributed::Client::buildWritePayload(bins, anals)))
     {
-        std::string point;
-        if (mDataManager->getPointByTag(t.first, point))
+        // No reply at all = outage: leave maps untouched and retry next cycle (don't fan out, each
+        // send can block ~15 s). An ERR reply can reject a whole batch for one bad point, so retry
+        // per point; points the provider rejects are dropped, as before batching.
+        bool outage = !mReplied();
+        std::vector<std::string> rejected;
+        if (!outage && bins.size() + anals.size() == 1)
         {
-            // write to provider
-            mClient->writePoint(point, t.second);
-            // write to rtu datastore
-            mDataManager->setDataByTag<double>(t.first, t.second);
-            // mark tag for deletion
-            aTagsToDelete.push_back(t.first);
+            rejected.push_back(bins.empty() ? anals[0].first : bins[0].first);
+        }
+        else if (!outage)
+        {
+            auto tryOne = [&](const std::string& p, const std::string& payload) {
+                if (mSend(payload))
+                {
+                    return;
+                }
+                rejected.push_back(p);
+                outage = !mReplied();
+            };
+            for (auto it = bins.begin(); !outage && it != bins.end(); ++it)
+            {
+                tryOne(it->first, distributed::Client::buildWritePayload({*it}, {}));
+            }
+            for (auto it = anals.begin(); !outage && it != anals.end(); ++it)
+            {
+                tryOne(it->first, distributed::Client::buildWritePayload({}, {*it}));
+            }
+        }
+        if (outage)
+        {
+            if (!mWriteFailed)
+            {
+                BENNU_LOG_ERROR("E: OutputModule: provider not responding, will retry writes\n");
+                mWriteFailed = true;
+            }
+            return;
+        }
+        for (auto& r : rejected)
+        {
+            BENNU_LOG_ERROR("E: OutputModule: write of %s rejected, dropping\n", r.c_str());
         }
     }
-    // delete analog tags
-    for (std::string tag : aTagsToDelete)
+    mWriteFailed = false;
+
+    for (size_t i = 0; i < bins.size(); ++i)
     {
-        mDataManager->deleteAnalogTag(tag);
+        mDataManager->setDataByTag<bool>(binTags[i], bins[i].second);
+        mDataManager->deleteBinaryTag(binTags[i], bins[i].second);
+    }
+    for (size_t i = 0; i < anals.size(); ++i)
+    {
+        mDataManager->setDataByTag<double>(analTags[i], anals[i].second);
+        mDataManager->deleteAnalogTag(analTags[i], anals[i].second);
     }
 }
 

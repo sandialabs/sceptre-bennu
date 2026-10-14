@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include "bennu/utility/Log.hpp"
+
 #include "bennu/devices/modules/comms/base/CommsModuleCreator.hpp"
 
 namespace bennu {
@@ -140,7 +142,10 @@ void FieldDevice::scanCycle()
         processOutputs();
         if (i % 10 == 0)
         {
-            mDataManager->printExternalData();
+            if (bennu::utility::logEnabled(bennu::utility::LOG_DEBUG))
+            {
+                mDataManager->printExternalData();
+            }
             i = 1;
         }
         else

@@ -1,8 +1,7 @@
 #include "Client.hpp"
 
-#include <chrono>
 #include <functional>
-#include <thread>
+#include "bennu/utility/Log.hpp"
 
 #include "bennu/distributed/Utils.hpp"
 
@@ -44,7 +43,7 @@ void Client::connect()
 
 void Client::defaultHandler(const std::string& reply)
 {
-    printf("I: Client received reply: %s\n", reply.data());
+    BENNU_LOG_DEBUG("I: Client received reply: %s\n", reply.data());
 }
 
 /*
@@ -52,14 +51,15 @@ void Client::defaultHandler(const std::string& reply)
  *  - http://zguide.zeromq.org/php:chapter4#Client-Side-Reliability-Lazy-Pirate-Pattern
  *  - http://zguide.zeromq.org/cpp:lpclient
  */
-void Client::send(const std::string& msg)
+bool Client::send(const std::string& msg)
 {
+    bool acked = false;
+    mReplied = false;
     int retriesLeft = REQUEST_RETRIES;
     while (retriesLeft)
     {
-        zmq::message_t message(msg + '\0'); // must include null byte
-        mSocket.send(message);
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        // must include null byte; a message_t is consumed by send, so build a fresh one per send
+        mSocket.send(zmq::message_t(msg + '\0'));
         bool expectReply = true;
         while (expectReply)
         {
@@ -71,13 +71,14 @@ void Client::send(const std::string& msg)
             {
                 zmq::message_t repMsg;
                 mSocket.recv(&repMsg);
+                mReplied = true;
                 std::string reply(repMsg.data<char>());
                 std::string delim{"="}, status, data;
                 try
                 {
                     auto split = distributed::split(reply, delim);
                     status = split[0];
-                    data = split[1];
+                    data = split.at(1);
                 }
                 catch (std::exception& e)
                 {
@@ -86,12 +87,13 @@ void Client::send(const std::string& msg)
 
                 if (status == "ACK" || status == "ack")
                 {
-                    printf("I: ACK\n");
+                    BENNU_LOG_INFO("I: ACK\n");
+                    acked = true;
                     mHandler(data);
                 }
                 else if (status == "ERR" || status == "err")
                 {
-                    printf("I: ERR -- %s\n", data.data());
+                    BENNU_LOG_INFO("I: ERR -- %s\n", data.data());
                 }
                 else
                 {
@@ -112,15 +114,16 @@ void Client::send(const std::string& msg)
             }
             else
             {
-                printf("I: Client send: no response from server, retrying...\n");
+                BENNU_LOG_DEBUG("I: Client send: no response from server, retrying...\n");
                 // Old socket will be confused; close it and open a new one
                 mSocket.close();
                 connect();
                 // Send request again, on new socket
-                mSocket.send(message);
+                mSocket.send(zmq::message_t(msg + '\0'));
             }
         }
     }
+    return acked;
 }
 
 } // namespace distributed

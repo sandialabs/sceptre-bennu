@@ -20,10 +20,13 @@
 
 #include <iostream>
 #include <numeric>
+#include <sstream>
+#include <string>
 
 #include <boost/algorithm/string.hpp>
 
 #include "bennu/devices/field-device/DataManager.hpp"
+#include "bennu/utility/Log.hpp"
 #include "bennu/devices/modules/logic/cparse/Cparse.hpp" // cparse_start(), calculator::calculate()
 
 namespace bennu {
@@ -56,19 +59,67 @@ bool LogicModule::handleTreeData(const boost::property_tree::ptree& tree)
     return success;
 }
 
-void LogicModule::scanInputs()
+// Sort tags (longest first) and split/trim the logic into non-blank lines once; per line, remember
+// which tags can occur in it so a cycle only touches those.
+void LogicModule::mPrepare()
 {
-    // Replace strings in RHS logic with corresponding boolean or analog data
-    mCurrentLogic = mLogic;
     for (auto& tag : mSortByLargest(mDataManager->getBinaryTags()))
     {
-        bool status = mDataManager->getDataByTag<bool>(tag);
-        mReplaceAllRhs(mCurrentLogic, tag, status ? "True" : "False");
+        mTags.push_back({tag, true});
     }
     for (auto& tag : mSortByLargest(mDataManager->getAnalogTags()))
     {
-        double value = mDataManager->getDataByTag<double>(tag);
-        mReplaceAllRhs(mCurrentLogic, tag, std::to_string(value));
+        mTags.push_back({tag, false});
+    }
+
+    std::stringstream ss(mLogic);
+    std::string line;
+    while (std::getline(ss, line, '\n'))
+    {
+        boost::algorithm::trim(line);
+        if (line.empty())
+        {
+            continue;
+        } // scanLogic ignores blank lines anyway
+        Line l{line, {}};
+        for (size_t i = 0; i < mTags.size(); i++)
+        {
+            if (line.find(mTags[i].name) != std::string::npos)
+            {
+                l.tags.push_back(i);
+            }
+        }
+        mLines.push_back(std::move(l));
+    }
+    mPrepared = true;
+}
+
+void LogicModule::scanInputs()
+{
+    if (!mPrepared)
+    {
+        mPrepare();
+    }
+
+    // Replace strings in RHS logic with corresponding boolean or analog data
+    std::vector<std::string> values(mTags.size());
+    std::vector<bool> fetched(mTags.size(), false);
+    mCurrentLogic.clear();
+    for (auto& l : mLines)
+    {
+        std::string line = l.text;
+        for (size_t i : l.tags)
+        {
+            if (!fetched[i])
+            {
+                values[i] = mTags[i].binary
+                                ? (mDataManager->getDataByTag<bool>(mTags[i].name) ? "True" : "False")
+                                : std::to_string(mDataManager->getDataByTag<double>(mTags[i].name));
+                fetched[i] = true;
+            }
+            mReplaceAllRhs(line, mTags[i].name, values[i]);
+        }
+        mCurrentLogic += line + "\n";
     }
 }
 
@@ -104,7 +155,7 @@ void LogicModule::scanLogic(unsigned int cycleTime)
             if (newDelay > 0)
             {
                 setDelayedTag(lhs, newDelay);
-                std::cout << "LOGIC (" << delay << "): " + lhs << " = " << logic << " ----> [ DELAYED " << newDelay << "ms ]" << std::endl;
+                BENNU_LOG_DEBUG("LOGIC (%d): %s = %s ----> [ DELAYED %dms ]\n", delay, lhs.c_str(), logic.c_str(), newDelay);
                 continue;
             }
         }
@@ -115,7 +166,7 @@ void LogicModule::scanLogic(unsigned int cycleTime)
             if (mDataManager->isBinary(lhs))
             {
                 bool result = calculator::calculate(logic.data(), &vars).asBool();
-                std::cout << "LOGIC (" << delay << "): " + lhs << " = " << logic << " ----> " << result << std::endl;
+                BENNU_LOG_DEBUG("LOGIC (%d): %s = %s ----> %s\n", delay, lhs.c_str(), logic.c_str(), std::to_string(result).c_str());
                 // if new evaluated data has changed from the datastore, update the tag
                 if (result != mDataManager->getDataByTag<bool>(lhs) && !mDataManager->isUpdatedBinaryTag(lhs))
                 {
@@ -123,7 +174,7 @@ void LogicModule::scanLogic(unsigned int cycleTime)
                     {
                         delay = delay * static_cast<int>(cycleTime); // delay (ms) = # of cycles * scan cycle time (ms)
                         setDelayedTag(lhs, delay);
-                        std::cout << "\nI: Delaying tag: " << lhs << " for " << delay << "ms" << std::endl;
+                        BENNU_LOG_DEBUG("\nI: Delaying tag: %s for %dms\n", lhs.c_str(), delay);
                     }
                     else
                     {
@@ -139,7 +190,7 @@ void LogicModule::scanLogic(unsigned int cycleTime)
             else if (mDataManager->isAnalog(lhs))
             {
                 double result = calculator::calculate(logic.data(), &vars).asDouble();
-                std::cout << "LOGIC (" << delay << "): " + lhs << " = " << logic << " ----> " << result << std::endl;
+                BENNU_LOG_DEBUG("LOGIC (%d): %s = %s ----> %s\n", delay, lhs.c_str(), logic.c_str(), std::to_string(result).c_str());
                 // if new evaluated data has changed from the datastore, update the tag
                 if (result != mDataManager->getDataByTag<double>(lhs) && !mDataManager->isUpdatedAnalogTag(lhs))
                 {
@@ -147,7 +198,7 @@ void LogicModule::scanLogic(unsigned int cycleTime)
                     {
                         delay = delay * static_cast<int>(cycleTime); // delay (ms) = # of cycles * scan cycle time (ms)
                         setDelayedTag(lhs, delay);
-                        std::cout << "\nI: Delaying tag: " << lhs << " for " << delay << "ms" << std::endl;
+                        BENNU_LOG_DEBUG("\nI: Delaying tag: %s for %dms\n", lhs.c_str(), delay);
                     }
                     else
                     {
@@ -200,36 +251,25 @@ int LogicModule::mGetDelay(std::vector<std::string> rhsParts)
     return delay;
 }
 
-void LogicModule::mReplaceAllRhs(std::string& data, std::string toSearch, std::string replaceStr)
+void LogicModule::mReplaceAllRhs(std::string& line, const std::string& toSearch, const std::string& replaceStr)
 {
-    // Example data (i.e. logic):
-    //    "load-breaker-toggle = ! load-power > 500 ;\n        gen-power = load-breaker-toggle ;"
-    // Example data (after being replaced. note the extra '\n' at the end):
-    //    "load-breaker-toggle = ! 400.55 > 500 ;\ngen-power = True ;\n"
-    std::stringstream ss(data);
-    std::string line;
-    std::string replaced;
-    while (std::getline(ss, line, '\n'))
+    // Example line (i.e. logic):
+    //    "load-breaker-toggle = ! load-power > 500 ;"
+    // Example line (after being replaced):
+    //    "load-breaker-toggle = ! 400.55 > 500 ;"
+    size_t pos = line.find(toSearch);
+    while (pos != std::string::npos)
     {
-        boost::algorithm::trim(line);
-        // Get the first occurrence
-        size_t pos = line.find(toSearch);
-        // Repeat till end is reached
-        while (pos != std::string::npos)
+        // Replace this occurrence, only if it is RHS of expression. Also check pos+1 to make
+        // sure this isn't a substring of a different variable.
+        //   e.g. 'var_O1' vs 'var_O12'
+        if (pos != 0 && !std::isalnum(line[pos + toSearch.size()]))
         {
-            // Replace this occurrence, only if it is RHS of expression. Also check pos+1 to make
-            // sure this isn't a substring of a different variable.
-            //   e.g. 'var_O1' vs 'var_O12'
-            if (pos != 0 && !std::isalnum(line[pos + toSearch.size()]))
-            {
-                line.replace(pos, toSearch.size(), replaceStr);
-            }
-            // Get the next occurrence from the current position
-            pos = line.find(toSearch, pos + toSearch.size());
+            line.replace(pos, toSearch.size(), replaceStr);
         }
-        replaced += line + "\n";
+        // Get the next occurrence from the current position
+        pos = line.find(toSearch, pos + toSearch.size());
     }
-    data = replaced;
 }
 
 std::vector<std::string> LogicModule::mSplitExpression(std::string phrase, std::string delimiter)

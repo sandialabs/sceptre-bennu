@@ -1,7 +1,10 @@
 #ifndef BENNU_DISTRIBUTED_CLIENT_HPP
 #define BENNU_DISTRIBUTED_CLIENT_HPP
 
+#include <functional>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "zmq/zmq.hpp"
 
@@ -19,7 +22,35 @@ public:
 
     ~Client();
 
-    void send(const std::string& msg);
+    // true iff an ACK reply was received
+    bool send(const std::string& msg);
+
+    // true if the last send() got any reply (ACK or ERR); false means the provider never answered
+    bool replied() const
+    {
+        return mReplied;
+    }
+
+    // "p1:v1,p2:v2" with the same value formatting as writePoint; binaries first, then analogs
+    static std::string buildWritePayload(const std::vector<std::pair<std::string, bool>>& bins,
+                                         const std::vector<std::pair<std::string, double>>& anals)
+    {
+        std::string out;
+        for (auto& b : bins)
+        {
+            out += (out.empty() ? "" : ",") + b.first + ":" + (b.second ? "true" : "false");
+        }
+        for (auto& a : anals)
+        {
+            out += (out.empty() ? "" : ",") + a.first + ":" + std::to_string(a.second);
+        }
+        return out;
+    }
+
+    bool writePoints(const std::string& payload)
+    {
+        return send("WRITE=" + payload);
+    }
 
     void setHandler(ReplyHandler handler)
     {
@@ -47,6 +78,7 @@ private:
     zmq::socket_t mSocket;
     ReplyHandler mHandler;
     Endpoint mEndpoint;
+    bool mReplied = false;
 };
 
 } // namespace distributed
