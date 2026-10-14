@@ -1,4 +1,5 @@
 import argparse
+import logging
 import os
 import platform
 import signal
@@ -302,7 +303,7 @@ class ServerDaemon(Daemon):
                 self.solver = RTDS(server_endpoint, publish_endpoint, settings)
 
             #########################################
-            ############ Genaric Python #############
+            ############ Generic Python #############
             #########################################
             elif solver == "GenericPython":
                 try:
@@ -510,6 +511,10 @@ def server():
     )
 
     args = parser.parse_args()
+    logging.basicConfig(
+        level=logging.DEBUG if args.debug else logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    )
 
     handle = ServerDaemon(args)
 

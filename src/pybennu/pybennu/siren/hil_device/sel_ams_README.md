@@ -9,9 +9,9 @@
 
 ### SEL Adaptive Multichannel Source (AMS).
 
-There are 12 ouput channels on the AMS that send data to the SEL
+There are 12 output channels on the AMS that send data to the SEL
 device over a ribbon cable to the top board. By plugging into the top board
-of the device, you can bypass the relay input transfomers of the bottom board
+of the device, you can bypass the relay input transformers of the bottom board
 so that you don't need large amplifiers.
 
 Analog channels for SEL-351S (only uses 8 of the 12 channels):

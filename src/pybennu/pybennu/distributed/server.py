@@ -1,8 +1,12 @@
 """pybennu server interface."""
 
+import logging
+
 import zmq
 
 import pybennu.distributed.swig._Endpoint as E
+
+logger = logging.getLogger(__name__)
 
 
 class Server:
@@ -42,8 +46,15 @@ class Server:
     def run(self):
         """Listen for requests and reply to them."""
         while True:
-            request = self.__socket.recv_string()
-            print(f"Server ---- Received request: {request}")
-            reply = self.request_handler(request.strip("\x00"))
+            try:
+                request = self.__socket.recv_string()
+                logger.debug("Server ---- Received request: %s", request)
+                reply = self.request_handler(request.strip("\x00"))
+            except zmq.ZMQError:
+                raise
+            except Exception:
+                # REP must reply after a recv (even a failed decode), or the socket wedges
+                logger.exception("Server ---- request handler failed")
+                reply = "ERR=Internal error"
             self.__socket.send_string(reply + "\x00")  # must include null byte
-            print(f"Server ---- Sent reply: {reply}")
+            logger.debug("Server ---- Sent reply: %s", reply)

@@ -19,7 +19,7 @@ class LabJackU6(HIL_Device):
     """
 
     def __init__(self, device_config):
-        """This initailizes the U6 device"""
+        """This initializes the U6 device"""
         self.device = U6()
 
         with open(device_config) as f:
@@ -73,7 +73,7 @@ class LabJackU6(HIL_Device):
 
         dicttype = type({dict: type})
         # If the mapping leads to another mapping, then don't use the defaults. Use the substructure.
-        if type(self.label_mapping[label]) == dicttype:
+        if type(self.label_mapping[label]) is dicttype:
             mindata = self.label_mapping[label]["min_data"]
             print("min_data", mindata)
             maxdata = self.label_mapping[label]["max_data"]

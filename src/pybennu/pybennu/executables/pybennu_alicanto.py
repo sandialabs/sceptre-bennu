@@ -4,7 +4,7 @@ The code is similar to the bennu HELICS code but stripped down.
 Alicanto runs as a Subscriber and Client object. It takes in a configuration file (which points to a json) which defines which points Alicanto cares about
 JSON format
  - Subscriptions tell Alicanto which publish point (udp) to subscrie to and which point to keep track of
- - Endpoints tell Alicanto where to corelate that subscribed point to a server-endpoint
+ - Endpoints tell Alicanto where to correlate that subscribed point to a server-endpoint
 """
 
 import argparse
@@ -16,7 +16,7 @@ import sys
 import threading
 import time
 
-# Adding a timeout helper to cause client objects not to feeze program
+# Adding a timeout helper to cause client objects not to freeze program
 from contextlib import contextmanager
 
 from py_expression_eval import Parser
@@ -118,16 +118,16 @@ class alicanto:
         self.lock = threading.Lock()
 
         # Initialize system state
-        self.state = dict()
+        self.state = {}
         # Tag=>destination map
-        self.dests = dict()
+        self.dests = {}
         # Tag=>type map
-        self.types = dict()
-        self.logic = dict()
+        self.types = {}
+        self.logic = {}
         # Expression parser for logic
         self.parser = Parser()
         # Set of all tags
-        self.tags = dict()
+        self.tags = {}
 
         ##############  Get counts from json  ######################
         cfg = None
@@ -142,19 +142,19 @@ class alicanto:
                 logger.info(f"Number of endpoints: {self.end_count}")
             except:
                 logger.exception(
-                    "No endpoints found or endpoints incorrectly formated, check configuration file"
+                    "No endpoints found or endpoints incorrectly formatted, check configuration file"
                 )
             try:
                 self.sub_count = len(cfg["subscriptions"])
                 logger.info(f"Number of subscriptions: {self.sub_count}")
             except:
                 logger.exception(
-                    "No subscriptions found or subscriptions incorrectly formated, check configuration file"
+                    "No subscriptions found or subscriptions incorrectly formatted, check configuration file"
                 )
 
         # Diagnostics to confirm JSON config correctly added the required
         #   endpoints and subscriptions
-        self.endid = dict()
+        self.endid = {}
         self.end_dests = []
         for i, endpoint in enumerate(cfg["endpoints"]):
             self.endid[i] = endpoint
@@ -172,7 +172,7 @@ class alicanto:
         # make end_dests elements unique
         self.end_dests = list(set(self.end_dests))
 
-        self.subid = dict()
+        self.subid = {}
         self.sub_sources = []
         for i in range(0, self.sub_count):
             self.subid[i] = cfg["subscriptions"][i]
@@ -302,7 +302,7 @@ class alicanto:
                     expr = self.parser.parse(self.logic[full_end_dest])
 
                     # Assign variables
-                    these_vars = dict()
+                    these_vars = {}
 
                     """
                     for v in expr.variables():
@@ -311,7 +311,7 @@ class alicanto:
                             t = bool(t)
 
                         these_vars[v] = t
-                    
+
                     """
                     # Automatic variable parsing with expression parser not working, so assign token manually
                     for i, token in enumerate(expr.tokens):

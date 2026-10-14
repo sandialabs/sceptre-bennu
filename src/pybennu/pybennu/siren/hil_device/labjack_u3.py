@@ -116,9 +116,7 @@ class LabJackU3(HIL_Device):
             min_voltage = self.label_mapping[label]["min_voltage"]
             max_voltage = self.label_mapping[label]["max_voltage"]
 
-        scaled_value = virtualsensor(
-            value, min_data, max_data, min_voltage, max_voltage
-        )
+        virtualsensor(value, min_data, max_data, min_voltage, max_voltage)
         self.device.writeRegister(register, value)
 
     def read_digital(self, label):

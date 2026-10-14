@@ -3,9 +3,14 @@
 This module defines the Publisher base class.
 """
 
+import logging
+
 import zmq
 
 import pybennu.distributed.swig._Endpoint as E
+from pybennu.distributed.utils import chunk_message
+
+logger = logging.getLogger(__name__)
 
 
 class Publisher:
@@ -41,23 +46,10 @@ class Publisher:
     def publish(self, msg):
         """Publish a message to the socket."""
         try:
-            size = len(msg)
-            if size > self.MTU:
-                parts = msg.split(",")
-                b_count = 0
-                message = ""
-                for p in parts:
-                    part = p + ","
-                    b_count += len(part)
-                    temp = message + part
-                    # If adding the part is smaller than MTU and we haven't consumed all the msg...
-                    if len(temp) < self.MTU and b_count <= size:
-                        message = temp
-                    # Otherwise, send the message without 'part' and reset message
-                    else:
-                        self.__socket.send_string(message, group=self.__group)
-                        message = part
+            if len(msg) > self.MTU:
+                for chunk in chunk_message(msg, self.MTU):
+                    self.__socket.send_string(chunk, group=self.__group)
             else:
                 self.__socket.send_string(msg, group=self.__group)
         except Exception as e:
-            print(f"Publish error: {e}")
+            logger.exception("Publish error: %s", e)

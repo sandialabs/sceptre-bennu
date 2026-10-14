@@ -1,8 +1,13 @@
 """pybennu client interface."""
 
+import logging
+
 import zmq
 
 import pybennu.distributed.swig._Endpoint as E
+from pybennu.distributed.utils import build_write_payload
+
+logger = logging.getLogger(__name__)
 
 
 class Client:
@@ -34,7 +39,7 @@ class Client:
 
     def __defaultHandler(self, reply):
         """Default reply handler."""
-        print("Client received reply: %s" % reply)
+        logger.info("Client received reply: %s", reply)
 
     def send(self, message):
         """Send message to Provider"""
@@ -42,15 +47,13 @@ class Client:
         self.__socket.send_string(message + "\0")  # must include null byte
         # get response
         msg = self.__socket.recv_string()
-        reply = msg.split("=")
-        status = reply[0]
-        data = reply[1]
+        status, _, data = msg.partition("=")
 
         if status == self.__kACK:
-            print("I: ACK")
+            logger.debug("I: ACK")
             self.reply_handler(data)
         else:
-            print("I: ERR -- %s" % msg)
+            logger.error("I: ERR -- %s", msg)
 
     def write_analog_point(self, tag, value):
         """Updates the analog value of a tag.
@@ -73,3 +76,12 @@ class Client:
         val = "true" if value else "false"
         update = "WRITE=" + tag + ":" + val
         self.send(update)
+
+    def write_points(self, points):
+        """Updates many tags with a single request.
+
+        Args:
+            points: dict of tag name -> bool or numeric value.
+        """
+        if points:
+            self.send("WRITE=" + build_write_payload(points))

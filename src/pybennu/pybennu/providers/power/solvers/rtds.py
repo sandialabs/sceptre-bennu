@@ -269,9 +269,9 @@ class RTDS(Provider):
             # This will block until there is an item to process
             pmu, frame = self.frame_queue.get()
 
-            # This is an epic hack to workaround a nasty time syncronization issue.
+            # This is an epic hack to workaround a nasty time synchronization issue.
             # Extensive documentation about this is on the wiki.
-            # tl;dr: due the 8 PMU connections being handled in independant threads,
+            # tl;dr: due the 8 PMU connections being handled in independent threads,
             # the sceptre_time will differ between the 8 PMUs for the same rtds_time.
             with self.__time_map_lock:
                 if frame["time"] not in self.time_map:
@@ -520,7 +520,6 @@ class RTDS(Provider):
 
         Publisher message format:
             WRITE=<tag name>:<value>[,<tag name>:<value>,...]
-            WRITE={tag name:value,tag name:value}
         """
         self.log.info(
             f"Beginning periodic publish (publish rate: {self.conf.publish_rate})"
@@ -533,7 +532,7 @@ class RTDS(Provider):
                     for tag, value in self.current_values.items()
                 ]
 
-            msg = "Write={" + ",".join(tags) + "}"
+            msg = ",".join(tags)
             self.publish(msg)
 
             # If publish_rate is not positive (0), don't sleep and go as fast as possible

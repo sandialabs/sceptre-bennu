@@ -141,7 +141,7 @@ class SELAMS(HIL_Device):
                               Connect to AMS: {self.connect_to_ams}
                               Inputs: {self.inputs}
                               Output Buses: {self.buses}
-                              Ouput Branches: {self.branches}""")
+                              Output Branches: {self.branches}""")
 
     def validate_outputs(self):
         """
@@ -297,7 +297,7 @@ class SELAMS(HIL_Device):
                         reading = False
                     except ValueError:
                         self.logger.warning(
-                            f"ValueError occured while splitting the serial data input {data}."
+                            f"ValueError occurred while splitting the serial data input {data}."
                         )
 
                     if line:
@@ -315,19 +315,19 @@ class SELAMS(HIL_Device):
         status = {"Type": "Unknown", "Raw Message": line}
 
         if line.startswith("TA") and len(line) == 2:
-            self.logger.debug(f"Receieved 'Test Abort' message from AMS, {line}")
+            self.logger.debug(f"Received 'Test Abort' message from AMS, {line}")
             status["Type"] = "Test Aborted"
         elif line.startswith("TC") and len(line) == 2:
-            self.logger.debug(f"Receieved 'Test Completed' message from AMS, {line}")
+            self.logger.debug(f"Received 'Test Completed' message from AMS, {line}")
             status["Type"] = "Test Completed"
         elif line[0] == "T" and len(line) == 15:
-            self.logger.debug(f"Receieved 'Current State' message from AMS, {line}")
+            self.logger.debug(f"Received 'Current State' message from AMS, {line}")
             status["Type"] = "Current State"
             status["Test Execution Time (ms)"] = (int(line[1:9], 16)) / 10.0
             status["Inputs"] = bin(int(line[10:12], 16))[2:].zfill(6)[::-1]
             status["State"] = int(line[13:14], 16)
         elif line[0] == "C" and len(line) == 18:
-            self.logger.debug(f"Receieved 'State Change' message from AMS, {line}")
+            self.logger.debug(f"Received 'State Change' message from AMS, {line}")
             status["Type"] = "State Change"
             status["Previous State"] = int(line[1:3], 16)
             status["Next State"] = int(line[4:6], 16)
@@ -620,6 +620,7 @@ class SELAMS(HIL_Device):
         self.logger.error(
             "In order to use Flip Flops 2 inputs must be defined in the configuration"
         )
+        return None
 
     def flippity_floppity(self, close, trip, ff_state):
         self.logger.debug(f"Close: {close}, Trip: {trip}, FlipFlop: {ff_state}")
@@ -663,7 +664,7 @@ class SELAMS(HIL_Device):
         def extract_bus_ids(self):
             """
             In order to calculate the values sent to the AMS, the bus the branch is connected to
-            needs to be known.  The bus id shoudl be part of the branch id:
+            needs to be known.  The bus id should be part of the branch id:
             BRANCH-<branch id>_BUS-<Bus 1 ID>-<Bus 2 ID>
             """
             results = re.search(r"BRANCH-.*_BUS-(\d*)-(\d*)", self.id.upper())
@@ -675,7 +676,7 @@ class SELAMS(HIL_Device):
             return False
 
         def is_valid(self, buses):
-            for key, bus in buses.items():
+            for _key, bus in buses.items():
                 if (
                     self.bus_id_1.upper() in bus.id.upper()
                     or self.bus_id_2.upper() in bus.id.upper()
@@ -747,7 +748,7 @@ class SELAMS(HIL_Device):
             if self.values["angle"] is not None:
                 return self.values["angle"]
             """
-                Consider deleting this logger eventually. It'll print everytime is_valid is called below if angle hasn't been sent yet
+                Consider deleting this logger eventually. It'll print every time is_valid is called below if angle hasn't been sent yet
                 """
             self.logger.debug("Bus angle has not been assigned yet")
             return None

@@ -66,7 +66,7 @@ class LJ_Tester:
             tx = not tx
             t1 = time()
             for i in self.addr:
-                rx = self.LJ_TX_RX(i[0], i[1], tx)
+                self.LJ_TX_RX(i[0], i[1], tx)
             t2 = time()
             self.delays.append(t2 - t1)
         print(

@@ -423,6 +423,7 @@ class PowerWorldDynamics(Provider):
 
                     return "ACK=Success processing PWDS write command"
                 return f"ERR=Tag {tag} not found"
+        return None
 
 
 if __name__ == "__main__":

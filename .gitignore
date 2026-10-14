@@ -80,6 +80,7 @@ docs/_build/
 
 # test files
 test*.py
+!src/pybennu/tests/test*.py
 
 # Compiled Object files, Static and Dynamic libs (Shared Objects)
 *.o

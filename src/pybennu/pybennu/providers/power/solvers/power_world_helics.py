@@ -196,6 +196,7 @@ class PowerWorldHelics(HelicsFederate):
             self.write(tag, value)
         else:
             return self.read(tag)
+        return None
 
     def write(self, tag, value):
         if self.__has_failed:
@@ -284,7 +285,7 @@ class PowerWorldHelics(HelicsFederate):
         if results[0] != "":
             raise AttributeError("Error executing command: GetParametersSingleElement")
         # trim whitespace and fix 'None'
-        data = list((i.strip() if i else "0.0") for i in results[1])
+        data = [(i.strip() if i else "0.0") for i in results[1]]
         data = [
             x.replace("YES", "true")
             .replace("NO", "false")
@@ -297,14 +298,12 @@ class PowerWorldHelics(HelicsFederate):
         # fix up field list to match SCADA side
         field_list = self.scada_fields[kind]
         # zip fields+data into dictionary e.g. {'x': 1, 'y': 2, ...}
-        element_data = dict(zip(field_list, data))
-        return element_data
+        return dict(zip(field_list, data))
 
     def _parse_name(self, name):
         # name = 1_1001-2002
         parts = [i.split("_") for i in name.split("-")]  # [['1', '1001'], ['2002']]
-        flat = [i for sub in parts for i in sub]  # ['1', '1001', '2002']
-        return flat
+        return [i for sub in parts for i in sub]  # ['1', '1001', '2002']
 
     def _get_field_value_lists(self, kind, name):
         field_list = self.case_object_fields[kind]

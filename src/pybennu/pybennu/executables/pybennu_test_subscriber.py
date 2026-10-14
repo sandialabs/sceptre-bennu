@@ -1,5 +1,6 @@
 """Generic test pybennu subscriber"""
 
+import logging
 import sys
 
 import pybennu.distributed.swig._Endpoint as E
@@ -12,6 +13,9 @@ class TestSubscriber(Subscriber):
 
 
 def main():
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
+    )
     endpoint = E.new_Endpoint()
     E.Endpoint_str_set(endpoint, "udp://239.0.0.1:40000")
     sub = TestSubscriber(endpoint)

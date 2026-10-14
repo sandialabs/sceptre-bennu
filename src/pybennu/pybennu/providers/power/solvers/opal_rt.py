@@ -728,7 +728,6 @@ class OPALRT(Provider):
 
         Publisher message format:
             WRITE=<tag name>:<value>[,<tag name>:<value>,...]
-            WRITE={tag name:value,tag name:value}
         """
         self.log.info(
             f"Beginning periodic publish (publish rate: {self.conf.publish_rate})"
@@ -742,7 +741,7 @@ class OPALRT(Provider):
                     for tag, value in self.current_values.items()
                 ]
 
-            msg = "Write={" + ",".join(tags) + "}"
+            msg = ",".join(tags)
             self.publish(msg)
 
             # If publish_rate is not positive (0), don't sleep and go as fast as possible

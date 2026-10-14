@@ -147,6 +147,10 @@ jobs:
         run: |
           cd src/pybennu
           make dist
+      - name: run pybennu unit tests
+        run: |
+          python3 -m pip install pytest pyzmq
+          PYTHONPATH=src/pybennu python3 -m pytest src/pybennu/tests
       - name: upload wheel
         uses: actions/upload-artifact@v4
         with:

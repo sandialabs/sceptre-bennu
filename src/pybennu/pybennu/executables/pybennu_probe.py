@@ -4,6 +4,7 @@ Used for querying/reading/writing values to/from a bennu FEP or provider.
 """
 
 import argparse
+import logging
 import sys
 
 import pybennu.distributed.client as client
@@ -21,6 +22,9 @@ def handler(reply: str) -> None:
 
 
 def main() -> None:
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
+    )
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-e",

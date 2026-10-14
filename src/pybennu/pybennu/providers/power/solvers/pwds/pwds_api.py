@@ -25,7 +25,7 @@ class PWDSAPI:
 
     # tracks the size of each PWDS data type defined above. the data type const
     # values above correspond to the indexes in this list.
-    SIZES = [
+    SIZES = [  # noqa: RUF012
         1,  # byte      - ummm... a byte
         4,  # cardinal  - unsigned 4 byte int
         4,  # integer   - signed 4 byte int
@@ -154,6 +154,7 @@ class PWDSAPI:
             # the case of payloads that's the end of the byte that represents
             # the size of the rest of the payload.
             return new_end, data[end:new_end]
+        return None
 
     def __parse_key(self, idx, data):
         end = idx + 2
@@ -186,6 +187,7 @@ class PWDSAPI:
             if len(value) == 0:
                 return struct.pack("!I", 0)
             return b"".join([struct.pack("!I", len(value)), value])
+        return None
 
     def __build_key(self, version):
         return b"".join([struct.pack("!B", 111), struct.pack("!B", version)])

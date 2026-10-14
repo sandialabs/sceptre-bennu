@@ -42,7 +42,7 @@ FUNCTIONS
 
     query()
 
-        Collects the entire sytem state when a query message received by
+        Collects the entire system state when a query message received by
         `Provider`. If no errors, returns the entire system state string as the
         message object.
 
@@ -209,7 +209,7 @@ class PowerWorld(Provider):
         self.__has_purged = False
         self.debug = debug
 
-        # probablity density function for random noise
+        # probability density function for random noise
         if noise not in ("none", "uniform", "normal", "lognormal", "gamma", "weibull"):
             raise ValueError(
                 "Noise PDF not a valid type! Choose from uniform, "
@@ -400,7 +400,7 @@ class PowerWorld(Provider):
             devtype = "gen" if "gen" in devtype else devtype
             self.need.append((line, devtype, id_))
 
-        # initialze the system under test using data from PowerWorld
+        # initialize the system under test using data from PowerWorld
         self.create()
 
     def create(self):
@@ -430,8 +430,7 @@ class PowerWorld(Provider):
         for item in self.need:
             fields = self.scada_fields[item[1]]
             tags += ",".join([f"{item[0]}.{f}" for f in fields])
-        msg = f"ACK={tags}"
-        return msg
+        return f"ACK={tags}"
 
     def read(self, tag):
         """Implements the read command interface for receiving the PowerWorld
@@ -553,8 +552,7 @@ class PowerWorld(Provider):
                         for name, fields in self.elements.items()
                     }
                 self.__has_purged = True
-            state = self.elements
-            return state
+            return self.elements
 
         if self.noise:
             with self.__lock:
@@ -680,7 +678,7 @@ class PowerWorld(Provider):
         if results[0] != "":
             raise AttributeError("Error executing command!")
         # trim whitespace and fix 'None'
-        data = list((i.strip() if i else "0.0") for i in results[1])
+        data = [(i.strip() if i else "0.0") for i in results[1]]
         data = [
             x.replace("YES", "true")
             .replace("NO", "false")
@@ -693,14 +691,12 @@ class PowerWorld(Provider):
         # fix up field list to match SCADA side
         field_list = self.scada_fields[devtype]
         # zip fields+data into dictionary e.g. {'x': 1, 'y': 2, ...}
-        element_data = dict(zip(field_list, data))
-        return element_data
+        return dict(zip(field_list, data))
 
     def _parse_id(self, id_):
         # id_ = 1_1001-2002
         parts = [i.split("_") for i in id_.split("-")]  # [['1', '1001'], ['2002']]
-        flat = [i for sub in parts for i in sub]  # ['1', '1001', '2002']
-        return flat
+        return [i for sub in parts for i in sub]  # ['1', '1001', '2002']
 
     def _get_field_value_lists(self, devtype, id_):
         field_list = self.case_object_fields[devtype]

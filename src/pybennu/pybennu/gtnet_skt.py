@@ -219,7 +219,7 @@ class GtnetSkt:
                     f"you're using 'pybennu-probe', this is normal."
                 )
 
-            # Conver booleans to integers, since gtnet-skt doesn't have a bool type
+            # Convert booleans to integers, since gtnet-skt doesn't have a bool type
             if val is False or (isinstance(val, str) and val.lower() == "false"):
                 val = "0"
             elif val is True or (isinstance(val, str) and val.lower() == "true"):

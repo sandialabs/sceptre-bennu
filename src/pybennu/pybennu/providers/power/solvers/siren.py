@@ -232,13 +232,13 @@ class Siren(Provider):
         classes = inspect.getmembers(module, inspect.isclass)
         for _class in classes:
             if _class[1].__module__ == path:
-                device = _class[1](
+                return _class[1](
                     device_config.config_file,
                     device_config.name,
                     device_config.level_name,
                     device_config.id,
                 )
-                return device
+        return None
 
     def _is_outside_deadband(self, old_value, new_value, deadband):
         """Check if a new value is outside of a deadband threshold from and old value
@@ -385,7 +385,7 @@ class Siren(Provider):
                 tags = []
                 for key, val in self.internal_state.items():
                     tags.append(f"{key}:{str(val).lower()}")
-                msg = f"Write={{{','.join(tags)}}}"
+                msg = ",".join(tags)
                 self.logger.debug(msg)
                 self.publish(msg)
 
@@ -396,8 +396,7 @@ class Siren(Provider):
         Returns a string containing all the internal state keys (tags).
         """
         with self.state_lock:
-            msg = f"ACK={','.join(self.internal_state.keys())}"
-        return msg
+            return f"ACK={','.join(self.internal_state.keys())}"
 
     def read(self, tag: str) -> str:
         """
@@ -408,10 +407,9 @@ class Siren(Provider):
         """
         if tag not in self.internal_state:
             msg = "ERR=Unknown Tag"
-            self.log.critical(f"{msg} (tag: {tag})")
+            self.logger.critical(f"{msg} (tag: {tag})")
             return msg
-        msg = f"ACK={self.internal_state[tag]}"
-        return msg
+        return f"ACK={self.internal_state[tag]}"
 
     def write(self, tags: dict) -> str:
         """
@@ -424,14 +422,13 @@ class Siren(Provider):
         for tag in tags.keys():
             if tag not in self.internal_state.keys():
                 msg = f"ERR: Unknown tag '{tag}'"
-                self.log.error(f"{msg} (tags being written {tags})")
+                self.logger.error(f"{msg} (tags being written {tags})")
                 return msg
 
         with self.state_lock:
             self.internal_state.update(tags)
 
-        msg = "ACK=Wrote Tags"
-        return msg
+        return "ACK=Wrote Tags"
 
     def _to_hardware(self, device_name, field, label, data):
         """Sends data to the inputs of the connected hardware.
