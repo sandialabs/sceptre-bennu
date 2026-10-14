@@ -1,24 +1,23 @@
-"""HELICS helper class
-"""
+"""HELICS helper class"""
+
 import json
 import logging
 import signal
 import sys
-
 from distutils.util import strtobool
-from py_expression_eval import Parser
 
 import helics as h
+from py_expression_eval import Parser
 
-logger = logging.getLogger('helics')
+logger = logging.getLogger("helics")
 logger.setLevel(logging.INFO)
 logger.info(f"Initializing helics version: {h.helicsGetVersion()}")
 
 
-class HelicsFederate(object):
+class HelicsFederate:
     def __init__(self, config, exit_handler=None):
         exit = exit_handler if exit_handler else self.ctrl_exit_handler
-        signal.signal(signal.SIGINT, exit) # ctlr + c
+        signal.signal(signal.SIGINT, exit)  # ctlr + c
         # Tag=>type map
         self.types = {}
         # Tag=>logic map
@@ -29,20 +28,20 @@ class HelicsFederate(object):
         self.tags = set()
 
         # Default max simulation time is 1 week (in seconds)
-        hours = 24*7 # one week
+        hours = 24 * 7  # one week
         total_interval = int(60 * 60 * hours)
 
         # Get federate values at runtime
-        with open(config, 'r') as file_:
+        with open(config) as file_:
             cfg = json.loads(file_.read())
-            end_time = cfg.get('end_time', None)
+            end_time = cfg.get("end_time", None)
             self.end_time = end_time if end_time else total_interval
-            req_time = cfg.get('request_time', None)
+            req_time = cfg.get("request_time", None)
             self.request_time = 1
             if req_time:
-                self.request_time = (h.HELICS_TIME_MAXTIME
-                                     if req_time == 'max'
-                                     else int(req_time))
+                self.request_time = (
+                    h.HELICS_TIME_MAXTIME if req_time == "max" else int(req_time)
+                )
 
         ##############  Registering  federate from json  ######################
         self.fed = h.helicsCreateCombinationFederateFromConfig(config)
@@ -63,7 +62,7 @@ class HelicsFederate(object):
             end_name = self.endid[i].name
             end_type = self.endid[i].type
             logger.debug(f"\tRegistered endpoint ---> {end_name}")
-            end_name = end_name.split('/')[1] if '/' in end_name else end_name
+            end_name = end_name.split("/")[1] if "/" in end_name else end_name
             self.tags.add(end_name)
             self.types[end_name] = end_type
         self.subid = {}
@@ -71,24 +70,24 @@ class HelicsFederate(object):
             self.subid[i] = h.helicsFederateGetInputByIndex(self.fed, i)
             sub_name = self.subid[i].target
             sub_type = self.subid[i].type
-            sub_info = self.subid[i].info # stores logic for interdependencies
+            sub_info = self.subid[i].info  # stores logic for interdependencies
             logger.debug(f"\tRegistered subscription ---> {sub_name}")
-            sub_name = sub_name.split('/')[1] if '/' in sub_name else sub_name
+            sub_name = sub_name.split("/")[1] if "/" in sub_name else sub_name
             self.tags.add(sub_name)
             self.types[sub_name] = sub_type
             if sub_info:
-                logger.debug(f"\t\t********** LOGIC **********")
-                for exp in sub_info.split(';'):
-                    lhs, rhs = exp.split('=')
+                logger.debug("\t\t********** LOGIC **********")
+                for exp in sub_info.split(";"):
+                    lhs, rhs = exp.split("=")
                     self.logic[lhs.strip()] = rhs.strip()
-                    logger.debug(f'\t\t{exp.strip()}')
+                    logger.debug(f"\t\t{exp.strip()}")
         self.pubid = {}
         for i in range(0, self.pub_count):
             self.pubid[i] = h.helicsFederateGetPublicationByIndex(self.fed, i)
             pub_name = self.pubid[i].name
             pub_type = self.pubid[i].type
             logger.debug(f"\tRegistered publication ---> {pub_name}")
-            pub_name = pub_name.split('/')[1] if '/' in pub_name else pub_name
+            pub_name = pub_name.split("/")[1] if "/" in pub_name else pub_name
             self.tags.add(pub_name)
             self.types[pub_name] = pub_type
 
@@ -108,13 +107,10 @@ class HelicsFederate(object):
         # Publish initial values to helics
         for i in range(self.pub_count):
             pub_name = self.pubid[i].name
-            pub_name = (pub_name.split('/')[1]
-                        if '/' in pub_name
-                        else pub_name)
+            pub_name = pub_name.split("/")[1] if "/" in pub_name else pub_name
             value = self.tag(pub_name)
             self.pubid[i].publish(value)
-            logger.debug(f"\tPublishing {pub_name}:{value} "
-                         f"at time {grantedtime}")
+            logger.debug(f"\tPublishing {pub_name}:{value} at time {grantedtime}")
 
         self.action_post_request_time()
 
@@ -125,9 +121,11 @@ class HelicsFederate(object):
 
             # Time request for the next physical interval to be simulated
             requested_time = grantedtime + self.request_time
-            requested_time = (self.request_time
-                              if self.request_time == h.HELICS_TIME_MAXTIME
-                              else requested_time)
+            requested_time = (
+                self.request_time
+                if self.request_time == h.HELICS_TIME_MAXTIME
+                else requested_time
+            )
             logger.debug(f"Requesting time {requested_time}")
             grantedtime = h.helicsFederateRequestTime(self.fed, requested_time)
             logger.debug(f"Granted time {grantedtime}")
@@ -136,13 +134,10 @@ class HelicsFederate(object):
             for i in range(self.sub_count):
                 if h.helicsInputIsUpdated(self.subid[i]):
                     sub_name = self.subid[i].target
-                    sub_name = (sub_name.split('/')[1]
-                                if '/' in sub_name
-                                else sub_name)
+                    sub_name = sub_name.split("/")[1] if "/" in sub_name else sub_name
                     value = self.subid[i].string
                     self._tag(sub_name, value)
-                    logger.debug(f"\tUpdated {sub_name}:{value} "
-                                 f"at time {grantedtime}")
+                    logger.debug(f"\tUpdated {sub_name}:{value} at time {grantedtime}")
 
             # Process logic
             for tag, exp in self.logic.items():
@@ -163,28 +158,24 @@ class HelicsFederate(object):
             for i in range(self.end_count):
                 while self.endid[i].has_message():
                     end_name = self.endid[i].name
-                    end_name = (end_name.split('/')[1]
-                                if '/' in end_name
-                                else end_name)
+                    end_name = end_name.split("/")[1] if "/" in end_name else end_name
                     msg = self.endid[i].get_message()
                     value = msg.data
-                    logger.debug(f"\tReceived message from endpoint "
-                                 f"{msg.source} at time {grantedtime}"
-                                 f" with data {value}")
+                    logger.debug(
+                        f"\tReceived message from endpoint "
+                        f"{msg.source} at time {grantedtime}"
+                        f" with data {value}"
+                    )
                     self._tag(end_name, value)
-                    logger.debug(f"\tUpdated {end_name}:{value} "
-                                 f"at time {grantedtime}")
+                    logger.debug(f"\tUpdated {end_name}:{value} at time {grantedtime}")
 
             # Process publications
             for i in range(self.pub_count):
                 pub_name = self.pubid[i].name
-                pub_name = (pub_name.split('/')[1]
-                            if '/' in pub_name
-                            else pub_name)
+                pub_name = pub_name.split("/")[1] if "/" in pub_name else pub_name
                 value = self.tag(pub_name)
                 self.pubid[i].publish(value)
-                logger.debug(f"\tPublishing {pub_name}:{value} "
-                             f"at time {grantedtime}")
+                logger.debug(f"\tPublishing {pub_name}:{value} at time {grantedtime}")
 
             self.action_post_request_time()
 
@@ -208,7 +199,7 @@ class HelicsFederate(object):
         return self.types[tag]
 
     def _tag(self, tag, val):
-        if self.get_type(tag) == 'bool':
+        if self.get_type(tag) == "bool":
             # Make sure any val is 'true'|'false'
             val = bool(strtobool(str(val)))
             val = str(val).lower()

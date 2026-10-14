@@ -68,3 +68,101 @@ module-root = "."
 [build-system]
 requires = ["uv_build>=0.9.7"]
 build-backend = "uv_build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+# Linting/code quality tools
+# To install: pip install -e .[dev]
+[project.optional-dependencies]
+dev = [
+    "codespell>=2.2.4",  # spelling
+    "pytest",  # testing framework
+    "pytest-cov",  # coverage reporting
+    "ruff",  # powerful linter
+    "vulture",  # checks for unused code
+]
+
+[tool.ruff]
+# Same as Black.
+line-length = 88
+indent-width = 4
+
+# requires-python >=3.10 (ubuntu 22.04)
+target-version = "py310"
+
+# exclude vendored and generated code outright
+exclude = [
+    "pybennu/pypmu/",
+    "pybennu/distributed/swig/",
+    "deps/",
+    "build/",
+    "dist/",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",        # pycodestyle errors
+    "W",        # pycodestyle warnings
+    "F",        # pyflakes
+    "I",        # isort
+    "UP",       # pyupgrade
+    "A",        # flake8-builtins
+    "B",        # flake8-bugbear
+    "C4",       # flake8-comprehensions
+    "PT",       # flake8-pytest-style
+    "RSE",      # flake8-raise
+    "RET",      # flake8-return
+    "ARG",      # flake8-unused-arguments
+    "RUF",      # Ruff-specific rules
+]
+# Each ignore below is pervasive in this codebase and a fix would change behavior or API:
+ignore = [
+    "E501",     # line-too-long https://docs.astral.sh/ruff/rules/line-too-long/
+    "E722",     # bare except: also catches KeyboardInterrupt/SystemExit, relied on in daemon loops
+    "UP031",    # printf-style formatting: 38 sites, manual conversion risks format drift
+    "ARG",      # unused args: signal handlers, pydantic hooks, overrides and mocks fix the signature
+    "B905",     # zip() strict=: would raise on mismatched lengths where it now truncates
+    "B007",     # unused loop var: names kept for readability
+    "A001",     # builtin shadowing (id, exit, vars): renaming locals is churn
+    "A002",     # builtin-shadowing args (id): callers may pass by keyword
+    "E741",     # ambiguous name `l`: domain-style short names in power-system code
+    "E711",     # == None: may be numpy/pandas elementwise comparison
+    "E712",     # == True: may be numpy/pandas elementwise comparison
+    "RUF001",   # ambiguous unicode in a banner string
+]
+
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Allow unused variables when underscore-prefixed.
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.per-file-ignores]
+"test_*.py" = ["ARG"] # ignore unused-argument in test files
+
+[tool.ruff.lint.isort]
+known-first-party = ["pybennu"]
+
+[tool.ruff.format]
+# Like Black
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+# Enable auto-formatting of code examples in docstrings
+docstring-code-format = true
+docstring-code-line-length = "dynamic"
+
+[tool.vulture]
+min_confidence = 80
+paths = ["pybennu", "tests"]
+exclude = [
+    "pybennu/pypmu/",
+    "pybennu/distributed/swig/",
+]
+# Signal-handler, classmethod and context-manager signatures are fixed by their callers.
+ignore_names = ["signum", "stack", "frame", "cls", "settings_cls", "file_secret_settings",
+                "exc_type", "exc_val", "exc_tb", "a", "k"]

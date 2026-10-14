@@ -20,7 +20,6 @@ public:
 private:
     void subscriptionHandler(std::string& data);
     std::shared_ptr<distributed::Subscriber> mSubscriber;
-
 };
 
 } // namespace io

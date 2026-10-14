@@ -6,9 +6,9 @@ Full Documentation: https://sandialabs.github.io/sceptre-docs/13-providers.html
 
 import argparse
 import json
-from typing import List, Literal, Tuple, Type, Union
 from ipaddress import IPv4Address
 from pathlib import Path
+from typing import Literal
 
 import yaml
 from pydantic import (
@@ -34,7 +34,7 @@ class GtnetSktTag(BaseModel):
     type: Literal["int", "float"] = Field(
         description="Data type for the tag, must the string 'int' or 'float'. This must match what's configured in RSCAD for the RTDS.",
     )
-    initial_value: Union[int, float] = Field(
+    initial_value: int | float = Field(
         description="Initial value to set in internal state when provider starts.",
         examples=["0", "1", "0.0", "60.0", "1.0"],
     )
@@ -49,16 +49,17 @@ class GtnetSktTag(BaseModel):
 
 class SirenTag(BaseModel):
     name: str = Field(
-        description="Name of the tag Siren Provider is providing. E.g. \"IA.real\"",
+        description='Name of the tag Siren Provider is providing. E.g. "IA.real"',
     )
     type: Literal["int", "float", "bool"]
-    initial_value: Union[int, float, bool] = Field(
+    initial_value: int | float | bool = Field(
         description="Initial value to set in internal state when provider starts.",
     )
     publish_rms: bool = Field(
         description="Whether the provider should publish the RMS of this value.",
         default=False,
     )
+
 
 class SirenSettings(BaseModel):
     enabled: bool = False
@@ -77,19 +78,21 @@ class SirenSettings(BaseModel):
         default=100,
         gt=0,
         title="RMS Circular Buffer Size",
-        description="The size of the circular buffer from which RMS values are calculated"
+        description="The size of the circular buffer from which RMS values are calculated",
     )
-    tags: List[SirenTag] = Field(
+    tags: list[SirenTag] = Field(
         default_factory=list,
         title="Siren Tags",
-        description="The list of tags for the Siren Provider to provide (i.e. tags to publish and be written by clients)"
+        description="The list of tags for the Siren Provider to provide (i.e. tags to publish and be written by clients)",
     )
+
 
 class GtnetSktSettings(BaseModel):
     """
     Configuration for connecting to the GTNET-SKT interface on the RTDS.
     NOTE: this applies to GTNET-SKT channel 1 ONLY. Multiple GTNET-SKT channels are not supported yet.
     """
+
     enabled: bool = False
     ip: IPv4Address = IPv4Address("0.0.0.0")
     port: int = Field(default=7000, gt=0)
@@ -107,7 +110,7 @@ class GtnetSktSettings(BaseModel):
         description="How many writes per second for UDP. Default is 30hz (30 times a second).",
     )
     # TODO: validate that number of tags <= 30 (maximum of 30 points are allowed per GTNET-SKT channel)
-    tags: List[GtnetSktTag] = Field(
+    tags: list[GtnetSktTag] = Field(
         default_factory=list,
         title="GTNET-SKT Tags",
         description="IMPORTANT: The order of this list matters! It determines the order in which values are serialized on the wire in packets, which determines how they're read by the RTDS. See docstring in rtds.py for details.",
@@ -126,6 +129,7 @@ class PmuDevice(BaseModel):
         BUS6_VA.real
         BUS6_VA.angle
     """
+
     name: str = Field(
         title="PMU Name",
         description="Name of the PMU.",
@@ -164,6 +168,7 @@ class PmuSettings(BaseModel):
     requires each PMU to be configured individually, even if they all have the
     same IP address.
     """
+
     enabled: bool = False
     retry_delay: float = Field(
         default=5.0,
@@ -174,14 +179,14 @@ class PmuSettings(BaseModel):
     retry_attempts: int = Field(
         default=3,
         title="Retry Attempts",
-        description="Number of times to retry querying for data before either rebuilding the TCP connection (for TCP protocol) or exiting with an error (for UDP). Note that TCP connection retries will continue until a connection is established, this config option merely sets the number of failures allowed."
+        description="Number of times to retry querying for data before either rebuilding the TCP connection (for TCP protocol) or exiting with an error (for UDP). Note that TCP connection retries will continue until a connection is established, this config option merely sets the number of failures allowed.",
     )
     bind_ip: IPv4Address = Field(
         default=IPv4Address("0.0.0.0"),
         title="Bind IP",
         description="IPv4 address to listen on for UDP-based PMU communications.",
     )
-    pmus: List[PmuDevice] = Field(
+    pmus: list[PmuDevice] = Field(
         default_factory=list,
     )
 
@@ -190,10 +195,11 @@ class ModbusRegister(BaseModel):
     """
     Modbus registers.
     """
+
     num: int = Field(
         ge=0,
         title="Register Number",
-        description="The Modbus Register ID. This should be unique for a given device."
+        description="The Modbus Register ID. This should be unique for a given device.",
     )
     name: str = Field(
         description="Descriptive name for the register",
@@ -207,7 +213,7 @@ class ModbusRegister(BaseModel):
     )
     data_type: Literal["float32", "bool"] = Field(
         title="Data Type",
-        description="Data type for the register, also determines width (32 bits will be two registers wide)."
+        description="Data type for the register, also determines width (32 bits will be two registers wide).",
     )
     unit_type: str = Field(
         default="",
@@ -220,7 +226,12 @@ class ModbusRegister(BaseModel):
         default="",
         validate_default=True,
         description="Human-readable description of the register's purpose.",
-        examples=["Bus Power, Bidirectional", "Read-only version of some_reg", "Genset Voltage", "Battery SOC (State of Charge)"],
+        examples=[
+            "Bus Power, Bidirectional",
+            "Read-only version of some_reg",
+            "Genset Voltage",
+            "Battery SOC (State of Charge)",
+        ],
     )
     sceptre_tag: str = Field(
         default="",
@@ -243,18 +254,14 @@ class ModbusRegister(BaseModel):
         # use 'name' as-is.
         # .closed: boolean
         # .value: float/etc
-        if any(
-            info.data['name'].endswith(s)
-            for s in [".closed", ".value"]
-        ):
-            return info.data['name']
+        if any(info.data["name"].endswith(s) for s in [".closed", ".value"]):
+            return info.data["name"]
 
         # TODO: use the simulator type to determine this
         # TODO: RTDS uses .closed, OPALRT uses .value
         if info.data["data_type"] == "bool":
             return f"{info.data['name']}.closed"
-        else:
-            return f"{info.data['name']}.value"
+        return f"{info.data['name']}.value"
 
     # === User methods ===
     def humanize(self, value) -> str:
@@ -262,7 +269,7 @@ class ModbusRegister(BaseModel):
         Generate string with human-readable value with the register's
         unit_type added, e.g. "4.05kW" or "60.0%".
         """
-        return f"{str(value)}{self.unit_type}"
+        return f"{value!s}{self.unit_type}"
 
     # === For comparison and sorting ===
     def __eq__(self, other: "ModbusRegister") -> bool:
@@ -284,6 +291,7 @@ class ModbusSettings(BaseModel):
     This is NOT to be confused with Modbus inside the SCEPTRE emulation, this
     is only between the provider VM and the dynamic simulator (OPALRT/RTDS).
     """
+
     enabled: bool = False
     ip: IPv4Address = IPv4Address("0.0.0.0")
     port: int = Field(default=502, gt=0)
@@ -296,7 +304,7 @@ class ModbusSettings(BaseModel):
     retry_attempts: int = Field(
         default=3,
         title="Modbus Retry Attempts",
-        description="Number of times to retry querying for data before rebuilding the Modbus TCP connection. Set to 0 to never rebuild connection. Note that TCP connection retries will continue until a connection is established, this config option merely sets the number of failures allowed."
+        description="Number of times to retry querying for data before rebuilding the Modbus TCP connection. Set to 0 to never rebuild connection. Note that TCP connection retries will continue until a connection is established, this config option merely sets the number of failures allowed.",
     )
     retry_delay: float = Field(
         default=3.0,
@@ -310,7 +318,7 @@ class ModbusSettings(BaseModel):
         title="Modbus Polling Rate",
         description="Rate at which readable values are regularly polled for values. Set to 0.0 to poll as fast as possible (no sleeps).",
     )
-    registers: List[ModbusRegister] = Field(
+    registers: list[ModbusRegister] = Field(
         title="Modbus Registers",
         default_factory=list,
     )
@@ -321,6 +329,7 @@ class CsvSettings(BaseModel):
     Configure exporting of ground truth data from the provider
     to CSV files on disk in the provider VM.
     """
+
     enabled: bool = False
     file_path: str = Field(
         default="/root/default_csv_path/",
@@ -347,6 +356,7 @@ class ElasticSettings(BaseModel):
     Configure export of ground truth data directly from
     the provider to an Elasticsearch database.
     """
+
     enabled: bool = False
     host: str = Field(
         default="http://localhost:9200",
@@ -382,21 +392,20 @@ class PybennuSettings(BaseSettings):
     server_endpoint: str = Field(
         default="tcp://172.16.1.2:5555",
         title="Provider server endpoint",
-        description="Where the provider daemon listens. This is typically set by sceptre app."
+        description="Where the provider daemon listens. This is typically set by sceptre app.",
     )
     publish_endpoint: str = Field(
         default="udp://*;239.0.0.1:40000",
         title="Provider publish endpoint",
-        description="Where provider messages are published to as UDP multicast messages. This is typically set by sceptre app."
+        description="Where provider messages are published to as UDP multicast messages. This is typically set by sceptre app.",
     )
     simulator: str = Field(
         default="",
         title="Provider Simulator",
-        description="This is the 'solver' field in the Scenario YAML, and the 'solver-type' in the legacy config.ini format. This is typically set by sceptre app."
+        description="This is the 'solver' field in the Scenario YAML, and the 'solver-type' in the legacy config.ini format. This is typically set by sceptre app.",
     )
     debug: bool = Field(
-        default=False,
-        description="Enable debugging output (more verbose)"
+        default=False, description="Enable debugging output (more verbose)"
     )
 
     # === SCEPTRE Metadata ===
@@ -404,22 +413,22 @@ class PybennuSettings(BaseSettings):
     sceptre_topology: str = Field(
         default="",
         title="SCEPTRE Topology",
-        description="This is typically set by sceptre app"
+        description="This is typically set by sceptre app",
     )
     sceptre_scenario: str = Field(
         default="",
         title="SCEPTRE Scenario",
-        description="This is typically set by sceptre app"
+        description="This is typically set by sceptre app",
     )
     sceptre_experiment: str = Field(
         default="",
         title="SCEPTRE Experiment",
-        description="This is typically set by sceptre app"
+        description="This is typically set by sceptre app",
     )
     provider_hostname: str = Field(
         default="",
         title="Provider Hostname",
-        description="Hostname of the provider. This is typically set by sceptre app."
+        description="Hostname of the provider. This is typically set by sceptre app.",
     )
     provider_ip: IPv4Address = Field(
         default=IPv4Address("0.0.0.0"),
@@ -463,11 +472,9 @@ class PybennuSettings(BaseSettings):
         env_prefix="bennu_",
         env_nested_delimiter="__",
         env_ignore_empty=True,
-
         # Remove whitespace from any string fields
         str_strip_whitespace=True,
-
-        extra='ignore',
+        extra="ignore",
         validate_assignment=True,
         # validate_default=False,
         allow_inf_nan=False,
@@ -484,12 +491,12 @@ class PybennuSettings(BaseSettings):
     @classmethod
     def settings_customise_sources(
         cls,
-        settings_cls: Type[BaseSettings],
+        settings_cls: type[BaseSettings],
         init_settings: PydanticBaseSettingsSource,
         env_settings: PydanticBaseSettingsSource,
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,  # not used by us
-    ) -> Tuple[PydanticBaseSettingsSource, ...]:
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
         return env_settings, dotenv_settings, init_settings
 
     @field_validator("server_endpoint", "publish_endpoint")
@@ -498,7 +505,7 @@ class PybennuSettings(BaseSettings):
         return str(AnyUrl(v))
 
 
-def load_settings_yaml(path: Union[Path, str]) -> PybennuSettings:
+def load_settings_yaml(path: Path | str) -> PybennuSettings:
     """
     Generates a settings model from the contents of a YAML file.
     """
@@ -526,8 +533,16 @@ def load_settings_yaml(path: Union[Path, str]) -> PybennuSettings:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(prog="bennu_settings")
-    parser.add_argument("command", choices=["test_yaml", "gen_schema"], help="Load a settings YAML or generate a JSON schema")
-    parser.add_argument("filepath", type=str, help="Input file (for test_yaml) or output file (for gen_schema)")
+    parser.add_argument(
+        "command",
+        choices=["test_yaml", "gen_schema"],
+        help="Load a settings YAML or generate a JSON schema",
+    )
+    parser.add_argument(
+        "filepath",
+        type=str,
+        help="Input file (for test_yaml) or output file (for gen_schema)",
+    )
     args = parser.parse_args()
 
     p = Path(args.filepath).resolve()

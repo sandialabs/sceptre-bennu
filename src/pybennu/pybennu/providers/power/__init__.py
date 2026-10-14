@@ -1,1 +1,2 @@
-class PowerSolverError(Exception): pass
+class PowerSolverError(Exception):
+    pass

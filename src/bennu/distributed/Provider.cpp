@@ -54,14 +54,14 @@ zmq::message_t Provider::messageHandler(const zmq::message_t& request)
     }
     else if (op == "WRITE" || op == "write")
     {
-        std::unordered_map<std::string,std::string> tags;
+        std::unordered_map<std::string, std::string> tags;
 
         std::string pointDelim{","};
         try
         {
             auto split = distributed::split(payload, pointDelim);
 
-            for (auto &point : split)
+            for (auto& point : split)
             {
                 std::string valDelim{":"};
                 try
@@ -75,7 +75,7 @@ zmq::message_t Provider::messageHandler(const zmq::message_t& request)
                 }
             }
         }
-        catch(const std::exception& e)
+        catch (const std::exception& e)
         {
             printf("Err: %s", e.what());
         }
@@ -87,7 +87,7 @@ zmq::message_t Provider::messageHandler(const zmq::message_t& request)
         reply += "ERR=Unknown command type '" + op + "'";
     }
     printf("Sending reply for payload %s -- %s\n", payload.data(), reply.data());
-    zmq::message_t repMsg(reply+'\0'); // must include null byte
+    zmq::message_t repMsg(reply + '\0'); // must include null byte
     return repMsg;
 }
 

@@ -4,9 +4,13 @@ This module converters Protobuf objects to PTI format for PyPower to ingest
 and perform a power flow solve, then converts the results back to protobuf
 again to publish out to Gryffin.
 """
+
 import math
+
 from numpy import array
+
 from pybennu.protobuf.bennu_pb2 import PowerTransmission
+
 
 class PTIManager:
     """Helper class for managing PTI <--> Protobuf references"""
@@ -15,7 +19,9 @@ class PTIManager:
         """Expects a Protobuf PowerTransmission to initialize indexes from"""
 
         if not isinstance(system, PowerTransmission):
-            raise AttributeError('PTIManager: system must be of type bennu.protobuf.PowerTransmission')
+            raise AttributeError(
+                "PTIManager: system must be of type bennu.protobuf.PowerTransmission"
+            )
 
         self.__initialize_indexes(system)
         self.__initialize_data(system)
@@ -26,7 +32,7 @@ class PTIManager:
             idx = self.gennamidx[gen.name]
             assert idx is not None
 
-            data = self.ppc['gen'][idx]
+            data = self.ppc["gen"][idx]
             assert data.any()
 
             data[1] = gen.mw
@@ -46,16 +52,16 @@ class PTIManager:
             idx = self.busnamidx[bus]
             assert idx is not None
 
-            if not idx in demands:
-                demands[idx] = {'mw': 0.0, 'mvar': 0.0}
+            if idx not in demands:
+                demands[idx] = {"mw": 0.0, "mvar": 0.0}
 
             if load.active:
-                demands[idx]['mw'] += load.mw
-                demands[idx]['mvar'] += load.mvar
+                demands[idx]["mw"] += load.mw
+                demands[idx]["mvar"] += load.mvar
 
         for bus, demand in demands.items():
-            self.ppc['bus'][bus][2] = demand['mw']
-            self.ppc['bus'][bus][3] = demand['mvar']
+            self.ppc["bus"][bus][2] = demand["mw"]
+            self.ppc["bus"][bus][3] = demand["mvar"]
 
         capacities = {}
 
@@ -66,21 +72,21 @@ class PTIManager:
             idx = self.busnamidx[bus]
             assert idx is not None
 
-            if not idx in capacities:
+            if idx not in capacities:
                 capacities[idx] = 0.0
 
             if shunt.active:
                 capacities[idx] += shunt.nominal_mvar
 
         for bus, capacity in capacities.items():
-            self.ppc['bus'][bus][5] = capacity
+            self.ppc["bus"][bus][5] = capacity
 
         for branch in system.branches:
             assert branch.name in self.bchnamidx
             idx = self.bchnamidx[branch.name]
             assert idx is not None
 
-            data = self.ppc['branch'][idx]
+            data = self.ppc["branch"][idx]
             assert data.any()
 
             if branch.active:
@@ -91,7 +97,7 @@ class PTIManager:
         return self.ppc
 
     def pti_to_pb(self, devices, results):
-        for idx, data in enumerate(results['bus']):
+        for idx, data in enumerate(results["bus"]):
             name = self.busidxnam[idx]
             bus = devices[name]
 
@@ -132,7 +138,7 @@ class PTIManager:
 
                 shunt.actual_mvar = data[5]
 
-        for idx, data in enumerate(results['gen']):
+        for idx, data in enumerate(results["gen"]):
             name = self.genidxnam[idx]
             gen = devices[name]
 
@@ -153,7 +159,7 @@ class PTIManager:
             bus.gen_mw += data[1]
             bus.gen_mvar += data[2]
 
-        for idx, data in enumerate(results['branch']):
+        for idx, data in enumerate(results["branch"]):
             name = self.bchidxnam[idx]
             branch = devices[name]
 
@@ -211,8 +217,8 @@ class PTIManager:
         branches = []
 
         for bus in system.buses:
-            assert bus.HasField('name')
-            assert bus.HasField('number')
+            assert bus.HasField("name")
+            assert bus.HasField("number")
 
             data = [0.0] * 13
             data[0] = bus.number
@@ -225,8 +231,8 @@ class PTIManager:
             self.busidxnam[idx] = bus.name
 
         for gen in system.generators:
-            assert gen.HasField('name')
-            assert gen.HasField('bus')
+            assert gen.HasField("name")
+            assert gen.HasField("bus")
 
             data = [0.0] * 21
             data[0] = gen.bus
@@ -238,8 +244,8 @@ class PTIManager:
             self.genidxnam[idx] = gen.name
 
         for load in system.loads:
-            assert load.HasField('name')
-            assert load.HasField('bus')
+            assert load.HasField("name")
+            assert load.HasField("bus")
 
             idx = self.busnumidx[load.bus]
             nam = self.busidxnam[idx]
@@ -247,8 +253,8 @@ class PTIManager:
             self.busnamlodnam[nam] = load.name
 
         for shunt in system.shunts:
-            assert shunt.HasField('name')
-            assert shunt.HasField('bus')
+            assert shunt.HasField("name")
+            assert shunt.HasField("bus")
 
             idx = self.busnumidx[shunt.bus]
             nam = self.busidxnam[idx]
@@ -256,9 +262,9 @@ class PTIManager:
             self.busnamshtnam[nam] = shunt.name
 
         for branch in system.branches:
-            assert branch.HasField('name')
-            assert branch.HasField('source')
-            assert branch.HasField('target')
+            assert branch.HasField("name")
+            assert branch.HasField("source")
+            assert branch.HasField("target")
 
             data = [0.0] * 13
             data[0] = branch.source
@@ -270,23 +276,27 @@ class PTIManager:
             self.bchnamidx[branch.name] = idx
             self.bchidxnam[idx] = branch.name
 
-        self.ppc = {'version': '2', 'baseMVA': 100.0,
-                    'bus': array(buses), 'gen': array(gens),
-                    'branch': array(branches)}
+        self.ppc = {
+            "version": "2",
+            "baseMVA": 100.0,
+            "bus": array(buses),
+            "gen": array(gens),
+            "branch": array(branches),
+        }
 
     def __initialize_data(self, system):
         for bus in system.buses:
-            assert bus.HasField('name')
-            assert bus.HasField('active')
-            assert bus.HasField('slack')
-            assert bus.HasField('voltage')
-            assert bus.HasField('angle')
-            assert bus.HasField('base_kv')
+            assert bus.HasField("name")
+            assert bus.HasField("active")
+            assert bus.HasField("slack")
+            assert bus.HasField("voltage")
+            assert bus.HasField("angle")
+            assert bus.HasField("base_kv")
 
             idx = self.busnamidx[bus.name]
             assert idx is not None
 
-            data = self.ppc['bus'][idx]
+            data = self.ppc["bus"][idx]
             assert data.any()
 
             if bus.active:
@@ -306,31 +316,31 @@ class PTIManager:
             data[12] = 1.1
 
         for load in system.loads:
-            assert load.HasField('bus')
-            assert load.HasField('mw')
-            assert load.HasField('mvar')
+            assert load.HasField("bus")
+            assert load.HasField("mw")
+            assert load.HasField("mvar")
 
             bus = self.busnumidx[load.bus]
             assert bus is not None
-            self.ppc['bus'][bus][2] += load.mw
-            self.ppc['bus'][bus][3] += load.mvar
+            self.ppc["bus"][bus][2] += load.mw
+            self.ppc["bus"][bus][3] += load.mvar
 
         for gen in system.generators:
-            assert gen.HasField('name')
-            assert gen.HasField('mw')
-            assert gen.HasField('mvar')
-            assert gen.HasField('mvar_max')
-            assert gen.HasField('mvar_min')
-            assert gen.HasField('voltage')
-            assert gen.HasField('active')
-            assert gen.HasField('bus')
-            assert gen.HasField('mw_max')
-            assert gen.HasField('mw_min')
+            assert gen.HasField("name")
+            assert gen.HasField("mw")
+            assert gen.HasField("mvar")
+            assert gen.HasField("mvar_max")
+            assert gen.HasField("mvar_min")
+            assert gen.HasField("voltage")
+            assert gen.HasField("active")
+            assert gen.HasField("bus")
+            assert gen.HasField("mw_max")
+            assert gen.HasField("mw_min")
 
             idx = self.gennamidx[gen.name]
             assert idx is not None
 
-            data = self.ppc['gen'][idx]
+            data = self.ppc["gen"][idx]
             assert data.any()
 
             data[1] = gen.mw
@@ -345,8 +355,8 @@ class PTIManager:
 
                 bus = self.busnumidx[gen.bus]
                 assert bus is not None
-                if self.ppc['bus'][bus][1] != 3:
-                    self.ppc['bus'][bus][1] = 2
+                if self.ppc["bus"][bus][1] != 3:
+                    self.ppc["bus"][bus][1] = 2
             else:
                 data[7] = 0
 
@@ -354,27 +364,27 @@ class PTIManager:
             data[9] = gen.mw_min
 
         for shunt in system.shunts:
-            assert shunt.HasField('bus')
-            assert shunt.HasField('nominal_mvar')
+            assert shunt.HasField("bus")
+            assert shunt.HasField("nominal_mvar")
 
             bus = self.busnumidx[shunt.bus]
             assert bus is not None
-            self.ppc['bus'][bus][5] += shunt.nominal_mvar
+            self.ppc["bus"][bus][5] += shunt.nominal_mvar
 
         for branch in system.branches:
-            assert branch.HasField('name')
-            assert branch.HasField('resistance')
-            assert branch.HasField('reactance')
-            assert branch.HasField('charging')
-            assert branch.HasField('mva_max')
-            assert branch.HasField('turns_ratio')
-            assert branch.HasField('phase_angle')
-            assert branch.HasField('active')
+            assert branch.HasField("name")
+            assert branch.HasField("resistance")
+            assert branch.HasField("reactance")
+            assert branch.HasField("charging")
+            assert branch.HasField("mva_max")
+            assert branch.HasField("turns_ratio")
+            assert branch.HasField("phase_angle")
+            assert branch.HasField("active")
 
             idx = self.bchnamidx[branch.name]
             assert idx is not None
 
-            data = self.ppc['branch'][idx]
+            data = self.ppc["branch"][idx]
             assert data.any()
 
             data[2] = branch.resistance

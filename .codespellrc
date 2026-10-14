@@ -1,0 +1,4 @@
+[codespell]
+ignore-words-list = ot,ser,nam,regiter,datset,comit
+# vendored and generated code (basenames match at any depth)
+skip = .git,.beads,build,*.pyd,*.so,*.deb,*.pcap,go.sum,protocol,helics,deps,pypmu,swig,cparse,doctest.h,settings_schema,*.min.js,*.min.css

@@ -1,17 +1,16 @@
 import atexit
+import copy
 import logging
 import platform
-import copy
 import queue
-from threading import Thread
 from datetime import datetime, timezone
 from pprint import pformat
-from typing import List, Set
+from threading import Thread
 
 from elasticsearch import Elasticsearch, helpers
 
-from pybennu.utils import utc_now, get_bennu_version
 from pybennu.settings import PybennuSettings
+from pybennu.utils import get_bennu_version, utc_now
 
 # Schema docs: https://sandialabs.github.io/sceptre-docs/13-providers.html
 
@@ -122,11 +121,12 @@ class ElasticPusher:
     """
     Handles export of data from providers to Elasticsearch.
     """
+
     TYPE_MAPPING: dict = copy.deepcopy(ES_BASE_TYPE_MAPPING)
 
     def __init__(self, conf: PybennuSettings) -> None:
         self.conf: PybennuSettings = conf
-        self.index_cache: Set[str] = set()  # index names that are known to exist
+        self.index_cache: set[str] = set()  # index names that are known to exist
         self.data_queue: queue.Queue = queue.Queue()  # queue of data values to push
 
         # Reduce verbosity of Elasticsearch's loggers
@@ -183,7 +183,7 @@ class ElasticPusher:
         for t in self.threads:
             t.start()
 
-    def enqueue(self, messages: List[dict]) -> None:
+    def enqueue(self, messages: list[dict]) -> None:
         """
         Add list of data bodies to push to the internal queue.
         """
@@ -197,7 +197,9 @@ class ElasticPusher:
         self.log.info("Connecting to Elasticsearch...")
         es = Elasticsearch(self.conf.elastic.host)
         if not es.ping():  # cause connection to be created
-            raise RuntimeError(f"failed to connect to Elasticsearch server '{self.conf.elastic.host}'")
+            raise RuntimeError(
+                f"failed to connect to Elasticsearch server '{self.conf.elastic.host}'"
+            )
         self.log.info("Successfully connected to Elasticsearch!")
         atexit.register(es.close)
 
@@ -232,11 +234,10 @@ class ElasticPusher:
                 # if the provider was restarted part way through a day.
                 if not es.indices.exists(index=index):
                     self.log.info(f"Creating Elasticsearch index '{index}'...")
-                    es.indices.create(index=index, body={
-                        "mappings": {
-                            "properties": self.TYPE_MAPPING
-                        }
-                    })
+                    es.indices.create(
+                        index=index,
+                        body={"mappings": {"properties": self.TYPE_MAPPING}},
+                    )
                     self.log.info(f"Created Elasticsearch index '{index}'")
                 self.index_cache.add(index)
 
@@ -246,7 +247,7 @@ class ElasticPusher:
                     **self.msg_additions,
                     **message,
                     "event": {"ingested": ts_now},
-                }
+                },
             }
             actions.append(action)
 

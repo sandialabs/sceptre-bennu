@@ -54,15 +54,13 @@ in the short-term.
 import logging
 import socket
 import struct
+from threading import Lock, Thread
 from time import sleep
-from typing import Dict, Optional, Union
-from threading import Thread, Lock
 
-from pybennu.settings import PybennuSettings, GtnetSktTag
+from pybennu.settings import GtnetSktTag, PybennuSettings
 
 
 class GtnetSkt:
-
     def __init__(self, conf: PybennuSettings) -> None:
         self.conf: PybennuSettings = conf
 
@@ -72,13 +70,13 @@ class GtnetSkt:
 
         # Socket to be used for writes
         # This can be TCP (SOCK_STREAM) or UDP (SOCK_DGRAM)
-        self.socket: Optional[socket.socket] = None
+        self.socket: socket.socket | None = None
 
         # Thread lock
         self.lock: Lock = Lock()
 
         # Dict of tags, keyed by name
-        self.tags: Dict[str, GtnetSktTag] = {
+        self.tags: dict[str, GtnetSktTag] = {
             t.name: t for t in self.conf.gtnet_skt.tags
         }
         self.log.debug(f"tags: {self.tags}")
@@ -101,10 +99,14 @@ class GtnetSkt:
                 self.state[gtag.name] = float(gtag.initial_value)
                 self.struct_format_string += "f"
             else:
-                raise ValueError(f"invalid type {gtag.type} for GTNET-SKT tag {gtag.name}")
+                raise ValueError(
+                    f"invalid type {gtag.type} for GTNET-SKT tag {gtag.name}"
+                )
 
         if self.conf.gtnet_skt.protocol == "udp":
-            self.udp_write_thread: Thread = Thread(target=self.continuous_write, daemon=True)
+            self.udp_write_thread: Thread = Thread(
+                target=self.continuous_write, daemon=True
+            )
 
     def start(self):
         self.init_socket()
@@ -120,7 +122,9 @@ class GtnetSkt:
         sleep_for = 1.0 / float(self.conf.gtnet_skt.udp_write_rate)
         target = (str(self.conf.gtnet_skt.ip), self.conf.gtnet_skt.port)
 
-        self.log.info(f"Starting GTNET-SKT UDP writer thread [sleep_for={sleep_for}, target={target}]")
+        self.log.info(
+            f"Starting GTNET-SKT UDP writer thread [sleep_for={sleep_for}, target={target}]"
+        )
         # self.init_socket()   # this is called in start()
 
         while True:
@@ -178,7 +182,9 @@ class GtnetSkt:
                     self.socket.connect(target)
                     connected = True
                 except Exception:
-                    self.log.error(f"Failed to connect to GTNET-SKT {target}, sleeping for {self.conf.gtnet_skt.tcp_retry_delay} seconds before retrying")
+                    self.log.error(
+                        f"Failed to connect to GTNET-SKT {target}, sleeping for {self.conf.gtnet_skt.tcp_retry_delay} seconds before retrying"
+                    )
                     if self.conf.debug:  # only log traceback if debugging
                         self.log.exception(f"traceback for GTNET-SKT {target}")
                     self.close_socket()
@@ -197,8 +203,8 @@ class GtnetSkt:
             self.socket = None
 
     def typecast_values(
-        self, to_typecast: Dict[str, Union[str, int, float]]
-    ) -> Dict[str, Union[int, float]]:
+        self, to_typecast: dict[str, str | int | float]
+    ) -> dict[str, int | float]:
         typecasted = {}
 
         for tag, val in to_typecast.items():

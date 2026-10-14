@@ -4,31 +4,33 @@ import atexit
 import contextlib
 import importlib
 import inspect
-import inspect
 import json
 import logging
-import os
 import signal
 import sys
 import threading
-
-from pybennu.distributed.client import Client
-from pybennu.distributed.subscriber import Subscriber
-import pybennu.distributed.swig._Endpoint as E
-
 from time import sleep
 
+import pybennu.distributed.swig._Endpoint as E
+from pybennu.distributed.client import Client
+from pybennu.distributed.subscriber import Subscriber
 
-LEVELS = {'debug': logging.DEBUG,       # 10
-          'info': logging.INFO,         # 20
-          'warning': logging.WARNING,   # 30
-          'filter': 31,
-          'error': logging.ERROR,       # 40
-          'critical': logging.CRITICAL  # 50
-         }
+LEVELS = {
+    "debug": logging.DEBUG,  # 10
+    "info": logging.INFO,  # 20
+    "warning": logging.WARNING,  # 30
+    "filter": 31,
+    "error": logging.ERROR,  # 40
+    "critical": logging.CRITICAL,  # 50
+}
 
-logging.addLevelName(LEVELS['filter'], 'FILTER')
-logging.basicConfig(format='%(asctime)s %(name)-12s  %(levelname)-8s  %(message)s', level=logging.DEBUG, datefmt='%Y-%m-%d %H:%M:%S')
+logging.addLevelName(LEVELS["filter"], "FILTER")
+logging.basicConfig(
+    format="%(asctime)s %(name)-12s  %(levelname)-8s  %(message)s",
+    level=logging.DEBUG,
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
 
 class device_config:
     def __init__(self, _name):
@@ -40,15 +42,15 @@ class device_config:
         self.server_endpoint = "tcp://127.0.0.1:5555"
         self.publish_endpoint = "udp://239.0.0.1:40000"
         self.filter = "/"
-        self.level_name = ''
+        self.level_name = ""
         self.to_endpoint = {}
         self.to_device = {}
 
 
-class siren_start():
-    '''
+class siren_start:
+    """
     Class used to maintain all of the siren device threads.
-    '''
+    """
 
     def __init__(self, config, devices, level_name):
         """Inits the siren subscriber."""
@@ -57,8 +59,10 @@ class siren_start():
 
         self.siren_objs = {}
         for device_name in self.devices:
-            self.logger.debug(f'Created siren object {device_name}.')
-            siren_obj = siren(self.devices[device_name], self.devices[device_name].level_name)
+            self.logger.debug(f"Created siren object {device_name}.")
+            siren_obj = siren(
+                self.devices[device_name], self.devices[device_name].level_name
+            )
             self.siren_objs[device_name] = siren_obj
             thread = threading.Thread(target=self.run_siren, args=[siren_obj])
             thread.daemon = True
@@ -71,7 +75,7 @@ class siren_start():
         level = LEVELS.get(level_name, logging.NOTSET)
         self.logger.setLevel(level)
 
-    '''
+    """
     Just an empty loop to keep the main thread running, while each
     individual device thread runs.  Each device thread is a daemon thread.
     This way when Ctrl-C is pressed quitting the main thread the
@@ -83,7 +87,8 @@ class siren_start():
     If this isn't used and daemon = true, multiple errors are thrown when
     ctrl-c is hit. The specific errors encountered
     are dependent on timing.
-    '''
+    """
+
     def run(self):
         while True:
             sleep(1)
@@ -100,30 +105,30 @@ class siren_start():
         for key in self.config:
             device = device_config(key)
             if devices is None or device.name in devices:
-                if 'device_type' in self.config[key]:
-                    device.type = self.config[key]['device_type']
-                if 'device_id' in self.config[key]:
-                    device.id = self.config[key]['device_id']
-                if 'device_config_file' in self.config[key]:
-                    device.config_file = self.config[key]['device_config_file']
-                if 'server-endpoint' in self.config[key]:
-                    device.server_endpoint = self.config[key]['server-endpoint']
-                if 'publish-endpoint' in self.config[key]:
-                    device.publish_endpoint = self.config[key]['publish-endpoint']
-                if 'filter' in self.config[key]:
-                    device.filter = self.config[key]['filter']
-                if 'device_polling_time' in self.config[key]:
-                    device.polling_time = self.config[key]['device_polling_time']
-                if 'to_endpoint' in self.config[key]:
-                    device.to_endpoint = self.config[key]['to_endpoint']
-                if 'to_device' in self.config[key]:
-                    device.to_device = self.config[key]['to_device']
-                if 'level_name' in self.config[key]:
-                    device.level_name = self.config[key]['level_name']
+                if "device_type" in self.config[key]:
+                    device.type = self.config[key]["device_type"]
+                if "device_id" in self.config[key]:
+                    device.id = self.config[key]["device_id"]
+                if "device_config_file" in self.config[key]:
+                    device.config_file = self.config[key]["device_config_file"]
+                if "server-endpoint" in self.config[key]:
+                    device.server_endpoint = self.config[key]["server-endpoint"]
+                if "publish-endpoint" in self.config[key]:
+                    device.publish_endpoint = self.config[key]["publish-endpoint"]
+                if "filter" in self.config[key]:
+                    device.filter = self.config[key]["filter"]
+                if "device_polling_time" in self.config[key]:
+                    device.polling_time = self.config[key]["device_polling_time"]
+                if "to_endpoint" in self.config[key]:
+                    device.to_endpoint = self.config[key]["to_endpoint"]
+                if "to_device" in self.config[key]:
+                    device.to_device = self.config[key]["to_device"]
+                if "level_name" in self.config[key]:
+                    device.level_name = self.config[key]["level_name"]
 
                 self.devices[key] = device
 
-                self.logger.debug(f'''Configuration
+                self.logger.debug(f"""Configuration
                         Log Level: {device.level_name}
                         Device Type: {device.type}
                         Device Id: {device.id}
@@ -133,7 +138,7 @@ class siren_start():
                         Filter: {device.filter}
                         Device Polling Time: {device.polling_time}
                         To Endpoint: {device.to_endpoint}
-                        To Device: {device.to_device}''')
+                        To Device: {device.to_device}""")
 
     def run_siren(self, siren_obj):
         siren_obj.start()
@@ -176,20 +181,20 @@ class siren(Subscriber, Client):
         self.run()
 
     def cleanup(self):
-        self.logger.info(f'Cleaning up {self.device.device_name}.')
+        self.logger.info(f"Cleaning up {self.device.device_name}.")
         self.run_thread = False
         self.thread.join()
         self.device.cleanup()
 
     def create_device(self):
-        '''
+        """
         There should only be one device class the siren.hil_device.* module.  Otherwise
         getmembers(...) will return all the classes in that module and they may
         not necessarily be the device class you want.
 
         Classes nested in the device class are ok and preferred
-        '''
-        path = 'pybennu.siren.hil_device.{}'.format(self.device_config.type)
+        """
+        path = f"pybennu.siren.hil_device.{self.device_config.type}"
         module = importlib.import_module(path)
         classes = inspect.getmembers(module, inspect.isclass)
         for _class in classes:
@@ -198,12 +203,13 @@ class siren(Subscriber, Client):
                     self.device_config.config_file,
                     self.device_config.name,
                     self.device_config.level_name,
-                    self.device_config.id)
+                    self.device_config.id,
+                )
                 break
 
     def _is_outside_deadband(self, old_value, new_value, deadband):
         """Check if a new value is outside of a deadband threshold from and old value
-        Returns true  if the difference between new_value and old_value are 
+        Returns true  if the difference between new_value and old_value are
         greater than the deadband, or if the old_value is None.
         """
         if old_value is None:
@@ -222,15 +228,15 @@ class siren(Subscriber, Client):
             message (str): published zmq message as a string
         """
         with self.__lock:
-            points = message.split(',')
-            
+            points = message.split(",")
+
             for point in points:
-                split = point.split(':')
+                split = point.split(":")
 
                 # Point is empty, cutoff, or malformed
                 if len(split) < 2 or any([len(s) == 0 for s in split]):
                     continue
-                    
+
                 tag = split[0]
                 value = split[1]
 
@@ -240,26 +246,28 @@ class siren(Subscriber, Client):
 
                 # Here is a default range for the sensor data for the case that the configs do not
                 # include the min and max for sensor data. This is desirble to keep as an option.
-                #sensor_range = [-100, 100]
+                # sensor_range = [-100, 100]
                 # if filter has a list associated with it instead of just a lebel, then use the second entry in the list
                 # as the min value for sensor data and third entry as the max val. The label will be the first entry.
-                #if type(label) == type(sensor_range):
+                # if type(label) == type(sensor_range):
                 #    sensor_range[0] = label[1]
                 #    sensor_range[1] = label[2]
                 #    label = label[0]
                 # Find an approprate scaled voltage to output
-                #voltage = virtualsensor(data, sensor_range[0], sensor_range[1], 0, 3.2)
+                # voltage = virtualsensor(data, sensor_range[0], sensor_range[1], 0, 3.2)
 
-                if value.lower() == 'false':
+                if value.lower() == "false":
                     value = False
-                    field = 'status'
-                elif value.lower() == 'true':
+                    field = "status"
+                elif value.lower() == "true":
                     value = True
-                    field = 'status'
+                    field = "status"
                 else:
                     value = float(value)
-                    field = 'value'
-                self.device.logger.log(LEVELS['debug'], f'TO HARDWARE {tag}:{value} with field:{field}')
+                    field = "value"
+                self.device.logger.log(
+                    LEVELS["debug"], f"TO HARDWARE {tag}:{value} with field:{field}"
+                )
                 self._to_hardware(field, label, value)
 
     def _to_provider(self):
@@ -267,48 +275,61 @@ class siren(Subscriber, Client):
 
         The flow is hardware -> siren -> provider.
         """
-        sleep(5)  # before polling the devices sleep so that siren has a chance to get the values from the provider
+        sleep(
+            5
+        )  # before polling the devices sleep so that siren has a chance to get the values from the provider
         filters = self.device_config.to_endpoint.keys()
         while self.run_thread:
             with self.__lock:
                 for _filter in filters:
                     label = self.device_config.to_endpoint[_filter]
-                    if 'analog' in label:
+                    if "analog" in label:
                         data = self.device.read_analog(label)
                         # set deadband if given in label mapping
                         deadband = self.device.label_mapping[label].get("deadband", 0.0)
                         if data is not None:
                             if (
                                 _filter in self.to_endpoint_states
-                                and self._is_outside_deadband(self.to_endpoint_states[_filter], data, deadband)
+                                and self._is_outside_deadband(
+                                    self.to_endpoint_states[_filter], data, deadband
+                                )
                             ):
                                 self.to_endpoint_states[_filter] = data
-                                self.device.logger.log(LEVELS['debug'], f'TO PROVIDER {label}:{data}')
+                                self.device.logger.log(
+                                    LEVELS["debug"], f"TO PROVIDER {label}:{data}"
+                                )
                                 with contextlib.redirect_stdout(None):
                                     self.write_analog_point(_filter, data)
-                    elif 'digital' in label:
+                    elif "digital" in label:
                         data = self.device.read_digital(label)
                         if data is not None:
-                            if _filter in self.to_endpoint_states and self.to_endpoint_states[_filter] != data:
+                            if (
+                                _filter in self.to_endpoint_states
+                                and self.to_endpoint_states[_filter] != data
+                            ):
                                 self.to_endpoint_states[_filter] = data
-                                self.device.logger.log(LEVELS['debug'], f'TO PROVIDER {label}:{data}')
+                                self.device.logger.log(
+                                    LEVELS["debug"], f"TO PROVIDER {label}:{data}"
+                                )
                                 with contextlib.redirect_stdout(None):
                                     self.write_digital_point(_filter, data)
-                    elif 'flip_flop' in label:
+                    elif "flip_flop" in label:
                         data = self.device.read_flip_flop(label)
                         if data is not None:
-                            if _filter in self.to_endpoint_states and self.to_endpoint_states[_filter] != data:
+                            if (
+                                _filter in self.to_endpoint_states
+                                and self.to_endpoint_states[_filter] != data
+                            ):
                                 self.to_endpoint_states[_filter] = data
-                                self.device.logger.log(LEVELS['debug'], f'TO PROVIDER {label}:{data}')
+                                self.device.logger.log(
+                                    LEVELS["debug"], f"TO PROVIDER {label}:{data}"
+                                )
                                 with contextlib.redirect_stdout(None):
                                     self.write_digital_point(_filter, data)
                     else:
                         raise NotImplementedError
 
-                    
             sleep(self.device_config.polling_time)
-
-
 
     def _to_hardware(self, field, label, data):
         """Sends data to the inputs of the connected hardware.
@@ -320,10 +341,10 @@ class siren(Subscriber, Client):
             label: The IO point to write to.
             data: The value which the IO point will be written to.
         """
-        if field == 'status':
+        if field == "status":
             self.device.write_digital(label, data)
-        elif field == 'value':
-            if 'waveform' in label:
+        elif field == "value":
+            if "waveform" in label:
                 self.device.write_waveform(label, data)
             else:
                 # This could lead to issues because for the LJ labels are either
@@ -339,29 +360,29 @@ def main():
 
     # Setup command line arguments.
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c',
-                        '--config',
-                        required=True,
-                        action='store',
-                        help='siren config file')
-    parser.add_argument('-D',
-                        '--devices',
-                        nargs='+',
-                        required=False,
-                        help='space-separated list of expected devices')
+    parser.add_argument(
+        "-c", "--config", required=True, action="store", help="siren config file"
+    )
+    parser.add_argument(
+        "-D",
+        "--devices",
+        nargs="+",
+        required=False,
+        help="space-separated list of expected devices",
+    )
     args = parser.parse_args()
 
     # Start the subscriber.
-    ss = siren_start(args.config, args.devices, 'critical')
+    ss = siren_start(args.config, args.devices, "critical")
     ss.run()
 
 
 def on_exit(signum, stack):
     goodbye = """                             _ _
           __ _  ___   ___   __| | |__  _   _  ___
-         / _` |/ _ \ / _ \ / _` | '_ \| | | |/ _ \\
+         / _` |/ _ \\ / _ \\ / _` | '_ \\| | | |/ _ \\
         | (_| | (_) | (_) | (_| | |_) | |_| |  __/
-         \__, |\___/ \___/ \__,_|_.__/ \__, |\___|
+         \\__, |\\___/ \\___/ \\__,_|_.__/ \\__, |\\___|
          |___/                         |___/
                     siren [sahy-ruh n]
               """

@@ -7,19 +7,21 @@ import signal
 import sys
 import time
 
-class Daemon(object):
+
+class Daemon:
     """
     A generic daemon class.
 
     Usage: subclass the Daemon class and override the run() method
     """
 
-    def __init__(self, pidfile, stdin='/dev/null',
-                 stdout='/dev/null', stderr='/dev/null'):
+    def __init__(
+        self, pidfile, stdin="/dev/null", stdout="/dev/null", stderr="/dev/null"
+    ):
         self.pidfile = pidfile
-        self.stdin   = stdin
-        self.stdout  = stdout
-        self.stderr  = stderr
+        self.stdin = stdin
+        self.stdout = stdout
+        self.stderr = stderr
 
     def daemonize(self):
         """
@@ -45,9 +47,9 @@ class Daemon(object):
         sys.stderr.flush()
 
         # Redirect standard file descriptors
-        si = open(self.stdin,  'r')
-        so = open(self.stdout, 'a+')
-        se = open(self.stderr, 'ab+', 0)
+        si = open(self.stdin)
+        so = open(self.stdout, "a+")
+        se = open(self.stderr, "ab+", 0)
 
         os.dup2(si.fileno(), sys.stdin.fileno())
         os.dup2(so.fileno(), sys.stdout.fileno())
@@ -75,9 +77,9 @@ class Daemon(object):
         atexit.register(self.del_pidfile)
 
         pid = str(os.getpid())
-        open(self.pidfile,'w+').write("%s\n" % pid)
+        open(self.pidfile, "w+").write("%s\n" % pid)
 
-        sys.stderr.write('\nProcess started with PID %s\n' % (pid))
+        sys.stderr.write("\nProcess started with PID %s\n" % (pid))
 
     def del_pidfile(self):
         """
@@ -109,14 +111,14 @@ class Daemon(object):
         """
 
         try:
-            pf  = open(self.pidfile,'r')
+            pf = open(self.pidfile)
             pid = int(pf.read().strip())
             pf.close()
-        except (IOError, TypeError):
+        except (OSError, TypeError):
             pid = None
         return pid
 
-    def stop(self, silent = False):
+    def stop(self, silent=False):
         """
         Stop the daemon
         """
@@ -128,7 +130,7 @@ class Daemon(object):
             if not silent:
                 message = "pidfile %s does not exist. Daemon not running?\n"
                 sys.stderr.write(message % self.pidfile)
-            return # not an error in a restart
+            return  # not an error in a restart
 
         # Try killing the daemon process
         try:
@@ -149,7 +151,7 @@ class Daemon(object):
         Restart the daemon
         """
 
-        self.stop(silent = True)
+        self.stop(silent=True)
         self.start()
 
     def run(self):

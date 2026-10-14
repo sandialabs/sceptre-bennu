@@ -9,14 +9,14 @@ import pybennu.distributed.swig._Endpoint as E
 
 
 class Publisher:
-    """ Publisher base class.
+    """Publisher base class.
 
     This class implements functionality to connect to a ZMQ RADIO socket and
     publish data.
     """
+
     def __init__(self, endpoint):
-        """ Initialize connection environment.
-        """
+        """Initialize connection environment."""
         self.MTU = 1465
 
         if isinstance(endpoint, str):
@@ -30,7 +30,7 @@ class Publisher:
         self.connect()
 
     def connect(self):
-        """ Connect to publish socket
+        """Connect to publish socket
 
         This function creates a ZMQ RADIO socket and "connects" to it.
         """
@@ -39,16 +39,15 @@ class Publisher:
         self.__socket.connect(E.Endpoint_str_get(self.__endpoint))
 
     def publish(self, msg):
-        """ Publish a message to the socket.
-        """
+        """Publish a message to the socket."""
         try:
             size = len(msg)
             if size > self.MTU:
-                parts = msg.split(',')
+                parts = msg.split(",")
                 b_count = 0
                 message = ""
                 for p in parts:
-                    part = p + ','
+                    part = p + ","
                     b_count += len(part)
                     temp = message + part
                     # If adding the part is smaller than MTU and we haven't consumed all the msg...
@@ -61,4 +60,4 @@ class Publisher:
             else:
                 self.__socket.send_string(msg, group=self.__group)
         except Exception as e:
-            print("Publish error: {}".format(e))
+            print(f"Publish error: {e}")

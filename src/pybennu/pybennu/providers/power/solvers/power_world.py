@@ -188,13 +188,21 @@ from win32com.client import VARIANT
 
 from pybennu.distributed.provider import Provider
 
+
 class PowerWorld(Provider):
     """PowerWorld-based implementation of an electric power transmission
     system"""
 
-    def __init__(self, server_endpoint, publish_endpoint, case_filename,
-                 oneline_filename=None, objects_filename=None,
-                 debug=False, noise='normal'):
+    def __init__(
+        self,
+        server_endpoint,
+        publish_endpoint,
+        case_filename,
+        oneline_filename=None,
+        objects_filename=None,
+        debug=False,
+        noise="normal",
+    ):
         Provider.__init__(self, server_endpoint, publish_endpoint)
         self.__lock = threading.Lock()
         self.__has_failed = False
@@ -202,73 +210,162 @@ class PowerWorld(Provider):
         self.debug = debug
 
         # probablity density function for random noise
-        if noise not in ('none', 'uniform', 'normal', 'lognormal', 'gamma', 'weibull'):
-            raise ValueError('Noise PDF not a valid type! Choose from uniform, '
-                             'normal, lognormal, gamma, weibull')
+        if noise not in ("none", "uniform", "normal", "lognormal", "gamma", "weibull"):
+            raise ValueError(
+                "Noise PDF not a valid type! Choose from uniform, "
+                "normal, lognormal, gamma, weibull"
+            )
+        if noise.lower() == "none":
+            self.noise = None
         else:
-            if noise.lower() == 'none':
-                self.noise = None
-            else:
-                self.noise = noise
+            self.noise = noise
 
         # define SCADA field mappings for each device type
-        self.scada_fields = {'bus': ['busnum', 'base_kv', 'slack', 'active',
-                                     'voltage', 'angle', 'gen_mw',
-                                     'gen_mvar', 'load_mw', 'load_mvar',
-                                     'shunt_mvar'],
-                             'gen': ['busnum', 'id', 'active', 'voltage', 'mw',
-                                     'mvar', 'mw_max', 'mw_min', 'mvar_max',
-                                     'mvar_min', 'agc', 'avr'],
-                             'load': ['busnum', 'id', 'active', 'mw',
-                                      'mvar'],
-                             'shunt': ['busnum', 'id', 'active', 'actual_mvar',
-                                       'nominal_mvar'],
-                             'branch': ['busnumfrom', 'busnumto',
-                                        'circuit', 'active', 'current_from', 'current',
-                                        'target_mw', 'target_mvar', 'source_mw',
-                                        'source_mvar', 'mva', 'mva_max',
-                                        'phase_angle', 'charging', 'r', 'x'],
-                             'transformer': ['busnumfrom', 'busnumto',
-                                             'circuit', 'active', 'voltage_source',
-                                             'voltage_target', 'nominal_kv_source',
-                                             'nominal_kv_target', 'phase_angle_source',
-                                             'voltage_angle_target', 'current_source',
-                                             'current_target', 'source_mw', 'target_mw',
-                                             'source_mvar', 'target_mvar', 'tap']}
+        self.scada_fields = {
+            "bus": [
+                "busnum",
+                "base_kv",
+                "slack",
+                "active",
+                "voltage",
+                "angle",
+                "gen_mw",
+                "gen_mvar",
+                "load_mw",
+                "load_mvar",
+                "shunt_mvar",
+            ],
+            "gen": [
+                "busnum",
+                "id",
+                "active",
+                "voltage",
+                "mw",
+                "mvar",
+                "mw_max",
+                "mw_min",
+                "mvar_max",
+                "mvar_min",
+                "agc",
+                "avr",
+            ],
+            "load": ["busnum", "id", "active", "mw", "mvar"],
+            "shunt": ["busnum", "id", "active", "actual_mvar", "nominal_mvar"],
+            "branch": [
+                "busnumfrom",
+                "busnumto",
+                "circuit",
+                "active",
+                "current_from",
+                "current",
+                "target_mw",
+                "target_mvar",
+                "source_mw",
+                "source_mvar",
+                "mva",
+                "mva_max",
+                "phase_angle",
+                "charging",
+                "r",
+                "x",
+            ],
+            "transformer": [
+                "busnumfrom",
+                "busnumto",
+                "circuit",
+                "active",
+                "voltage_source",
+                "voltage_target",
+                "nominal_kv_source",
+                "nominal_kv_target",
+                "phase_angle_source",
+                "voltage_angle_target",
+                "current_source",
+                "current_target",
+                "source_mw",
+                "target_mw",
+                "source_mvar",
+                "target_mvar",
+                "tap",
+            ],
+        }
 
         # define PW fields for each device type
-        self.case_object_fields = {'bus': ['busnum', 'nomkv', 'slack', 'status',
-                                           'buspuvolt', 'busangle', 'genmw',
-                                           'genmvar', 'loadmw', 'loadmvar',
-                                           'shuntmvar'],
-                                   'gen': ['busnum', 'id', 'status', 'vpu', 'mw',
-                                           'mvar', 'mwmax', 'mwmin', 'mvarmax',
-                                           'mvarmin', 'agc', 'avr'],
-                                   'load': ['busnum', 'id', 'status', 'mw',
-                                            'mvar'],
-                                   'shunt': ['busnum', 'id', 'status', 'mvar',
-                                             'mvarnom'],
-                                   'branch': ['busnumfrom', 'busnumto',
-                                              'circuit', 'status', 'ampsfrom', 'ampsto',
-                                              'mwto', 'mvarto', 'mwfrom',
-                                              'mvarfrom', 'mvato', 'mvamax',
-                                              'vanglediff',
-                                              'chargingampstoopenendedfrom',
-                                              'r', 'x'],
-                                   'transformer': ['busnumfrom', 'busnumto',
-                                                   'circuit', 'status', 'vpufrom',
-                                                   'vputo', 'nomkvfrom',
-                                                   'nomkvto', 'vanglefrom',
-                                                   'vangleto', 'ampsfrom',
-                                                   'ampsto', 'mwfrom', 'mwto',
-                                                   'mvarfrom', 'mvarto', 'tap']}
+        self.case_object_fields = {
+            "bus": [
+                "busnum",
+                "nomkv",
+                "slack",
+                "status",
+                "buspuvolt",
+                "busangle",
+                "genmw",
+                "genmvar",
+                "loadmw",
+                "loadmvar",
+                "shuntmvar",
+            ],
+            "gen": [
+                "busnum",
+                "id",
+                "status",
+                "vpu",
+                "mw",
+                "mvar",
+                "mwmax",
+                "mwmin",
+                "mvarmax",
+                "mvarmin",
+                "agc",
+                "avr",
+            ],
+            "load": ["busnum", "id", "status", "mw", "mvar"],
+            "shunt": ["busnum", "id", "status", "mvar", "mvarnom"],
+            "branch": [
+                "busnumfrom",
+                "busnumto",
+                "circuit",
+                "status",
+                "ampsfrom",
+                "ampsto",
+                "mwto",
+                "mvarto",
+                "mwfrom",
+                "mvarfrom",
+                "mvato",
+                "mvamax",
+                "vanglediff",
+                "chargingampstoopenendedfrom",
+                "r",
+                "x",
+            ],
+            "transformer": [
+                "busnumfrom",
+                "busnumto",
+                "circuit",
+                "status",
+                "vpufrom",
+                "vputo",
+                "nomkvfrom",
+                "nomkvto",
+                "vanglefrom",
+                "vangleto",
+                "ampsfrom",
+                "ampsto",
+                "mwfrom",
+                "mwto",
+                "mvarfrom",
+                "mvarto",
+                "tap",
+            ],
+        }
 
         # used to map circuit elements to their names
         self.elements = {}
         self.temp_system = {}
 
         # connect to SimAuto
-        self.pw = win32com.client.Dispatch('pwrworld.SimulatorAuto')
+        self.pw = win32com.client.Dispatch("pwrworld.SimulatorAuto")
 
         # make UI visible
         self.pw.UIVisible = 1
@@ -276,28 +373,32 @@ class PowerWorld(Provider):
         # open PowerWorld case file
         try:
             self.pw.OpenCase(case_filename)
-        except IOError:
-            print('Failed to open the Power World case file: ' + case_filename + '.')
+        except OSError:
+            print("Failed to open the Power World case file: " + case_filename + ".")
 
         # open PowerWorld oneline file
         if oneline_filename:
             try:
-                self.pw.RunScriptCommand('OpenOneline({}, '', YES)'.format(oneline_filename))
-            except IOError:
-                print('Failed to open the Power World oneline file: ' + oneline_filename + '.')
+                self.pw.RunScriptCommand(f"OpenOneline({oneline_filename}, , YES)")
+            except OSError:
+                print(
+                    "Failed to open the Power World oneline file: "
+                    + oneline_filename
+                    + "."
+                )
 
         # enter run mode and animate oneline
-        self.pw.RunScriptCommand('EnterMode(RUN)')
-        self.pw.RunScriptCommand('Animate(YES)')
+        self.pw.RunScriptCommand("EnterMode(RUN)")
+        self.pw.RunScriptCommand("Animate(YES)")
 
-        with open(objects_filename, 'r') as f_:
+        with open(objects_filename) as f_:
             lines = f_.readlines()
         self.need = []
         for line in lines:
             line = line.strip()
-            devtype, id_ = line.split('-', 1)
-            devtype = 'gen' if 'gen' in devtype else devtype
-            self.need.append((line,devtype,id_))
+            devtype, id_ = line.split("-", 1)
+            devtype = "gen" if "gen" in devtype else devtype
+            self.need.append((line, devtype, id_))
 
         # initialze the system under test using data from PowerWorld
         self.create()
@@ -308,8 +409,8 @@ class PowerWorld(Provider):
         element in the self.need points list."""
 
         if self.debug:
-            print('Creating system under test')
-        for i in self.need: # ex: i = ('branch-1_1001-1002', 'branch', '1_1001-1002')
+            print("Creating system under test")
+        for i in self.need:  # ex: i = ('branch-1_1001-1002', 'branch', '1_1001-1002')
             data = self._get_single_element(i[1], i[2])
             self.elements[i[0]] = data
 
@@ -320,16 +421,16 @@ class PowerWorld(Provider):
         of the system under test will be collected and returned."""
 
         if self.debug:
-            print('Processing query')
-# TODO: this returns too much data right now. Instead, we'll just return
-# the subset of tags in self.need
-#        for i in self.case_object_fields:
-#            self._get_multi_element('branch')
-        tags = ''
+            print("Processing query")
+        # TODO: this returns too much data right now. Instead, we'll just return
+        # the subset of tags in self.need
+        #        for i in self.case_object_fields:
+        #            self._get_multi_element('branch')
+        tags = ""
         for item in self.need:
             fields = self.scada_fields[item[1]]
-            tags += ','.join(['{}.{}'.format(item[0],f) for f in fields])
-        msg = 'ACK={}'.format(tags)
+            tags += ",".join([f"{item[0]}.{f}" for f in fields])
+        msg = f"ACK={tags}"
         return msg
 
     def read(self, tag):
@@ -339,16 +440,16 @@ class PowerWorld(Provider):
         the system under test will be collected and returned."""
 
         if self.debug:
-            print('Processing read request')
+            print("Processing read request")
         try:
-            element, field = tag.strip('\x00').split('.')
-            devtype, id_ = element.split('-', 1)
-            devtype = 'gen' if 'gen' in devtype else devtype
+            element, field = tag.strip("\x00").split(".")
+            devtype, id_ = element.split("-", 1)
+            devtype = "gen" if "gen" in devtype else devtype
             data = self._get_single_element(devtype, id_)
             value = data[field]
-            msg = 'ACK={}'.format(value) if value else 'ERR={}'.format("No data found.")
+            msg = f"ACK={value}" if value else "ERR={}".format("No data found.")
         except Exception as err:
-            msg = 'ERR={}'.format(err)
+            msg = f"ERR={err}"
         return msg
 
     def write(self, tags):
@@ -358,51 +459,59 @@ class PowerWorld(Provider):
         be updated and published after the solve completes."""
 
         if self.debug:
-            print('Processing write command')
-            
+            print("Processing write command")
+
         if self.__has_failed:
-            return 'ERR=Solution in failed state.'
-        else:
-            try:
-                for tag, value in tags.items():
-                    if self.debug:
-                        print('PowerWorld.write ---- received write command for: '
-                            + tag + ' with value ' + value + ' -> ', end='')
+            return "ERR=Solution in failed state."
+        try:
+            for tag, value in tags.items():
+                if self.debug:
+                    print(
+                        "PowerWorld.write ---- received write command for: "
+                        + tag
+                        + " with value "
+                        + value
+                        + " -> ",
+                        end="",
+                    )
 
-                    element, field = tag.strip('\x00').split('.')
-                    devtype, id_ = element.split('-', 1)
-                    devtype = 'gen' if 'gen' in devtype else devtype
+                element, field = tag.strip("\x00").split(".")
+                devtype, id_ = element.split("-", 1)
+                devtype = "gen" if "gen" in devtype else devtype
 
-                    if value in ['true', 'false']:
-                        if field in ['slack', 'agc', 'avr']:
-                            val = 'YES' if value == 'true' else 'NO'
-                        elif field == 'active':
-                            if devtype == 'bus':
-                                val = 'Connected' if value == 'true' else 'Disconnected'
-                            else:
-                                val = 'Closed' if value == 'true' else 'Open'
+                if value in ["true", "false"]:
+                    if field in ["slack", "agc", "avr"]:
+                        val = "YES" if value == "true" else "NO"
+                    elif field == "active":
+                        if devtype == "bus":
+                            val = "Connected" if value == "true" else "Disconnected"
                         else:
-                            return 'ERR=Invalid value for tag: {}'.format(tag)
+                            val = "Closed" if value == "true" else "Open"
                     else:
-                        val = value
-
-                    self._change_single_element(devtype, id_, field, val)
-
-                #try to solve power flow after update, handle failure
-                status = self.pw.RunScriptCommand('SolvePowerFlow(RECTNEWT)')
-                if any(errMsg in status[0].lower() for errMsg in ['error', 'err']):
-                    print(f'{status[0]}')
-                    self.__has_failed = True
-                    msg = 'ERR=Failed to find solution. Check PowerWorld log for details.'
+                        return f"ERR=Invalid value for tag: {tag}"
                 else:
-                    self.__update()
-                    msg = 'ACK=Success processing PowerWorld write command'
+                    val = value
 
-            except Exception as err:
-                print("ERROR: Provider failed to process write message with exception: %s" % str(err))
-                msg = 'ERR=Provider failed to process write message with exception: {}'.format(err)
+                self._change_single_element(devtype, id_, field, val)
 
-            return msg
+            # try to solve power flow after update, handle failure
+            status = self.pw.RunScriptCommand("SolvePowerFlow(RECTNEWT)")
+            if any(errMsg in status[0].lower() for errMsg in ["error", "err"]):
+                print(f"{status[0]}")
+                self.__has_failed = True
+                msg = "ERR=Failed to find solution. Check PowerWorld log for details."
+            else:
+                self.__update()
+                msg = "ACK=Success processing PowerWorld write command"
+
+        except Exception as err:
+            print(
+                "ERROR: Provider failed to process write message with exception: %s"
+                % str(err)
+            )
+            msg = f"ERR=Provider failed to process write message with exception: {err}"
+
+        return msg
 
     def periodic_publish(self):
         """Loop that calls `self.publish` every second."""
@@ -413,26 +522,36 @@ class PowerWorld(Provider):
             try:
                 self.publish(msg)
             except Exception as e:
-                print("provider periodic_publish error: {}".format(e))
+                print(f"provider periodic_publish error: {e}")
             time.sleep(1)
-            
+
     def _value_type(self, value):
         # Utility function - return type (class) of value
-        return float if '.' in value else (bool if value.lower() in ['true', 'false'] else int)
+        return (
+            float
+            if "." in value
+            else (bool if value.lower() in ["true", "false"] else int)
+        )
 
     def _get_system_state(self):
         """Gets the system state as self.elements. If noise is required, a
         deep copy of the current self.elements is created and noise is added"""
-        
+
         if self.debug:
             print("Collecting latest system state")
-        
-        #reset state for failed solution
+
+        # reset state for failed solution
         if self.__has_failed:
             if not self.__has_purged:
                 with self.__lock:
-                    reset_value = {float: '0.0', int: '0', bool: 'false'}
-                    self.elements = {name: {field: reset_value[self._value_type(value)] for field, value in fields.items()} for name, fields in self.elements.items()}
+                    reset_value = {float: "0.0", int: "0", bool: "false"}
+                    self.elements = {
+                        name: {
+                            field: reset_value[self._value_type(value)]
+                            for field, value in fields.items()
+                        }
+                        for name, fields in self.elements.items()
+                    }
                 self.__has_purged = True
             state = self.elements
             return state
@@ -442,8 +561,8 @@ class PowerWorld(Provider):
                 # creating temp system to add noise to the steady state power system
                 # data so that `self.elements` is preserved.
                 temp_elem = copy.deepcopy(self.elements)
-            for name,data in temp_elem.items(): # ex: i={'bus-1001': {...},...}
-                for field,value in data.items():
+            for name, data in temp_elem.items():  # ex: i={'bus-1001': {...},...}
+                for field, value in data.items():
                     try:
                         val = float(value)
                         temp_elem[name][field] = str(self._add_noise(val))
@@ -460,11 +579,11 @@ class PowerWorld(Provider):
         if self.debug:
             print("Packing data")
         with self.__lock:
-            str_data = ''
+            str_data = ""
             # eg. {'bus-101': {...}, 'branch-1_1001-2002': {...}, ...}
-            for name,data in state.items():
-                for field,value in data.items():
-                    str_data += '{}.{}:{},'.format(name, field, value)
+            for name, data in state.items():
+                for field, value in data.items():
+                    str_data += f"{name}.{field}:{value},"
         return str_data
 
     def __update(self):
@@ -472,7 +591,7 @@ class PowerWorld(Provider):
         representation of the system under test."""
 
         if self.debug:
-            print('Updating system under test')
+            print("Updating system under test")
 
         # if this solver is self publishing, the periodic publish will run in a
         # separate thread, so we need a mutex around reading and writing data
@@ -480,7 +599,9 @@ class PowerWorld(Provider):
         # is also used in the get_publish_message function.
 
         with self.__lock:
-            for i in self.need: # ex: i = ('branch-1_1001-1002', 'branch', '1_1001-1002')
+            for (
+                i
+            ) in self.need:  # ex: i = ('branch-1_1001-1002', 'branch', '1_1001-1002')
                 data = self._get_single_element(i[1], i[2])
                 self.elements[i[0]] = data
 
@@ -495,26 +616,35 @@ class PowerWorld(Provider):
 
         field_list = self.case_object_fields[devtype]
         fieldarray = VARIANT(pythoncom.VT_VARIANT | pythoncom.VT_ARRAY, field_list)
-        results = self.pw.GetParametersMultipleElement(devtype, fieldarray, '')
+        results = self.pw.GetParametersMultipleElement(devtype, fieldarray, "")
 
         # Need to be smarter here to differentiate errors from no results
-        if results[0] != '':
+        if results[0] != "":
             items = None
         else:
             data = results[1]
             items = []
-            if devtype == 'bus':
-                items = ['bus-{}'.format(i.strip()) for i in data[0]]
-            elif devtype in ['gen', 'load', 'shunt']:
-                items = ['{}-{}_bus-{}'.format(devtype,i.strip(),j.strip()) for i in data[1] for j in data[0]]
-            elif devtype == 'branch':
-                items = ['branch-{}_{}-{}'.format(i.strip(),j.strip(),k.strip()) for i in data[2] for j in data[0] for k in data[1]]
+            if devtype == "bus":
+                items = [f"bus-{i.strip()}" for i in data[0]]
+            elif devtype in ["gen", "load", "shunt"]:
+                items = [
+                    f"{devtype}-{i.strip()}_bus-{j.strip()}"
+                    for i in data[1]
+                    for j in data[0]
+                ]
+            elif devtype == "branch":
+                items = [
+                    f"branch-{i.strip()}_{j.strip()}-{k.strip()}"
+                    for i in data[2]
+                    for j in data[0]
+                    for k in data[1]
+                ]
             else:
                 items = []
         return items
 
     def _change_single_element(self, devtype, id_, field, value):
-        #need to get current values first
+        # need to get current values first
         # Retrieves parameter data according to the fields specified in field_list.
         # value_list consists of identifying parameter values and zeroes and should be
         # the same length as field_list
@@ -522,11 +652,11 @@ class PowerWorld(Provider):
         fieldarray = VARIANT(pythoncom.VT_VARIANT | pythoncom.VT_ARRAY, field_list)
         valuearray = VARIANT(pythoncom.VT_VARIANT | pythoncom.VT_ARRAY, value_list)
         results = self.pw.GetParametersSingleElement(devtype, fieldarray, valuearray)
-        
-        #update value list to have actual values
+
+        # update value list to have actual values
         value_list = list(results[1])
 
-        #change the value that we are interested in 
+        # change the value that we are interested in
         # Sets parameter data according to the fields specified in field_list.
         # value_list consists of identifying parameter values and change value and
         # should be the same length as field_list
@@ -535,10 +665,9 @@ class PowerWorld(Provider):
         value_list[idx] = value
         valuearray = VARIANT(pythoncom.VT_VARIANT | pythoncom.VT_ARRAY, value_list)
         results = self.pw.ChangeParametersSingleElement(devtype, fieldarray, valuearray)
-        if results[0] != '':
-            raise AttributeError('Error executing command!')
-        else:
-            return True
+        if results[0] != "":
+            raise AttributeError("Error executing command!")
+        return True
 
     def _get_single_element(self, devtype, id_):
         field_list, value_list = self._get_field_value_lists(devtype, id_)
@@ -548,36 +677,43 @@ class PowerWorld(Provider):
         # value_list consists of identifying parameter values and zeroes and should be
         # the same length as field_list
         results = self.pw.GetParametersSingleElement(devtype, fieldarray, valuearray)
-        if results[0] != '':
-            raise AttributeError('Error executing command!')
-        else:
-            # trim whitespace and fix 'None'
-            data = list((i.strip() if i else '0.0') for i in results[1])
-            data = [x.replace('YES','true').replace('NO','false').replace('Connected','true').replace('Disconnected','false').replace('Closed','true').replace('Open','false') for x in data]
-            # fix up field list to match SCADA side
-            field_list = self.scada_fields[devtype]
-            # zip fields+data into dictionary e.g. {'x': 1, 'y': 2, ...}
-            element_data = dict(zip(field_list, data))
-            return element_data
+        if results[0] != "":
+            raise AttributeError("Error executing command!")
+        # trim whitespace and fix 'None'
+        data = list((i.strip() if i else "0.0") for i in results[1])
+        data = [
+            x.replace("YES", "true")
+            .replace("NO", "false")
+            .replace("Connected", "true")
+            .replace("Disconnected", "false")
+            .replace("Closed", "true")
+            .replace("Open", "false")
+            for x in data
+        ]
+        # fix up field list to match SCADA side
+        field_list = self.scada_fields[devtype]
+        # zip fields+data into dictionary e.g. {'x': 1, 'y': 2, ...}
+        element_data = dict(zip(field_list, data))
+        return element_data
 
     def _parse_id(self, id_):
         # id_ = 1_1001-2002
-        parts = [i.split('_') for i in id_.split('-')] # [['1', '1001'], ['2002']]
-        flat = [i for sub in parts for i in sub] # ['1', '1001', '2002']
+        parts = [i.split("_") for i in id_.split("-")]  # [['1', '1001'], ['2002']]
+        flat = [i for sub in parts for i in sub]  # ['1', '1001', '2002']
         return flat
 
     def _get_field_value_lists(self, devtype, id_):
         field_list = self.case_object_fields[devtype]
         value_list = [0] * len(field_list)
         parts = self._parse_id(id_)
-        if devtype == 'branch':  # id_ = 1_1001-2002
-            value_list[0] = parts[1] # src
-            value_list[1] = parts[2] # dst
-            value_list[2] = parts[0] # id (circuit)
-        elif devtype in ['gen','load','shunt']: # id_ = 1_bus-1001
-            value_list[0] = parts[2] # busno
-            value_list[1] = parts[0] # id
-        else: # id_ = 1001
+        if devtype == "branch":  # id_ = 1_1001-2002
+            value_list[0] = parts[1]  # src
+            value_list[1] = parts[2]  # dst
+            value_list[2] = parts[0]  # id (circuit)
+        elif devtype in ["gen", "load", "shunt"]:  # id_ = 1_bus-1001
+            value_list[0] = parts[2]  # busno
+            value_list[1] = parts[0]  # id
+        else:  # id_ = 1001
             value_list[0] = id_
         return (field_list, value_list)
 
@@ -588,9 +724,9 @@ class PowerWorld(Provider):
         if value == 0.0:
             noise = random.uniform(-0.1, 0.1)
         else:
-            if self.noise == 'uniform':
+            if self.noise == "uniform":
                 noise = value * random.uniform(0.99, 1.01)
-            elif self.noise == 'normal':
+            elif self.noise == "normal":
                 noise = value * random.normalvariate(1, 0.01)
         return noise
 

@@ -11,7 +11,7 @@ import pybennu.distributed.swig._Endpoint as E
 
 
 def handler(reply: str) -> None:
-    split = reply.split(',')
+    split = reply.split(",")
     print("Reply:")
     if len(split) > 1:
         for tag in split:
@@ -23,34 +23,37 @@ def handler(reply: str) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '-e', '--endpoint',
-        default='tcp://127.0.0.1:1330',
-        help="FEP (:1330) or Provider (:5555) endpoint, e.g. 'tcp://172.16.1.2:5555' or 'tcp://127.0.0.1:1330'"
+        "-e",
+        "--endpoint",
+        default="tcp://127.0.0.1:1330",
+        help="FEP (:1330) or Provider (:5555) endpoint, e.g. 'tcp://172.16.1.2:5555' or 'tcp://127.0.0.1:1330'",
     )
     parser.add_argument(
-        '-c', '--command',
-        default='query',
-        choices=['query', 'read', 'write', 'raw'],
-        help="Command to issue: query | read | write | raw"
+        "-c",
+        "--command",
+        default="query",
+        choices=["query", "read", "write", "raw"],
+        help="Command to issue: query | read | write | raw",
     )
     parser.add_argument(
-        '-t', '--tag',
-        help="Full tag name, e.g. 'bus101.active', 'br1.closed' or 'pv_power.value'"
+        "-t",
+        "--tag",
+        help="Full tag name, e.g. 'bus101.active', 'br1.closed' or 'pv_power.value'",
     )
     value_group = parser.add_mutually_exclusive_group()
+    value_group.add_argument("-v", "--value", help="Value to write (for analog tags)")
     value_group.add_argument(
-        '-v', '--value',
-        help='Value to write (for analog tags)'
+        "-s",
+        "--status",
+        choices=["true", "false", "1", "0"],
+        help="Status (for boolean tags), one of: true | 1 | false | 0",
     )
     value_group.add_argument(
-        '-s', '--status',
-        choices=['true', 'false', '1', '0'],
-        help="Status (for boolean tags), one of: true | 1 | false | 0"
-    )
-    value_group.add_argument(
-        '-r', '--raw', type=str,
-        help='Raw command to issue, passed as-is. '
-             'Example: --raw "WRITE=G1CB1_binary_input_closed:1,G2CB2_binary_input_closed:1,G3CB3_binary_input_closed:1"'
+        "-r",
+        "--raw",
+        type=str,
+        help="Raw command to issue, passed as-is. "
+        'Example: --raw "WRITE=G1CB1_binary_input_closed:1,G2CB2_binary_input_closed:1,G3CB3_binary_input_closed:1"',
     )
 
     args = parser.parse_args()
@@ -68,17 +71,17 @@ def main() -> None:
     probe.reply_handler = handler
 
     msg = ""
-    if args.command == 'query':
+    if args.command == "query":
         msg += "QUERY="
-    elif args.command == 'read':
+    elif args.command == "read":
         msg += "READ=" + args.tag
-    elif args.command == 'write':
+    elif args.command == "write":
         if args.status:
-            val = 'true' if args.status in ['true', '1'] else 'false'
+            val = "true" if args.status in ["true", "1"] else "false"
         else:
             val = args.value
         msg += f"WRITE={args.tag}:{val}"
-    elif args.command == 'raw':
+    elif args.command == "raw":
         msg += args.raw
     else:
         print(f"UNKNOWN COMMAND: {args.command}")

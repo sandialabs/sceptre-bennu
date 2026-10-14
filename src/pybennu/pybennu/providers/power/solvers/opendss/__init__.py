@@ -212,18 +212,25 @@ NOTES
     https://sf.net/p/electricdss/code/HEAD/tree/trunk/Distrib/Doc/OpenDSS_Direct_DLL.pdf.
 """
 
-import base64, copy, json, os, random, shutil, tempfile, threading, time
-
+import base64
+import copy
+import json
+import os
+import random
+import shutil
+import tempfile
+import threading
+import time
 from datetime import datetime
-from timeit   import default_timer as timer
+from timeit import default_timer as timer
 
-import opendssdirect       as dss
+import opendssdirect as dss
 import opendssdirect.utils as dss_utils
 
-from pybennu.distributed.provider import Provider
-from pybennu.providers.power      import PowerSolverError
-
 import pybennu.providers.power.solvers.opendss.data as models
+from pybennu.distributed.provider import Provider
+from pybennu.providers.power import PowerSolverError
+
 
 class OpenDSS(Provider):
     """OpenDSS-based implementation of an electric power distribution system"""
@@ -233,9 +240,10 @@ class OpenDSS(Provider):
         self.__lock = threading.Lock()
 
         self.__debug = False
-        if kwargs['debug']: self.__debug = True
+        if kwargs["debug"]:
+            self.__debug = True
 
-        print('Using OpenDSS version {}'.format(dss.Basic.Version()))
+        print(f"Using OpenDSS version {dss.Basic.Version()}")
 
         # Detect if a single config file was provided (assumes the .dss
         # or .DSS extension). If not, assume an archive was provided
@@ -244,11 +252,11 @@ class OpenDSS(Provider):
         path, ext = os.path.splitext(filename)
 
         if not ext:
-            raise RuntimeError('config file has no extension')
+            raise RuntimeError("config file has no extension")
 
         # If the filename extension is not `.dss` or `.DSS`, then assume
         # a config archive has been provided.
-        if ext not in ['.dss', '.DSS']:
+        if ext not in [".dss", ".DSS"]:
             # Get the name and directory location of the archive file.
             name = os.path.basename(path)
             directory = os.path.dirname(path)
@@ -259,7 +267,7 @@ class OpenDSS(Provider):
                 # the same directory the archive lives.
                 shutil.unpack_archive(filename, directory)
             except ValueError:
-                raise RuntimeError('unknown format used for config archive')
+                raise RuntimeError("unknown format used for config archive")
 
             # Assume the archive was created with a directory that
             # has the same name as the archive itself. For example,
@@ -267,16 +275,16 @@ class OpenDSS(Provider):
             # assume that unpacking the archive will result in a
             # /path/to/config/ directory that contains a master.dss
             # file in it.
-            filename = os.path.join(directory, name, 'master.dss')
+            filename = os.path.join(directory, name, "master.dss")
 
             if not os.path.isfile(filename):
-                raise RuntimeError('config archive does not contain master.dss file')
+                raise RuntimeError("config archive does not contain master.dss file")
 
         # enable/disable saving and clearing circuit
-        self.clear_circuit = kwargs['clear_circuit'] == 'enabled'
+        self.clear_circuit = kwargs["clear_circuit"] == "enabled"
 
         if self.clear_circuit:
-            now  = datetime.now()
+            now = datetime.now()
             noon = now.replace(hour=12, minute=0, second=0)
 
             self.__time_offset = int(now.timestamp() - noon.timestamp())
@@ -292,7 +300,7 @@ class OpenDSS(Provider):
         self.__create()
 
         # enable/disable published data jitter
-        self.jitter = kwargs['jitter'] == 'enabled'
+        self.jitter = kwargs["jitter"] == "enabled"
 
     def query(self):
         """Implements the query command interface for receiving the
@@ -300,7 +308,8 @@ class OpenDSS(Provider):
         When a query command is received, all available OpenDSS points
         of the system under test will be collected and returned."""
 
-        if self.__debug: print('Processing query command')
+        if self.__debug:
+            print("Processing query command")
 
         msg = []
 
@@ -308,7 +317,7 @@ class OpenDSS(Provider):
             device = self.elements[name]
 
             for field in device.__dataclass_fields__:
-                msg.append(f'{name}.{field}')
+                msg.append(f"{name}.{field}")
 
         return f"ACK={','.join(msg)}"
 
@@ -319,21 +328,22 @@ class OpenDSS(Provider):
         specific element of the system under test will be collected and
         returned."""
 
-        if self.__debug: print('Processing read command')
+        if self.__debug:
+            print("Processing read command")
 
         try:
-            device, field = tag.split('.')
+            device, field = tag.split(".")
 
-            if not device in self.elements:
-                return 'ERR=Unknown device {}'.format(device)
+            if device not in self.elements:
+                return f"ERR=Unknown device {device}"
 
             value = getattr(self.elements[device], field)
 
-            return 'ACK={}'.format(value)
+            return f"ACK={value}"
         except AttributeError:
-            return 'ERR=Unknown field {} for device {}'.format(field, device)
+            return f"ERR=Unknown field {field} for device {device}"
         except Exception as err:
-            return 'ERR={}'.format(err)
+            return f"ERR={err}"
 
     def write(self, tags):
         """Implements the write command interface for updating the
@@ -342,21 +352,22 @@ class OpenDSS(Provider):
         system under test will be updated and published after the solve
         completes."""
 
-        if self.__debug: print('Processing write command')
+        if self.__debug:
+            print("Processing write command")
 
         # Compile circuit definition living in currently tracked temp directory.
         self.__compile_circuit()
 
         try:
             for tag, value in tags.items():
-                device, field = tag.split('.')
+                device, field = tag.split(".")
 
-                if not device in self.elements:
-                   raise NameError('{} is not an element in the current system'.format(device))
+                if device not in self.elements:
+                    raise NameError(f"{device} is not an element in the current system")
 
-                if value.lower() == 'true':
+                if value.lower() == "true":
                     value = True
-                elif value.lower() == 'false':
+                elif value.lower() == "false":
                     value = False
                 else:
                     value = float(value)
@@ -365,12 +376,12 @@ class OpenDSS(Provider):
 
             # UPDATE GENERATORS
             if isinstance(self.elements[device], models.GeneratorData):
-                dss.Circuit.SetActiveClass('generator')
+                dss.Circuit.SetActiveClass("generator")
 
                 gen = self.elements[device]
 
                 # remove the 'generator_' qualifier added during create
-                name = gen.name.replace('generator_', '')
+                name = gen.name.replace("generator_", "")
 
                 # set the current generator as the active element
                 dss.Circuit.SetActiveElement(name)
@@ -386,12 +397,12 @@ class OpenDSS(Provider):
 
             # UPDATE LOADS
             if isinstance(self.elements[device], models.LoadData):
-                dss.Circuit.SetActiveClass('load')
+                dss.Circuit.SetActiveClass("load")
 
                 load = self.elements[device]
 
                 # remove the 'load_' qualifier added during create
-                name = load.name.replace('load_', '')
+                name = load.name.replace("load_", "")
 
                 # set the current load as the active element
                 dss.Circuit.SetActiveElement(name)
@@ -405,12 +416,12 @@ class OpenDSS(Provider):
 
             # UPDATE SHUNTS
             if isinstance(self.elements[device], models.ShuntData):
-                dss.Circuit.SetActiveClass('capacitor')
+                dss.Circuit.SetActiveClass("capacitor")
 
                 shunt = self.elements[device]
 
                 # remove the 'shunt_' qualifier added during create
-                name = shunt.name.replace('shunt_', '')
+                name = shunt.name.replace("shunt_", "")
 
                 # set the current shunt as the active element
                 dss.Circuit.SetActiveElement(name)
@@ -424,12 +435,12 @@ class OpenDSS(Provider):
 
             # UPDATE BRANCHES
             if isinstance(self.elements[device], models.BranchData):
-                dss.Circuit.SetActiveClass('line')
+                dss.Circuit.SetActiveClass("line")
 
                 branch = self.elements[device]
 
                 # remove the 'branch_' qualifier added during create
-                name = branch.name.replace('branch_', '')
+                name = branch.name.replace("branch_", "")
 
                 # set the current branch as the active element
                 dss.Circuit.SetActiveElement(name)
@@ -443,12 +454,12 @@ class OpenDSS(Provider):
 
             # UPDATE TRANSFORMERS
             if isinstance(self.elements[device], models.TransformerData):
-                dss.Circuit.SetActiveClass('transformer')
+                dss.Circuit.SetActiveClass("transformer")
 
                 transformer = self.elements[device]
 
                 # remove the 'transformer_' qualifier added during create
-                name = transformer.name.replace('transformer_', '')
+                name = transformer.name.replace("transformer_", "")
 
                 # set the current transformer as the active element
                 dss.Circuit.SetActiveElement(name)
@@ -471,12 +482,12 @@ class OpenDSS(Provider):
 
             # UPDATE INVERTERS
             if isinstance(self.elements[device], models.InverterData):
-                dss.Circuit.SetActiveClass('pvsystem')
+                dss.Circuit.SetActiveClass("pvsystem")
 
                 inverter = self.elements[device]
 
                 # remove the 'inverter_' qualifier added during create
-                name = inverter.name.replace('inverter_', '')
+                name = inverter.name.replace("inverter_", "")
 
                 # set the current inverter as the active element
                 dss.Circuit.SetActiveElement(name)
@@ -492,31 +503,42 @@ class OpenDSS(Provider):
                 # current internal representation of the inverter curve,
                 # then updating the specific point provided in the
                 # update
-                volt_array = [inverter.curve_volt_pt_1, inverter.curve_volt_pt_2,
-                              inverter.curve_volt_pt_3, inverter.curve_volt_pt_4,
-                              inverter.curve_volt_pt_5, inverter.curve_volt_pt_6]
+                volt_array = [
+                    inverter.curve_volt_pt_1,
+                    inverter.curve_volt_pt_2,
+                    inverter.curve_volt_pt_3,
+                    inverter.curve_volt_pt_4,
+                    inverter.curve_volt_pt_5,
+                    inverter.curve_volt_pt_6,
+                ]
 
-                var_array = [inverter.curve_var_pt_1, inverter.curve_var_pt_2,
-                             inverter.curve_var_pt_3, inverter.curve_var_pt_4,
-                             inverter.curve_var_pt_5, inverter.curve_var_pt_6]
+                var_array = [
+                    inverter.curve_var_pt_1,
+                    inverter.curve_var_pt_2,
+                    inverter.curve_var_pt_3,
+                    inverter.curve_var_pt_4,
+                    inverter.curve_var_pt_5,
+                    inverter.curve_var_pt_6,
+                ]
 
-                self.__run_command('edit xycurve.{} xarray={} yarray={}'.
-                                   format(inverter.volt_var_curve_name,
-                                          volt_array, var_array))
+                self.__run_command(
+                    f"edit xycurve.{inverter.volt_var_curve_name} xarray={volt_array} yarray={var_array}"
+                )
 
             self.__solve()
-            return 'ACK=Success processing OpenDSS write command'
+            return "ACK=Success processing OpenDSS write command"
 
         except Exception as err:
-            msg = 'OpenDSS failed to process update message with exception: {}'.format(err)
-            print('ERROR: processing write command - {}'.format(msg))
-            return 'ERR={}'.format(msg)
+            msg = f"OpenDSS failed to process update message with exception: {err}"
+            print(f"ERROR: processing write command - {msg}")
+            return f"ERR={msg}"
 
     def periodic_publish(self):
         """Loop that calls `self._publish_data` every two seconds."""
 
         while True:
-            if self.__debug: print('Periodically publishing data')
+            if self.__debug:
+                print("Periodically publishing data")
 
             msg = self.__pack_message()
 
@@ -524,7 +546,7 @@ class OpenDSS(Provider):
                 # The publish function is implemented by the Provider.
                 self.publish(msg)
             except Exception as ex:
-                print('provider periodic publish error: {}'.format(ex))
+                print(f"provider periodic publish error: {ex}")
 
             time.sleep(2)
 
@@ -532,7 +554,8 @@ class OpenDSS(Provider):
         """Packs each element in the system under test into a publish
         message."""
 
-        if self.__debug: print('Creating publish message')
+        if self.__debug:
+            print("Creating publish message")
 
         # if this solver is self publishing, the periodic publish will run in a
         # separate thread, so we need a mutex around reading and writing data
@@ -548,7 +571,8 @@ class OpenDSS(Provider):
                 if isinstance(temp_elements[device], models.BusData):
                     bus = temp_elements[device]
 
-                    if self.__debug: print(bus)
+                    if self.__debug:
+                        print(bus)
 
                     bus.voltage_mag_p1 = bus.voltage_mag_p1 * self.__gen_rand_num()
                     bus.voltage_ang_p1 = bus.voltage_ang_p1 * self.__gen_rand_num()
@@ -560,287 +584,652 @@ class OpenDSS(Provider):
                 if isinstance(temp_elements[device], models.GeneratorData):
                     gen = temp_elements[device]
 
-                    if self.__debug: print(gen)
+                    if self.__debug:
+                        print(gen)
 
                     phases = json.loads(base64.b64decode(gen.phases).decode())
-                    if phases['p1']:
+                    if phases["p1"]:
                         gen.voltage_mag_p1 = gen.voltage_mag_p1 * self.__gen_rand_num()
                         gen.voltage_ang_p1 = gen.voltage_ang_p1 * self.__gen_rand_num()
                         gen.current_mag_p1 = gen.current_mag_p1 * self.__gen_rand_num()
                         gen.current_ang_p1 = gen.current_ang_p1 * self.__gen_rand_num()
                         gen.real_power_p1 = gen.real_power_p1 * self.__gen_rand_num()
-                        gen.reactive_power_p1 = gen.reactive_power_p1 * self.__gen_rand_num()
-                    if phases['p2']:
+                        gen.reactive_power_p1 = (
+                            gen.reactive_power_p1 * self.__gen_rand_num()
+                        )
+                    if phases["p2"]:
                         gen.voltage_mag_p2 = gen.voltage_mag_p2 * self.__gen_rand_num()
                         gen.voltage_ang_p2 = gen.voltage_ang_p2 * self.__gen_rand_num()
                         gen.current_mag_p2 = gen.current_mag_p2 * self.__gen_rand_num()
                         gen.current_ang_p2 = gen.current_ang_p2 * self.__gen_rand_num()
                         gen.real_power_p2 = gen.real_power_p2 * self.__gen_rand_num()
-                        gen.reactive_power_p2 = gen.reactive_power_p2 * self.__gen_rand_num()
-                    if phases['p3']:
+                        gen.reactive_power_p2 = (
+                            gen.reactive_power_p2 * self.__gen_rand_num()
+                        )
+                    if phases["p3"]:
                         gen.voltage_mag_p3 = gen.voltage_mag_p3 * self.__gen_rand_num()
                         gen.voltage_ang_p3 = gen.voltage_ang_p3 * self.__gen_rand_num()
                         gen.current_mag_p3 = gen.current_mag_p3 * self.__gen_rand_num()
                         gen.current_ang_p3 = gen.current_ang_p3 * self.__gen_rand_num()
                         gen.real_power_p3 = gen.real_power_p3 * self.__gen_rand_num()
-                        gen.reactive_power_p3 = gen.reactive_power_p3 * self.__gen_rand_num()
-                    if phases['pn']:
+                        gen.reactive_power_p3 = (
+                            gen.reactive_power_p3 * self.__gen_rand_num()
+                        )
+                    if phases["pn"]:
                         gen.voltage_mag_pn = gen.voltage_mag_pn * self.__gen_rand_num()
                         gen.voltage_ang_pn = gen.voltage_ang_pn * self.__gen_rand_num()
                         gen.current_mag_pn = gen.current_mag_pn * self.__gen_rand_num()
                         gen.current_ang_pn = gen.current_ang_pn * self.__gen_rand_num()
                         gen.real_power_pn = gen.real_power_pn * self.__gen_rand_num()
-                        gen.reactive_power_pn = gen.reactive_power_pn * self.__gen_rand_num()
+                        gen.reactive_power_pn = (
+                            gen.reactive_power_pn * self.__gen_rand_num()
+                        )
 
                 if isinstance(temp_elements[device], models.LoadData):
                     load = temp_elements[device]
 
-                    if self.__debug: print(load)
+                    if self.__debug:
+                        print(load)
 
                     phases = json.loads(base64.b64decode(load.phases).decode())
-                    if phases['p1']:
-                        load.voltage_mag_p1 = load.voltage_mag_p1 * self.__gen_rand_num()
-                        load.voltage_ang_p1 = load.voltage_ang_p1 * self.__gen_rand_num()
-                        load.current_mag_p1 = load.current_mag_p1 * self.__gen_rand_num()
-                        load.current_ang_p1 = load.current_ang_p1 * self.__gen_rand_num()
+                    if phases["p1"]:
+                        load.voltage_mag_p1 = (
+                            load.voltage_mag_p1 * self.__gen_rand_num()
+                        )
+                        load.voltage_ang_p1 = (
+                            load.voltage_ang_p1 * self.__gen_rand_num()
+                        )
+                        load.current_mag_p1 = (
+                            load.current_mag_p1 * self.__gen_rand_num()
+                        )
+                        load.current_ang_p1 = (
+                            load.current_ang_p1 * self.__gen_rand_num()
+                        )
                         load.real_power_p1 = load.real_power_p1 * self.__gen_rand_num()
-                        load.reactive_power_p1 = load.reactive_power_p1 * self.__gen_rand_num()
-                    if phases['p2']:
-                        load.voltage_mag_p2 = load.voltage_mag_p2 * self.__gen_rand_num()
-                        load.voltage_ang_p2 = load.voltage_ang_p2 * self.__gen_rand_num()
-                        load.current_mag_p2 = load.current_mag_p2 * self.__gen_rand_num()
-                        load.current_ang_p2 = load.current_ang_p2 * self.__gen_rand_num()
+                        load.reactive_power_p1 = (
+                            load.reactive_power_p1 * self.__gen_rand_num()
+                        )
+                    if phases["p2"]:
+                        load.voltage_mag_p2 = (
+                            load.voltage_mag_p2 * self.__gen_rand_num()
+                        )
+                        load.voltage_ang_p2 = (
+                            load.voltage_ang_p2 * self.__gen_rand_num()
+                        )
+                        load.current_mag_p2 = (
+                            load.current_mag_p2 * self.__gen_rand_num()
+                        )
+                        load.current_ang_p2 = (
+                            load.current_ang_p2 * self.__gen_rand_num()
+                        )
                         load.real_power_p2 = load.real_power_p2 * self.__gen_rand_num()
-                        load.reactive_power_p2 = load.reactive_power_p2 * self.__gen_rand_num()
-                    if phases['p3']:
-                        load.voltage_mag_p3 = load.voltage_mag_p3 * self.__gen_rand_num()
-                        load.voltage_ang_p3 = load.voltage_ang_p3 * self.__gen_rand_num()
-                        load.current_mag_p3 = load.current_mag_p3 * self.__gen_rand_num()
-                        load.current_ang_p3 = load.current_ang_p3 * self.__gen_rand_num()
+                        load.reactive_power_p2 = (
+                            load.reactive_power_p2 * self.__gen_rand_num()
+                        )
+                    if phases["p3"]:
+                        load.voltage_mag_p3 = (
+                            load.voltage_mag_p3 * self.__gen_rand_num()
+                        )
+                        load.voltage_ang_p3 = (
+                            load.voltage_ang_p3 * self.__gen_rand_num()
+                        )
+                        load.current_mag_p3 = (
+                            load.current_mag_p3 * self.__gen_rand_num()
+                        )
+                        load.current_ang_p3 = (
+                            load.current_ang_p3 * self.__gen_rand_num()
+                        )
                         load.real_power_p3 = load.real_power_p3 * self.__gen_rand_num()
-                        load.reactive_power_p3 = load.reactive_power_p3 * self.__gen_rand_num()
-                    if phases['pn']:
-                        load.voltage_mag_pn = load.voltage_mag_pn * self.__gen_rand_num()
-                        load.voltage_ang_pn = load.voltage_ang_pn * self.__gen_rand_num()
-                        load.current_mag_pn = load.current_mag_pn * self.__gen_rand_num()
-                        load.current_ang_pn = load.current_ang_pn * self.__gen_rand_num()
+                        load.reactive_power_p3 = (
+                            load.reactive_power_p3 * self.__gen_rand_num()
+                        )
+                    if phases["pn"]:
+                        load.voltage_mag_pn = (
+                            load.voltage_mag_pn * self.__gen_rand_num()
+                        )
+                        load.voltage_ang_pn = (
+                            load.voltage_ang_pn * self.__gen_rand_num()
+                        )
+                        load.current_mag_pn = (
+                            load.current_mag_pn * self.__gen_rand_num()
+                        )
+                        load.current_ang_pn = (
+                            load.current_ang_pn * self.__gen_rand_num()
+                        )
                         load.real_power_pn = load.real_power_pn * self.__gen_rand_num()
-                        load.reactive_power_pn = load.reactive_power_pn * self.__gen_rand_num()
+                        load.reactive_power_pn = (
+                            load.reactive_power_pn * self.__gen_rand_num()
+                        )
 
                 if isinstance(temp_elements[device], models.ShuntData):
                     shunt = temp_elements[device]
 
-                    if self.__debug: print(shunt)
+                    if self.__debug:
+                        print(shunt)
 
                     phases = json.loads(base64.b64decode(shunt.phases).decode())
-                    if phases['p1']:
-                        shunt.voltage_mag_p1 = shunt.voltage_mag_p1 * self.__gen_rand_num()
-                        shunt.voltage_ang_p1 = shunt.voltage_ang_p1 * self.__gen_rand_num()
-                        shunt.current_mag_p1 = shunt.current_mag_p1 * self.__gen_rand_num()
-                        shunt.current_ang_p1 = shunt.current_ang_p1 * self.__gen_rand_num()
-                        shunt.real_power_p1 = shunt.real_power_p1 * self.__gen_rand_num()
-                        shunt.reactive_power_p1 = shunt.reactive_power_p1 * self.__gen_rand_num()
-                    if phases['p2']:
-                        shunt.voltage_mag_p2 = shunt.voltage_mag_p2 * self.__gen_rand_num()
-                        shunt.voltage_ang_p2 = shunt.voltage_ang_p2 * self.__gen_rand_num()
-                        shunt.current_mag_p2 = shunt.current_mag_p2 * self.__gen_rand_num()
-                        shunt.current_ang_p2 = shunt.current_ang_p2 * self.__gen_rand_num()
-                        shunt.real_power_p2 = shunt.real_power_p2 * self.__gen_rand_num()
-                        shunt.reactive_power_p2 = shunt.reactive_power_p2 * self.__gen_rand_num()
-                    if phases['p3']:
-                        shunt.voltage_mag_p3 = shunt.voltage_mag_p3 * self.__gen_rand_num()
-                        shunt.voltage_ang_p3 = shunt.voltage_ang_p3 * self.__gen_rand_num()
-                        shunt.current_mag_p3 = shunt.current_mag_p3 * self.__gen_rand_num()
-                        shunt.current_ang_p3 = shunt.current_ang_p3 * self.__gen_rand_num()
-                        shunt.real_power_p3 = shunt.real_power_p3 * self.__gen_rand_num()
-                        shunt.reactive_power_p3 = shunt.reactive_power_p3 * self.__gen_rand_num()
-                    if phases['pn']:
-                        shunt.voltage_mag_pn = shunt.voltage_mag_pn * self.__gen_rand_num()
-                        shunt.voltage_ang_pn = shunt.voltage_ang_pn * self.__gen_rand_num()
-                        shunt.current_mag_pn = shunt.current_mag_pn * self.__gen_rand_num()
-                        shunt.current_ang_pn = shunt.current_ang_pn * self.__gen_rand_num()
-                        shunt.real_power_pn = shunt.real_power_pn * self.__gen_rand_num()
-                        shunt.reactive_power_pn = shunt.reactive_power_pn * self.__gen_rand_num()
+                    if phases["p1"]:
+                        shunt.voltage_mag_p1 = (
+                            shunt.voltage_mag_p1 * self.__gen_rand_num()
+                        )
+                        shunt.voltage_ang_p1 = (
+                            shunt.voltage_ang_p1 * self.__gen_rand_num()
+                        )
+                        shunt.current_mag_p1 = (
+                            shunt.current_mag_p1 * self.__gen_rand_num()
+                        )
+                        shunt.current_ang_p1 = (
+                            shunt.current_ang_p1 * self.__gen_rand_num()
+                        )
+                        shunt.real_power_p1 = (
+                            shunt.real_power_p1 * self.__gen_rand_num()
+                        )
+                        shunt.reactive_power_p1 = (
+                            shunt.reactive_power_p1 * self.__gen_rand_num()
+                        )
+                    if phases["p2"]:
+                        shunt.voltage_mag_p2 = (
+                            shunt.voltage_mag_p2 * self.__gen_rand_num()
+                        )
+                        shunt.voltage_ang_p2 = (
+                            shunt.voltage_ang_p2 * self.__gen_rand_num()
+                        )
+                        shunt.current_mag_p2 = (
+                            shunt.current_mag_p2 * self.__gen_rand_num()
+                        )
+                        shunt.current_ang_p2 = (
+                            shunt.current_ang_p2 * self.__gen_rand_num()
+                        )
+                        shunt.real_power_p2 = (
+                            shunt.real_power_p2 * self.__gen_rand_num()
+                        )
+                        shunt.reactive_power_p2 = (
+                            shunt.reactive_power_p2 * self.__gen_rand_num()
+                        )
+                    if phases["p3"]:
+                        shunt.voltage_mag_p3 = (
+                            shunt.voltage_mag_p3 * self.__gen_rand_num()
+                        )
+                        shunt.voltage_ang_p3 = (
+                            shunt.voltage_ang_p3 * self.__gen_rand_num()
+                        )
+                        shunt.current_mag_p3 = (
+                            shunt.current_mag_p3 * self.__gen_rand_num()
+                        )
+                        shunt.current_ang_p3 = (
+                            shunt.current_ang_p3 * self.__gen_rand_num()
+                        )
+                        shunt.real_power_p3 = (
+                            shunt.real_power_p3 * self.__gen_rand_num()
+                        )
+                        shunt.reactive_power_p3 = (
+                            shunt.reactive_power_p3 * self.__gen_rand_num()
+                        )
+                    if phases["pn"]:
+                        shunt.voltage_mag_pn = (
+                            shunt.voltage_mag_pn * self.__gen_rand_num()
+                        )
+                        shunt.voltage_ang_pn = (
+                            shunt.voltage_ang_pn * self.__gen_rand_num()
+                        )
+                        shunt.current_mag_pn = (
+                            shunt.current_mag_pn * self.__gen_rand_num()
+                        )
+                        shunt.current_ang_pn = (
+                            shunt.current_ang_pn * self.__gen_rand_num()
+                        )
+                        shunt.real_power_pn = (
+                            shunt.real_power_pn * self.__gen_rand_num()
+                        )
+                        shunt.reactive_power_pn = (
+                            shunt.reactive_power_pn * self.__gen_rand_num()
+                        )
 
                 if isinstance(temp_elements[device], models.BranchData):
                     branch = temp_elements[device]
 
-                    if self.__debug: print(branch)
+                    if self.__debug:
+                        print(branch)
 
                     phases = json.loads(base64.b64decode(branch.phases).decode())
-                    if phases['p1']:
-                        branch.voltage_mag_src_p1 = branch.voltage_mag_src_p1 * self.__gen_rand_num()
-                        branch.voltage_ang_src_p1 = branch.voltage_ang_src_p1 * self.__gen_rand_num()
-                        branch.current_mag_src_p1 = branch.current_mag_src_p1 * self.__gen_rand_num()
-                        branch.current_ang_src_p1 = branch.current_ang_src_p1 * self.__gen_rand_num()
-                        branch.real_power_src_p1 = branch.real_power_src_p1 * self.__gen_rand_num()
-                        branch.reactive_power_src_p1 = branch.reactive_power_src_p1 * self.__gen_rand_num()
-                        branch.voltage_mag_dst_p1 = branch.voltage_mag_dst_p1 * self.__gen_rand_num()
-                        branch.voltage_ang_dst_p1 = branch.voltage_ang_dst_p1 * self.__gen_rand_num()
-                        branch.current_mag_dst_p1 = branch.current_mag_dst_p1 * self.__gen_rand_num()
-                        branch.current_ang_dst_p1 = branch.current_ang_dst_p1 * self.__gen_rand_num()
-                        branch.real_power_dst_p1 = branch.real_power_dst_p1 * self.__gen_rand_num()
-                        branch.reactive_power_dst_p1 = branch.reactive_power_dst_p1 * self.__gen_rand_num()
-                    if phases['p2']:
-                        branch.voltage_mag_src_p2 = branch.voltage_mag_src_p2 * self.__gen_rand_num()
-                        branch.voltage_ang_src_p2 = branch.voltage_ang_src_p2 * self.__gen_rand_num()
-                        branch.current_mag_src_p2 = branch.current_mag_src_p2 * self.__gen_rand_num()
-                        branch.current_ang_src_p2 = branch.current_ang_src_p2 * self.__gen_rand_num()
-                        branch.real_power_src_p2 = branch.real_power_src_p2 * self.__gen_rand_num()
-                        branch.reactive_power_src_p2 = branch.reactive_power_src_p2 * self.__gen_rand_num()
-                        branch.voltage_mag_dst_p2 = branch.voltage_mag_dst_p2 * self.__gen_rand_num()
-                        branch.voltage_ang_dst_p2 = branch.voltage_ang_dst_p2 * self.__gen_rand_num()
-                        branch.current_mag_dst_p2 = branch.current_mag_dst_p2 * self.__gen_rand_num()
-                        branch.current_ang_dst_p2 = branch.current_ang_dst_p2 * self.__gen_rand_num()
-                        branch.real_power_dst_p2 = branch.real_power_dst_p2 * self.__gen_rand_num()
-                        branch.reactive_power_dst_p2 = branch.reactive_power_dst_p2 * self.__gen_rand_num()
-                    if phases['p3']:
-                        branch.voltage_mag_src_p3 = branch.voltage_mag_src_p3 * self.__gen_rand_num()
-                        branch.voltage_ang_src_p3 = branch.voltage_ang_src_p3 * self.__gen_rand_num()
-                        branch.current_mag_src_p3 = branch.current_mag_src_p3 * self.__gen_rand_num()
-                        branch.current_ang_src_p3 = branch.current_ang_src_p3 * self.__gen_rand_num()
-                        branch.real_power_src_p3 = branch.real_power_src_p3 * self.__gen_rand_num()
-                        branch.reactive_power_src_p3 = branch.reactive_power_src_p3 * self.__gen_rand_num()
-                        branch.voltage_mag_dst_p3 = branch.voltage_mag_dst_p3 * self.__gen_rand_num()
-                        branch.voltage_ang_dst_p3 = branch.voltage_ang_dst_p3 * self.__gen_rand_num()
-                        branch.current_mag_dst_p3 = branch.current_mag_dst_p3 * self.__gen_rand_num()
-                        branch.current_ang_dst_p3 = branch.current_ang_dst_p3 * self.__gen_rand_num()
-                        branch.real_power_dst_p3 = branch.real_power_dst_p3 * self.__gen_rand_num()
-                        branch.reactive_power_dst_p3 = branch.reactive_power_dst_p3 * self.__gen_rand_num()
-                    if phases['pn']:
-                        branch.voltage_mag_src_pn = branch.voltage_mag_src_pn * self.__gen_rand_num()
-                        branch.voltage_ang_src_pn = branch.voltage_ang_src_pn * self.__gen_rand_num()
-                        branch.current_mag_src_pn = branch.current_mag_src_pn * self.__gen_rand_num()
-                        branch.current_ang_src_pn = branch.current_ang_src_pn * self.__gen_rand_num()
-                        branch.real_power_src_pn = branch.real_power_src_pn * self.__gen_rand_num()
-                        branch.reactive_power_src_pn = branch.reactive_power_src_pn * self.__gen_rand_num()
-                        branch.voltage_mag_dst_pn = branch.voltage_mag_dst_pn * self.__gen_rand_num()
-                        branch.voltage_ang_dst_pn = branch.voltage_ang_dst_pn * self.__gen_rand_num()
-                        branch.current_mag_dst_pn = branch.current_mag_dst_pn * self.__gen_rand_num()
-                        branch.current_ang_dst_pn = branch.current_ang_dst_pn * self.__gen_rand_num()
-                        branch.real_power_dst_pn = branch.real_power_dst_pn * self.__gen_rand_num()
-                        branch.reactive_power_dst_pn = branch.reactive_power_dst_pn * self.__gen_rand_num()
+                    if phases["p1"]:
+                        branch.voltage_mag_src_p1 = (
+                            branch.voltage_mag_src_p1 * self.__gen_rand_num()
+                        )
+                        branch.voltage_ang_src_p1 = (
+                            branch.voltage_ang_src_p1 * self.__gen_rand_num()
+                        )
+                        branch.current_mag_src_p1 = (
+                            branch.current_mag_src_p1 * self.__gen_rand_num()
+                        )
+                        branch.current_ang_src_p1 = (
+                            branch.current_ang_src_p1 * self.__gen_rand_num()
+                        )
+                        branch.real_power_src_p1 = (
+                            branch.real_power_src_p1 * self.__gen_rand_num()
+                        )
+                        branch.reactive_power_src_p1 = (
+                            branch.reactive_power_src_p1 * self.__gen_rand_num()
+                        )
+                        branch.voltage_mag_dst_p1 = (
+                            branch.voltage_mag_dst_p1 * self.__gen_rand_num()
+                        )
+                        branch.voltage_ang_dst_p1 = (
+                            branch.voltage_ang_dst_p1 * self.__gen_rand_num()
+                        )
+                        branch.current_mag_dst_p1 = (
+                            branch.current_mag_dst_p1 * self.__gen_rand_num()
+                        )
+                        branch.current_ang_dst_p1 = (
+                            branch.current_ang_dst_p1 * self.__gen_rand_num()
+                        )
+                        branch.real_power_dst_p1 = (
+                            branch.real_power_dst_p1 * self.__gen_rand_num()
+                        )
+                        branch.reactive_power_dst_p1 = (
+                            branch.reactive_power_dst_p1 * self.__gen_rand_num()
+                        )
+                    if phases["p2"]:
+                        branch.voltage_mag_src_p2 = (
+                            branch.voltage_mag_src_p2 * self.__gen_rand_num()
+                        )
+                        branch.voltage_ang_src_p2 = (
+                            branch.voltage_ang_src_p2 * self.__gen_rand_num()
+                        )
+                        branch.current_mag_src_p2 = (
+                            branch.current_mag_src_p2 * self.__gen_rand_num()
+                        )
+                        branch.current_ang_src_p2 = (
+                            branch.current_ang_src_p2 * self.__gen_rand_num()
+                        )
+                        branch.real_power_src_p2 = (
+                            branch.real_power_src_p2 * self.__gen_rand_num()
+                        )
+                        branch.reactive_power_src_p2 = (
+                            branch.reactive_power_src_p2 * self.__gen_rand_num()
+                        )
+                        branch.voltage_mag_dst_p2 = (
+                            branch.voltage_mag_dst_p2 * self.__gen_rand_num()
+                        )
+                        branch.voltage_ang_dst_p2 = (
+                            branch.voltage_ang_dst_p2 * self.__gen_rand_num()
+                        )
+                        branch.current_mag_dst_p2 = (
+                            branch.current_mag_dst_p2 * self.__gen_rand_num()
+                        )
+                        branch.current_ang_dst_p2 = (
+                            branch.current_ang_dst_p2 * self.__gen_rand_num()
+                        )
+                        branch.real_power_dst_p2 = (
+                            branch.real_power_dst_p2 * self.__gen_rand_num()
+                        )
+                        branch.reactive_power_dst_p2 = (
+                            branch.reactive_power_dst_p2 * self.__gen_rand_num()
+                        )
+                    if phases["p3"]:
+                        branch.voltage_mag_src_p3 = (
+                            branch.voltage_mag_src_p3 * self.__gen_rand_num()
+                        )
+                        branch.voltage_ang_src_p3 = (
+                            branch.voltage_ang_src_p3 * self.__gen_rand_num()
+                        )
+                        branch.current_mag_src_p3 = (
+                            branch.current_mag_src_p3 * self.__gen_rand_num()
+                        )
+                        branch.current_ang_src_p3 = (
+                            branch.current_ang_src_p3 * self.__gen_rand_num()
+                        )
+                        branch.real_power_src_p3 = (
+                            branch.real_power_src_p3 * self.__gen_rand_num()
+                        )
+                        branch.reactive_power_src_p3 = (
+                            branch.reactive_power_src_p3 * self.__gen_rand_num()
+                        )
+                        branch.voltage_mag_dst_p3 = (
+                            branch.voltage_mag_dst_p3 * self.__gen_rand_num()
+                        )
+                        branch.voltage_ang_dst_p3 = (
+                            branch.voltage_ang_dst_p3 * self.__gen_rand_num()
+                        )
+                        branch.current_mag_dst_p3 = (
+                            branch.current_mag_dst_p3 * self.__gen_rand_num()
+                        )
+                        branch.current_ang_dst_p3 = (
+                            branch.current_ang_dst_p3 * self.__gen_rand_num()
+                        )
+                        branch.real_power_dst_p3 = (
+                            branch.real_power_dst_p3 * self.__gen_rand_num()
+                        )
+                        branch.reactive_power_dst_p3 = (
+                            branch.reactive_power_dst_p3 * self.__gen_rand_num()
+                        )
+                    if phases["pn"]:
+                        branch.voltage_mag_src_pn = (
+                            branch.voltage_mag_src_pn * self.__gen_rand_num()
+                        )
+                        branch.voltage_ang_src_pn = (
+                            branch.voltage_ang_src_pn * self.__gen_rand_num()
+                        )
+                        branch.current_mag_src_pn = (
+                            branch.current_mag_src_pn * self.__gen_rand_num()
+                        )
+                        branch.current_ang_src_pn = (
+                            branch.current_ang_src_pn * self.__gen_rand_num()
+                        )
+                        branch.real_power_src_pn = (
+                            branch.real_power_src_pn * self.__gen_rand_num()
+                        )
+                        branch.reactive_power_src_pn = (
+                            branch.reactive_power_src_pn * self.__gen_rand_num()
+                        )
+                        branch.voltage_mag_dst_pn = (
+                            branch.voltage_mag_dst_pn * self.__gen_rand_num()
+                        )
+                        branch.voltage_ang_dst_pn = (
+                            branch.voltage_ang_dst_pn * self.__gen_rand_num()
+                        )
+                        branch.current_mag_dst_pn = (
+                            branch.current_mag_dst_pn * self.__gen_rand_num()
+                        )
+                        branch.current_ang_dst_pn = (
+                            branch.current_ang_dst_pn * self.__gen_rand_num()
+                        )
+                        branch.real_power_dst_pn = (
+                            branch.real_power_dst_pn * self.__gen_rand_num()
+                        )
+                        branch.reactive_power_dst_pn = (
+                            branch.reactive_power_dst_pn * self.__gen_rand_num()
+                        )
 
                 if isinstance(temp_elements[device], models.TransformerData):
                     transformer = temp_elements[device]
 
-                    if self.__debug: print(transformer)
+                    if self.__debug:
+                        print(transformer)
 
                     phases = json.loads(base64.b64decode(transformer.phases).decode())
-                    if phases['wdg1_p1']:
-                        transformer.voltage_mag_wdg1_p1 = transformer.voltage_mag_wdg1_p1 * self.__gen_rand_num()
-                        transformer.voltage_ang_wdg1_p1 = transformer.voltage_ang_wdg1_p1 * self.__gen_rand_num()
-                        transformer.current_mag_wdg1_p1 = transformer.current_mag_wdg1_p1 * self.__gen_rand_num()
-                        transformer.current_ang_wdg1_p1 = transformer.current_ang_wdg1_p1 * self.__gen_rand_num()
-                    if phases['wdg2_p1']:
-                        transformer.voltage_mag_wdg2_p1 = transformer.voltage_mag_wdg2_p1 * self.__gen_rand_num()
-                        transformer.voltage_ang_wdg2_p1 = transformer.voltage_ang_wdg2_p1 * self.__gen_rand_num()
-                        transformer.current_mag_wdg2_p1 = transformer.current_mag_wdg2_p1 * self.__gen_rand_num()
-                        transformer.current_ang_wdg2_p1 = transformer.current_ang_wdg2_p1 * self.__gen_rand_num()
-                    if phases['wdg3_p1']:
-                        transformer.voltage_mag_wdg3_p1 = transformer.voltage_mag_wdg3_p1 * self.__gen_rand_num()
-                        transformer.voltage_ang_wdg3_p1 = transformer.voltage_ang_wdg3_p1 * self.__gen_rand_num()
-                        transformer.current_mag_wdg3_p1 = transformer.current_mag_wdg3_p1 * self.__gen_rand_num()
-                        transformer.current_ang_wdg3_p1 = transformer.current_ang_wdg3_p1 * self.__gen_rand_num()
-                    if phases['wdg1_p2']:
-                        transformer.voltage_mag_wdg1_p2 = transformer.voltage_mag_wdg1_p2 * self.__gen_rand_num()
-                        transformer.voltage_ang_wdg1_p2 = transformer.voltage_ang_wdg1_p2 * self.__gen_rand_num()
-                        transformer.current_mag_wdg1_p2 = transformer.current_mag_wdg1_p2 * self.__gen_rand_num()
-                        transformer.current_ang_wdg1_p2 = transformer.current_ang_wdg1_p2 * self.__gen_rand_num()
-                    if phases['wdg2_p2']:
-                        transformer.voltage_mag_wdg2_p2 = transformer.voltage_mag_wdg2_p2 * self.__gen_rand_num()
-                        transformer.voltage_ang_wdg2_p2 = transformer.voltage_ang_wdg2_p2 * self.__gen_rand_num()
-                        transformer.current_mag_wdg2_p2 = transformer.current_mag_wdg2_p2 * self.__gen_rand_num()
-                        transformer.current_ang_wdg2_p2 = transformer.current_ang_wdg2_p2 * self.__gen_rand_num()
-                    if phases['wdg3_p2']:
-                        transformer.voltage_mag_wdg3_p2 = transformer.voltage_mag_wdg3_p2 * self.__gen_rand_num()
-                        transformer.voltage_ang_wdg3_p2 = transformer.voltage_ang_wdg3_p2 * self.__gen_rand_num()
-                        transformer.current_mag_wdg3_p2 = transformer.current_mag_wdg3_p2 * self.__gen_rand_num()
-                        transformer.current_ang_wdg3_p2 = transformer.current_ang_wdg3_p2 * self.__gen_rand_num()
-                    if phases['wdg1_p3']:
-                        transformer.voltage_mag_wdg1_p3 = transformer.voltage_mag_wdg1_p3 * self.__gen_rand_num()
-                        transformer.voltage_ang_wdg1_p3 = transformer.voltage_ang_wdg1_p3 * self.__gen_rand_num()
-                        transformer.current_mag_wdg1_p3 = transformer.current_mag_wdg1_p3 * self.__gen_rand_num()
-                        transformer.current_ang_wdg1_p3 = transformer.current_ang_wdg1_p3 * self.__gen_rand_num()
-                    if phases['wdg2_p3']:
-                        transformer.voltage_mag_wdg2_p3 = transformer.voltage_mag_wdg2_p3 * self.__gen_rand_num()
-                        transformer.voltage_ang_wdg2_p3 = transformer.voltage_ang_wdg2_p3 * self.__gen_rand_num()
-                        transformer.current_mag_wdg2_p3 = transformer.current_mag_wdg2_p3 * self.__gen_rand_num()
-                        transformer.current_ang_wdg2_p3 = transformer.current_ang_wdg2_p3 * self.__gen_rand_num()
-                    if phases['wdg3_p3']:
-                        transformer.voltage_mag_wdg3_p3 = transformer.voltage_mag_wdg3_p3 * self.__gen_rand_num()
-                        transformer.voltage_ang_wdg3_p3 = transformer.voltage_ang_wdg3_p3 * self.__gen_rand_num()
-                        transformer.current_mag_wdg3_p3 = transformer.current_mag_wdg3_p3 * self.__gen_rand_num()
-                        transformer.current_ang_wdg3_p3 = transformer.current_ang_wdg3_p3 * self.__gen_rand_num()
-                    if phases['wdg1_pn']:
-                        transformer.voltage_mag_wdg1_pn = transformer.voltage_mag_wdg1_pn * self.__gen_rand_num()
-                        transformer.voltage_ang_wdg1_pn = transformer.voltage_ang_wdg1_pn * self.__gen_rand_num()
-                        transformer.current_mag_wdg1_pn = transformer.current_mag_wdg1_pn * self.__gen_rand_num()
-                        transformer.current_ang_wdg1_pn = transformer.current_ang_wdg1_pn * self.__gen_rand_num()
-                    if phases['wdg2_pn']:
-                        transformer.voltage_mag_wdg2_pn = transformer.voltage_mag_wdg2_pn * self.__gen_rand_num()
-                        transformer.voltage_ang_wdg2_pn = transformer.voltage_ang_wdg2_pn * self.__gen_rand_num()
-                        transformer.current_mag_wdg2_pn = transformer.current_mag_wdg2_pn * self.__gen_rand_num()
-                        transformer.current_ang_wdg2_pn = transformer.current_ang_wdg2_pn * self.__gen_rand_num()
-                    if phases['wdg3_pn']:
-                        transformer.voltage_mag_wdg3_pn = transformer.voltage_mag_wdg3_pn * self.__gen_rand_num()
-                        transformer.voltage_ang_wdg3_pn = transformer.voltage_ang_wdg3_pn * self.__gen_rand_num()
-                        transformer.current_mag_wdg3_pn = transformer.current_mag_wdg3_pn * self.__gen_rand_num()
-                        transformer.current_ang_wdg3_pn = transformer.current_ang_wdg3_pn * self.__gen_rand_num()
+                    if phases["wdg1_p1"]:
+                        transformer.voltage_mag_wdg1_p1 = (
+                            transformer.voltage_mag_wdg1_p1 * self.__gen_rand_num()
+                        )
+                        transformer.voltage_ang_wdg1_p1 = (
+                            transformer.voltage_ang_wdg1_p1 * self.__gen_rand_num()
+                        )
+                        transformer.current_mag_wdg1_p1 = (
+                            transformer.current_mag_wdg1_p1 * self.__gen_rand_num()
+                        )
+                        transformer.current_ang_wdg1_p1 = (
+                            transformer.current_ang_wdg1_p1 * self.__gen_rand_num()
+                        )
+                    if phases["wdg2_p1"]:
+                        transformer.voltage_mag_wdg2_p1 = (
+                            transformer.voltage_mag_wdg2_p1 * self.__gen_rand_num()
+                        )
+                        transformer.voltage_ang_wdg2_p1 = (
+                            transformer.voltage_ang_wdg2_p1 * self.__gen_rand_num()
+                        )
+                        transformer.current_mag_wdg2_p1 = (
+                            transformer.current_mag_wdg2_p1 * self.__gen_rand_num()
+                        )
+                        transformer.current_ang_wdg2_p1 = (
+                            transformer.current_ang_wdg2_p1 * self.__gen_rand_num()
+                        )
+                    if phases["wdg3_p1"]:
+                        transformer.voltage_mag_wdg3_p1 = (
+                            transformer.voltage_mag_wdg3_p1 * self.__gen_rand_num()
+                        )
+                        transformer.voltage_ang_wdg3_p1 = (
+                            transformer.voltage_ang_wdg3_p1 * self.__gen_rand_num()
+                        )
+                        transformer.current_mag_wdg3_p1 = (
+                            transformer.current_mag_wdg3_p1 * self.__gen_rand_num()
+                        )
+                        transformer.current_ang_wdg3_p1 = (
+                            transformer.current_ang_wdg3_p1 * self.__gen_rand_num()
+                        )
+                    if phases["wdg1_p2"]:
+                        transformer.voltage_mag_wdg1_p2 = (
+                            transformer.voltage_mag_wdg1_p2 * self.__gen_rand_num()
+                        )
+                        transformer.voltage_ang_wdg1_p2 = (
+                            transformer.voltage_ang_wdg1_p2 * self.__gen_rand_num()
+                        )
+                        transformer.current_mag_wdg1_p2 = (
+                            transformer.current_mag_wdg1_p2 * self.__gen_rand_num()
+                        )
+                        transformer.current_ang_wdg1_p2 = (
+                            transformer.current_ang_wdg1_p2 * self.__gen_rand_num()
+                        )
+                    if phases["wdg2_p2"]:
+                        transformer.voltage_mag_wdg2_p2 = (
+                            transformer.voltage_mag_wdg2_p2 * self.__gen_rand_num()
+                        )
+                        transformer.voltage_ang_wdg2_p2 = (
+                            transformer.voltage_ang_wdg2_p2 * self.__gen_rand_num()
+                        )
+                        transformer.current_mag_wdg2_p2 = (
+                            transformer.current_mag_wdg2_p2 * self.__gen_rand_num()
+                        )
+                        transformer.current_ang_wdg2_p2 = (
+                            transformer.current_ang_wdg2_p2 * self.__gen_rand_num()
+                        )
+                    if phases["wdg3_p2"]:
+                        transformer.voltage_mag_wdg3_p2 = (
+                            transformer.voltage_mag_wdg3_p2 * self.__gen_rand_num()
+                        )
+                        transformer.voltage_ang_wdg3_p2 = (
+                            transformer.voltage_ang_wdg3_p2 * self.__gen_rand_num()
+                        )
+                        transformer.current_mag_wdg3_p2 = (
+                            transformer.current_mag_wdg3_p2 * self.__gen_rand_num()
+                        )
+                        transformer.current_ang_wdg3_p2 = (
+                            transformer.current_ang_wdg3_p2 * self.__gen_rand_num()
+                        )
+                    if phases["wdg1_p3"]:
+                        transformer.voltage_mag_wdg1_p3 = (
+                            transformer.voltage_mag_wdg1_p3 * self.__gen_rand_num()
+                        )
+                        transformer.voltage_ang_wdg1_p3 = (
+                            transformer.voltage_ang_wdg1_p3 * self.__gen_rand_num()
+                        )
+                        transformer.current_mag_wdg1_p3 = (
+                            transformer.current_mag_wdg1_p3 * self.__gen_rand_num()
+                        )
+                        transformer.current_ang_wdg1_p3 = (
+                            transformer.current_ang_wdg1_p3 * self.__gen_rand_num()
+                        )
+                    if phases["wdg2_p3"]:
+                        transformer.voltage_mag_wdg2_p3 = (
+                            transformer.voltage_mag_wdg2_p3 * self.__gen_rand_num()
+                        )
+                        transformer.voltage_ang_wdg2_p3 = (
+                            transformer.voltage_ang_wdg2_p3 * self.__gen_rand_num()
+                        )
+                        transformer.current_mag_wdg2_p3 = (
+                            transformer.current_mag_wdg2_p3 * self.__gen_rand_num()
+                        )
+                        transformer.current_ang_wdg2_p3 = (
+                            transformer.current_ang_wdg2_p3 * self.__gen_rand_num()
+                        )
+                    if phases["wdg3_p3"]:
+                        transformer.voltage_mag_wdg3_p3 = (
+                            transformer.voltage_mag_wdg3_p3 * self.__gen_rand_num()
+                        )
+                        transformer.voltage_ang_wdg3_p3 = (
+                            transformer.voltage_ang_wdg3_p3 * self.__gen_rand_num()
+                        )
+                        transformer.current_mag_wdg3_p3 = (
+                            transformer.current_mag_wdg3_p3 * self.__gen_rand_num()
+                        )
+                        transformer.current_ang_wdg3_p3 = (
+                            transformer.current_ang_wdg3_p3 * self.__gen_rand_num()
+                        )
+                    if phases["wdg1_pn"]:
+                        transformer.voltage_mag_wdg1_pn = (
+                            transformer.voltage_mag_wdg1_pn * self.__gen_rand_num()
+                        )
+                        transformer.voltage_ang_wdg1_pn = (
+                            transformer.voltage_ang_wdg1_pn * self.__gen_rand_num()
+                        )
+                        transformer.current_mag_wdg1_pn = (
+                            transformer.current_mag_wdg1_pn * self.__gen_rand_num()
+                        )
+                        transformer.current_ang_wdg1_pn = (
+                            transformer.current_ang_wdg1_pn * self.__gen_rand_num()
+                        )
+                    if phases["wdg2_pn"]:
+                        transformer.voltage_mag_wdg2_pn = (
+                            transformer.voltage_mag_wdg2_pn * self.__gen_rand_num()
+                        )
+                        transformer.voltage_ang_wdg2_pn = (
+                            transformer.voltage_ang_wdg2_pn * self.__gen_rand_num()
+                        )
+                        transformer.current_mag_wdg2_pn = (
+                            transformer.current_mag_wdg2_pn * self.__gen_rand_num()
+                        )
+                        transformer.current_ang_wdg2_pn = (
+                            transformer.current_ang_wdg2_pn * self.__gen_rand_num()
+                        )
+                    if phases["wdg3_pn"]:
+                        transformer.voltage_mag_wdg3_pn = (
+                            transformer.voltage_mag_wdg3_pn * self.__gen_rand_num()
+                        )
+                        transformer.voltage_ang_wdg3_pn = (
+                            transformer.voltage_ang_wdg3_pn * self.__gen_rand_num()
+                        )
+                        transformer.current_mag_wdg3_pn = (
+                            transformer.current_mag_wdg3_pn * self.__gen_rand_num()
+                        )
+                        transformer.current_ang_wdg3_pn = (
+                            transformer.current_ang_wdg3_pn * self.__gen_rand_num()
+                        )
 
-                    if phases['wdg1_p1'] or phases['wdg2_p1'] or phases['wdg3_p1']:
-                        transformer.real_power_p1 = transformer.real_power_p1 * self.__gen_rand_num()
-                        transformer.reactive_power_p1 = transformer.reactive_power_p1 * self.__gen_rand_num()
-                    if phases['wdg1_p2'] or phases['wdg2_p2'] or phases['wdg3_p2']:
-                        transformer.real_power_p2 = transformer.real_power_p2 * self.__gen_rand_num()
-                        transformer.reactive_power_p2 = transformer.reactive_power_p2 * self.__gen_rand_num()
-                    if phases['wdg1_p3'] or phases['wdg2_p3'] or phases['wdg3_p3']:
-                        transformer.real_power_p3 = transformer.real_power_p3 * self.__gen_rand_num()
-                        transformer.reactive_power_p3 = transformer.reactive_power_p3 * self.__gen_rand_num()
-                    if phases['wdg1_pn'] or phases['wdg2_pn'] or phases['wdg3_pn']:
-                        transformer.real_power_pn = transformer.real_power_pn * self.__gen_rand_num()
-                        transformer.reactive_power_pn = transformer.reactive_power_pn * self.__gen_rand_num()
+                    if phases["wdg1_p1"] or phases["wdg2_p1"] or phases["wdg3_p1"]:
+                        transformer.real_power_p1 = (
+                            transformer.real_power_p1 * self.__gen_rand_num()
+                        )
+                        transformer.reactive_power_p1 = (
+                            transformer.reactive_power_p1 * self.__gen_rand_num()
+                        )
+                    if phases["wdg1_p2"] or phases["wdg2_p2"] or phases["wdg3_p2"]:
+                        transformer.real_power_p2 = (
+                            transformer.real_power_p2 * self.__gen_rand_num()
+                        )
+                        transformer.reactive_power_p2 = (
+                            transformer.reactive_power_p2 * self.__gen_rand_num()
+                        )
+                    if phases["wdg1_p3"] or phases["wdg2_p3"] or phases["wdg3_p3"]:
+                        transformer.real_power_p3 = (
+                            transformer.real_power_p3 * self.__gen_rand_num()
+                        )
+                        transformer.reactive_power_p3 = (
+                            transformer.reactive_power_p3 * self.__gen_rand_num()
+                        )
+                    if phases["wdg1_pn"] or phases["wdg2_pn"] or phases["wdg3_pn"]:
+                        transformer.real_power_pn = (
+                            transformer.real_power_pn * self.__gen_rand_num()
+                        )
+                        transformer.reactive_power_pn = (
+                            transformer.reactive_power_pn * self.__gen_rand_num()
+                        )
 
                 if isinstance(temp_elements[device], models.InverterData):
                     inverter = temp_elements[device]
 
-                    if self.__debug: print(inverter)
+                    if self.__debug:
+                        print(inverter)
 
                     phases = json.loads(base64.b64decode(inverter.phases).decode())
-                    if phases['p1']:
-                        inverter.voltage_mag_p1 = inverter.voltage_mag_p1 * self.__gen_rand_num()
-                        inverter.voltage_ang_p1 = inverter.voltage_ang_p1 * self.__gen_rand_num()
-                        inverter.current_mag_p1 = inverter.current_mag_p1 * self.__gen_rand_num()
-                        inverter.current_ang_p1 = inverter.current_ang_p1 * self.__gen_rand_num()
-                        inverter.real_power_p1 = inverter.real_power_p1 * self.__gen_rand_num()
-                        inverter.reactive_power_p1 = inverter.reactive_power_p1 * self.__gen_rand_num()
-                    if phases['p2']:
-                        inverter.voltage_mag_p2 = inverter.voltage_mag_p2 * self.__gen_rand_num()
-                        inverter.voltage_ang_p2 = inverter.voltage_ang_p2 * self.__gen_rand_num()
-                        inverter.current_mag_p2 = inverter.current_mag_p2 * self.__gen_rand_num()
-                        inverter.current_ang_p2 = inverter.current_ang_p2 * self.__gen_rand_num()
-                        inverter.real_power_p2 = inverter.real_power_p2 * self.__gen_rand_num()
-                        inverter.reactive_power_p2 = inverter.reactive_power_p2 * self.__gen_rand_num()
-                    if phases['p3']:
-                        inverter.voltage_mag_p3 = inverter.voltage_mag_p3 * self.__gen_rand_num()
-                        inverter.voltage_ang_p3 = inverter.voltage_ang_p3 * self.__gen_rand_num()
-                        inverter.current_mag_p3 = inverter.current_mag_p3 * self.__gen_rand_num()
-                        inverter.current_ang_p3 = inverter.current_ang_p3 * self.__gen_rand_num()
-                        inverter.real_power_p3 = inverter.real_power_p3 * self.__gen_rand_num()
-                        inverter.reactive_power_p3 = inverter.reactive_power_p3 * self.__gen_rand_num()
-                    if phases['pn']:
-                        inverter.voltage_mag_pn = inverter.voltage_mag_pn * self.__gen_rand_num()
-                        inverter.voltage_ang_pn = inverter.voltage_ang_pn * self.__gen_rand_num()
-                        inverter.current_mag_pn = inverter.current_mag_pn * self.__gen_rand_num()
-                        inverter.current_ang_pn = inverter.current_ang_pn * self.__gen_rand_num()
-                        inverter.real_power_pn = inverter.real_power_pn * self.__gen_rand_num()
-                        inverter.reactive_power_pn = inverter.reactive_power_pn * self.__gen_rand_num()
+                    if phases["p1"]:
+                        inverter.voltage_mag_p1 = (
+                            inverter.voltage_mag_p1 * self.__gen_rand_num()
+                        )
+                        inverter.voltage_ang_p1 = (
+                            inverter.voltage_ang_p1 * self.__gen_rand_num()
+                        )
+                        inverter.current_mag_p1 = (
+                            inverter.current_mag_p1 * self.__gen_rand_num()
+                        )
+                        inverter.current_ang_p1 = (
+                            inverter.current_ang_p1 * self.__gen_rand_num()
+                        )
+                        inverter.real_power_p1 = (
+                            inverter.real_power_p1 * self.__gen_rand_num()
+                        )
+                        inverter.reactive_power_p1 = (
+                            inverter.reactive_power_p1 * self.__gen_rand_num()
+                        )
+                    if phases["p2"]:
+                        inverter.voltage_mag_p2 = (
+                            inverter.voltage_mag_p2 * self.__gen_rand_num()
+                        )
+                        inverter.voltage_ang_p2 = (
+                            inverter.voltage_ang_p2 * self.__gen_rand_num()
+                        )
+                        inverter.current_mag_p2 = (
+                            inverter.current_mag_p2 * self.__gen_rand_num()
+                        )
+                        inverter.current_ang_p2 = (
+                            inverter.current_ang_p2 * self.__gen_rand_num()
+                        )
+                        inverter.real_power_p2 = (
+                            inverter.real_power_p2 * self.__gen_rand_num()
+                        )
+                        inverter.reactive_power_p2 = (
+                            inverter.reactive_power_p2 * self.__gen_rand_num()
+                        )
+                    if phases["p3"]:
+                        inverter.voltage_mag_p3 = (
+                            inverter.voltage_mag_p3 * self.__gen_rand_num()
+                        )
+                        inverter.voltage_ang_p3 = (
+                            inverter.voltage_ang_p3 * self.__gen_rand_num()
+                        )
+                        inverter.current_mag_p3 = (
+                            inverter.current_mag_p3 * self.__gen_rand_num()
+                        )
+                        inverter.current_ang_p3 = (
+                            inverter.current_ang_p3 * self.__gen_rand_num()
+                        )
+                        inverter.real_power_p3 = (
+                            inverter.real_power_p3 * self.__gen_rand_num()
+                        )
+                        inverter.reactive_power_p3 = (
+                            inverter.reactive_power_p3 * self.__gen_rand_num()
+                        )
+                    if phases["pn"]:
+                        inverter.voltage_mag_pn = (
+                            inverter.voltage_mag_pn * self.__gen_rand_num()
+                        )
+                        inverter.voltage_ang_pn = (
+                            inverter.voltage_ang_pn * self.__gen_rand_num()
+                        )
+                        inverter.current_mag_pn = (
+                            inverter.current_mag_pn * self.__gen_rand_num()
+                        )
+                        inverter.current_ang_pn = (
+                            inverter.current_ang_pn * self.__gen_rand_num()
+                        )
+                        inverter.real_power_pn = (
+                            inverter.real_power_pn * self.__gen_rand_num()
+                        )
+                        inverter.reactive_power_pn = (
+                            inverter.reactive_power_pn * self.__gen_rand_num()
+                        )
 
-                    inverter.current_mag_total = inverter.current_mag_total * self.__gen_rand_num()
-                    inverter.real_power_total = inverter.real_power_total * self.__gen_rand_num()
-                    inverter.reactive_power_total = inverter.reactive_power_total * self.__gen_rand_num()
+                    inverter.current_mag_total = (
+                        inverter.current_mag_total * self.__gen_rand_num()
+                    )
+                    inverter.real_power_total = (
+                        inverter.real_power_total * self.__gen_rand_num()
+                    )
+                    inverter.reactive_power_total = (
+                        inverter.reactive_power_total * self.__gen_rand_num()
+                    )
 
-        if self.__debug: print('Packing message')
+        if self.__debug:
+            print("Packing message")
 
         msg = []
 
@@ -849,136 +1238,141 @@ class OpenDSS(Provider):
 
             for field in device.__dataclass_fields__:
                 value = getattr(device, field)
-                msg.append(f'{name}.{field}:{value}')
+                msg.append(f"{name}.{field}:{value}")
 
-        print('Done packing message.')
+        print("Done packing message.")
 
-        return ','.join(msg)
+        return ",".join(msg)
 
     def __create(self):
         """Creates the internal representation of the system under test using
         the data classes defined in this module, initializing it with the names
         of each element in the OpenDSS circuit."""
 
-        if self.__debug: print('Creating system under test')
+        if self.__debug:
+            print("Creating system under test")
 
         # BUSES
         for name in dss.Circuit.AllBusNames():
             if name:
                 dss.Circuit.SetActiveBus(name)
-                bus = models.BusData(name = f'bus_{name}')
+                bus = models.BusData(name=f"bus_{name}")
 
-                if self.__debug: print(bus)
+                if self.__debug:
+                    print(bus)
 
                 self.elements[bus.name] = bus
 
         # GENERATORS
         # set the active class to 'Generator'
-        dss.Circuit.SetActiveClass('generator')
+        dss.Circuit.SetActiveClass("generator")
 
         for name in dss.Generators.AllNames():
             # set the current generator as the active element
             dss.Circuit.SetActiveElement(name)
 
             gen = models.GeneratorData(
-                name = f'generator_{name}',
+                name=f"generator_{name}",
                 # Sometimes BusNames() will return not just the bus name, but
                 # also the phases in dot notation. So... split based on the dot
                 # then grab the actual number.
-                bus = dss.CktElement.BusNames()[0].split('.')[0],
-                rated_apparent_power = dss.Generators.kVARated(),
+                bus=dss.CktElement.BusNames()[0].split(".")[0],
+                rated_apparent_power=dss.Generators.kVARated(),
             )
 
-
-            if self.__debug: print(gen)
+            if self.__debug:
+                print(gen)
 
             self.elements[gen.name] = gen
 
         # LOADS
         # set the active class to 'Load'
-        dss.Circuit.SetActiveClass('load')
+        dss.Circuit.SetActiveClass("load")
 
         for name in dss.Loads.AllNames():
             # set the current load as the active element
             dss.Circuit.SetActiveElement(name)
 
             load = models.LoadData(
-                name = f'load_{name}',
+                name=f"load_{name}",
                 # Sometimes BusNames() will return not just the bus name, but
                 # also the phases in dot notation. So... split based on the dot
                 # then grab the actual number.
-                bus = dss.CktElement.BusNames()[0].split('.')[0],
+                bus=dss.CktElement.BusNames()[0].split(".")[0],
             )
 
-            if self.__debug: print(load)
+            if self.__debug:
+                print(load)
 
             self.elements[load.name] = load
 
         # SHUNTS
         # set the active class to 'Capacitor'
-        dss.Circuit.SetActiveClass('capacitor')
+        dss.Circuit.SetActiveClass("capacitor")
 
         for name in dss.Capacitors.AllNames():
             # set the current capacitor as the active element
             dss.Circuit.SetActiveElement(name)
 
             shunt = models.ShuntData(
-                name = f'shunt_{name}',
+                name=f"shunt_{name}",
                 # Sometimes BusNames() will return not just the bus name, but
                 # also the phases in dot notation. So... split based on the dot
                 # then grab the actual number.
-                bus = dss.CktElement.BusNames()[0].split('.')[0],
-                rated_reactive_power = dss.Capacitors.kvar(),
+                bus=dss.CktElement.BusNames()[0].split(".")[0],
+                rated_reactive_power=dss.Capacitors.kvar(),
             )
 
-            if self.__debug: print(shunt)
+            if self.__debug:
+                print(shunt)
 
             self.elements[shunt.name] = shunt
 
         # BRANCHES
         # set the active class to 'Line'
-        dss.Circuit.SetActiveClass('line')
+        dss.Circuit.SetActiveClass("line")
 
         for name in dss.Lines.AllNames():
             # set the current line as the active element
             dss.Circuit.SetActiveElement(name)
 
             branch = models.BranchData(
-                name = f'branch_{name}',
+                name=f"branch_{name}",
                 # Sometimes BusNames() will return not just the bus name, but
                 # also the phases in dot notation. So... split based on the dot
                 # then grab the actual number.
-                source_bus = dss.CktElement.BusNames()[0].split('.')[0],
-                dest_bus = dss.CktElement.BusNames()[1].split('.')[0],
+                source_bus=dss.CktElement.BusNames()[0].split(".")[0],
+                dest_bus=dss.CktElement.BusNames()[1].split(".")[0],
                 # Assuming intrinsic properties of branches will never change,
                 # statically add them during the create step.
-                resistance = dss.Lines.R1(),
-                reactance = dss.Lines.X1(),
-                charging = dss.Lines.C1(),
+                resistance=dss.Lines.R1(),
+                reactance=dss.Lines.X1(),
+                charging=dss.Lines.C1(),
             )
 
-            if self.__debug: print(branch)
+            if self.__debug:
+                print(branch)
 
             self.elements[branch.name] = branch
 
         # TRANSFORMERS
         # set the active class to 'Transformer'
-        dss.Circuit.SetActiveClass('transformer')
+        dss.Circuit.SetActiveClass("transformer")
 
         for name in dss.Transformers.AllNames():
             # set the current transformer as the active element
             dss.Circuit.SetActiveElement(name)
 
             transformer = models.TransformerData(
-                name = f'transformer_{name}',
+                name=f"transformer_{name}",
                 # Sometimes BusNames() will return not just the bus name, but
                 # also the phases in dot notation. So... split based on the dot
                 # then grab the actual number.
-                winding1_bus = dss.CktElement.BusNames()[0].split('.')[0],
-                winding2_bus = dss.CktElement.BusNames()[1].split('.')[0],
+                winding1_bus=dss.CktElement.BusNames()[0].split(".")[0],
+                winding2_bus=dss.CktElement.BusNames()[1].split(".")[0],
                 # Assuming intrinsic properties of transformers will never
                 # change, statically add them during the create step.
-                num_windings = dss.Transformers.NumWindings(),
+                num_windings=dss.Transformers.NumWindings(),
             )
 
             # select winding 1
@@ -986,9 +1380,9 @@ class OpenDSS(Provider):
             transformer.kva_rating_wdg1 = dss.Transformers.kVA()
             pattern = dss.Transformers.IsDelta()
             if pattern == 1:
-                transformer.winding_pattern_wdg1 = 'delta'
+                transformer.winding_pattern_wdg1 = "delta"
             else:
-                transformer.winding_pattern_wdg1 = 'wye'
+                transformer.winding_pattern_wdg1 = "wye"
             transformer.num_taps_wdg1 = dss.Transformers.NumTaps()
             transformer.min_tap_wdg1 = dss.Transformers.MinTap()
             transformer.max_tap_wdg1 = dss.Transformers.MaxTap()
@@ -1000,9 +1394,9 @@ class OpenDSS(Provider):
             transformer.kva_rating_wdg2 = dss.Transformers.kVA()
             pattern = dss.Transformers.IsDelta()
             if pattern == 1:
-                transformer.winding_pattern_wdg2 = 'delta'
+                transformer.winding_pattern_wdg2 = "delta"
             else:
-                transformer.winding_pattern_wdg2 = 'wye'
+                transformer.winding_pattern_wdg2 = "wye"
             transformer.num_taps_wdg2 = dss.Transformers.NumTaps()
             transformer.min_tap_wdg2 = dss.Transformers.MinTap()
             transformer.max_tap_wdg2 = dss.Transformers.MaxTap()
@@ -1012,41 +1406,41 @@ class OpenDSS(Provider):
 
             # if it's a 3 winding transformer
             if transformer.num_windings > 2:
-                dss.Transformers.Wdg(3) # activate winding 3, then check R
+                dss.Transformers.Wdg(3)  # activate winding 3, then check R
                 transformer.wdg3_resistance = dss.Transformers.R()
                 transformer.reactance_wdg1_wdg3 = dss.Transformers.Xht()
                 transformer.reactance_wdg2_wdg3 = dss.Transformers.Xlt()
 
-            if self.__debug: print(transformer)
+            if self.__debug:
+                print(transformer)
 
             self.elements[transformer.name] = transformer
 
         # INVERTERS
         # First, get controller names; set the active class to
         # 'INVcontrol'
-        dss.Circuit.SetActiveClass('invcontrol')
+        dss.Circuit.SetActiveClass("invcontrol")
         # get list of all inverter controller names
         inv_controllers = dss.ActiveClass.AllNames()
 
         for name in dss.PVsystems.AllNames():
             # set the active class to 'PVsystem'
-            dss.Circuit.SetActiveClass('pvsystem')
+            dss.Circuit.SetActiveClass("pvsystem")
 
             # set the current inverter as the active element
             dss.Circuit.SetActiveElement(name)
 
             inverter = models.InverterData(
-                name = f'inverter_{name}',
+                name=f"inverter_{name}",
                 # Sometimes BusNames() will return not just the bus name, but
                 # also the phases in dot notation. So... split based on the dot
                 # then grab the actual number.
-                bus = dss.CktElement.BusNames()[0].split('.')[0],
-                rated_apparent_power = dss.PVsystems.kVARated(),
+                bus=dss.CktElement.BusNames()[0].split(".")[0],
+                rated_apparent_power=dss.PVsystems.kVARated(),
             )
 
-
             # set the active class to 'INVcontrol'
-            dss.Circuit.SetActiveClass('invcontrol')
+            dss.Circuit.SetActiveClass("invcontrol")
 
             # the API is kinda limited for inverter controllers, so
             # I'm just looping through all the controller names and
@@ -1056,19 +1450,19 @@ class OpenDSS(Provider):
                 dss.Circuit.SetActiveElement(controller)
                 # now check the current active controller properties
                 # to see if it's associated with the current inverter
-                if name in dss.Properties.Value('1').lower():
+                if name in dss.Properties.Value("1").lower():
                     inverter.controller_name = controller
                     # if controller mode is 'VOLTVAR', then volt/var is enabled
-                    inverter.volt_var_enable = dss.Properties.Value('2') == 'VOLTVAR'
-                    inverter.volt_var_curve_name = dss.Properties.Value('4').lower()
+                    inverter.volt_var_enable = dss.Properties.Value("2") == "VOLTVAR"
+                    inverter.volt_var_curve_name = dss.Properties.Value("4").lower()
                     # '23' is the properties index for VV_RefReactivePower
                     # if VV_RefReactivePower = 'VARMAX_WATTS, then value = 2
                     # if VV_RefReactivePower = 'VARAVAL_WATTS, then value = 3
                     # if VV_RefReactivePower = 'VARMAX_VARS, don't care
                     # this is to support Sunspec 126.DeptRef standard
-                    if dss.Properties.Value('23') == 'VARMAX_WATTS':
+                    if dss.Properties.Value("23") == "VARMAX_WATTS":
                         inverter.volt_var_reference = 2
-                    elif dss.Properties.Value('23') == 'VARAVAL_WATTS':
+                    elif dss.Properties.Value("23") == "VARAVAL_WATTS":
                         inverter.volt_var_reference = 3
 
                     # the dss_utils.Iterator returns a handle to the function
@@ -1085,7 +1479,7 @@ class OpenDSS(Provider):
                     # 'dss.Circuit.SetActiveClass()' and
                     # 'dss.Circuit.SetActiveElement()' methods.
 
-                    for xy_name in dss_utils.Iterator(dss.XYCurves, 'Name'):
+                    for xy_name in dss_utils.Iterator(dss.XYCurves, "Name"):
                         # check for the volt/var curve name
                         # associated with this inverter
                         if xy_name() == inverter.volt_var_curve_name:
@@ -1104,7 +1498,8 @@ class OpenDSS(Provider):
                             inverter.curve_var_pt_5 = var_points[4]
                             inverter.curve_var_pt_6 = var_points[5]
 
-            if self.__debug: print(inverter)
+            if self.__debug:
+                print(inverter)
 
             self.elements[inverter.name] = inverter
 
@@ -1112,13 +1507,14 @@ class OpenDSS(Provider):
         # so first is set to 'true'. this is because we first need to
         # initialize the phases before we can do an update. the inverter updates
         # specifically need the phase information to update the data.
-        self.__solve(first='true')
+        self.__solve(first="true")
 
     def __update(self):
         """Reads circuit elements from OpenDSS and updates the internal
         representation of the system under test."""
 
-        if self.__debug: print('Updating system under test')
+        if self.__debug:
+            print("Updating system under test")
 
         # if this solver is self publishing, the periodic publish will run in a
         # separate thread, so we need a mutex around reading and writing data
@@ -1126,10 +1522,10 @@ class OpenDSS(Provider):
         # is also used in the pack_message function.
         with self.__lock:
             # BUSES
-            print('Updating buses...')
+            print("Updating buses...")
             for name in dss.Circuit.AllBusNames():
                 if name:
-                    bus = self.elements['bus_{}'.format(name)]
+                    bus = self.elements[f"bus_{name}"]
 
                     assert bus
 
@@ -1153,18 +1549,19 @@ class OpenDSS(Provider):
                     except IndexError:
                         pass
 
-                    if self.__debug: print(bus)
+                    if self.__debug:
+                        print(bus)
 
             # GENERATORS
-            print('Updating generators...')
+            print("Updating generators...")
             # set the active class to 'Generator'
-            dss.Circuit.SetActiveClass('generator')
+            dss.Circuit.SetActiveClass("generator")
 
             for name in dss.Generators.AllNames():
                 # set the current generator as the active element
                 dss.Circuit.SetActiveElement(name)
 
-                gen = self.elements['generator_{}'.format(name)]
+                gen = self.elements[f"generator_{name}"]
 
                 assert gen
 
@@ -1178,47 +1575,48 @@ class OpenDSS(Provider):
 
                 voltcurpow = self.__get_voltcurpow_1_terminal(gen.phases)
 
-                if 'p1' in voltcurpow:
-                    gen.voltage_mag_p1 = round(voltcurpow['p1'][0], 3)
-                    gen.voltage_ang_p1 = round(voltcurpow['p1'][1], 3)
-                    gen.current_mag_p1 = round(voltcurpow['p1'][2], 3)
-                    gen.current_ang_p1 = round(voltcurpow['p1'][3], 3)
-                    gen.real_power_p1 = round(voltcurpow['p1'][4], 3)
-                    gen.reactive_power_p1 = round(voltcurpow['p1'][5], 3)
-                if 'p2' in voltcurpow:
-                    gen.voltage_mag_p2 = round(voltcurpow['p2'][0], 3)
-                    gen.voltage_ang_p2 = round(voltcurpow['p2'][1], 3)
-                    gen.current_mag_p2 = round(voltcurpow['p2'][2], 3)
-                    gen.current_ang_p2 = round(voltcurpow['p2'][3], 3)
-                    gen.real_power_p2 = round(voltcurpow['p2'][4], 3)
-                    gen.reactive_power_p2 = round(voltcurpow['p2'][5], 3)
-                if 'p3' in voltcurpow:
-                    gen.voltage_mag_p3 = round(voltcurpow['p3'][0], 3)
-                    gen.voltage_ang_p3 = round(voltcurpow['p3'][1], 3)
-                    gen.current_mag_p3 = round(voltcurpow['p3'][2], 3)
-                    gen.current_ang_p3 = round(voltcurpow['p3'][3], 3)
-                    gen.real_power_p3 = round(voltcurpow['p3'][4], 3)
-                    gen.reactive_power_p3 = round(voltcurpow['p3'][5], 3)
-                if 'pn' in voltcurpow:
-                    gen.voltage_mag_pn = round(voltcurpow['pn'][0], 3)
-                    gen.voltage_ang_pn = round(voltcurpow['pn'][1], 3)
-                    gen.current_mag_pn = round(voltcurpow['pn'][2], 3)
-                    gen.current_ang_pn = round(voltcurpow['pn'][3], 3)
-                    gen.real_power_pn = round(voltcurpow['pn'][4], 3)
-                    gen.reactive_power_pn = round(voltcurpow['pn'][5], 3)
+                if "p1" in voltcurpow:
+                    gen.voltage_mag_p1 = round(voltcurpow["p1"][0], 3)
+                    gen.voltage_ang_p1 = round(voltcurpow["p1"][1], 3)
+                    gen.current_mag_p1 = round(voltcurpow["p1"][2], 3)
+                    gen.current_ang_p1 = round(voltcurpow["p1"][3], 3)
+                    gen.real_power_p1 = round(voltcurpow["p1"][4], 3)
+                    gen.reactive_power_p1 = round(voltcurpow["p1"][5], 3)
+                if "p2" in voltcurpow:
+                    gen.voltage_mag_p2 = round(voltcurpow["p2"][0], 3)
+                    gen.voltage_ang_p2 = round(voltcurpow["p2"][1], 3)
+                    gen.current_mag_p2 = round(voltcurpow["p2"][2], 3)
+                    gen.current_ang_p2 = round(voltcurpow["p2"][3], 3)
+                    gen.real_power_p2 = round(voltcurpow["p2"][4], 3)
+                    gen.reactive_power_p2 = round(voltcurpow["p2"][5], 3)
+                if "p3" in voltcurpow:
+                    gen.voltage_mag_p3 = round(voltcurpow["p3"][0], 3)
+                    gen.voltage_ang_p3 = round(voltcurpow["p3"][1], 3)
+                    gen.current_mag_p3 = round(voltcurpow["p3"][2], 3)
+                    gen.current_ang_p3 = round(voltcurpow["p3"][3], 3)
+                    gen.real_power_p3 = round(voltcurpow["p3"][4], 3)
+                    gen.reactive_power_p3 = round(voltcurpow["p3"][5], 3)
+                if "pn" in voltcurpow:
+                    gen.voltage_mag_pn = round(voltcurpow["pn"][0], 3)
+                    gen.voltage_ang_pn = round(voltcurpow["pn"][1], 3)
+                    gen.current_mag_pn = round(voltcurpow["pn"][2], 3)
+                    gen.current_ang_pn = round(voltcurpow["pn"][3], 3)
+                    gen.real_power_pn = round(voltcurpow["pn"][4], 3)
+                    gen.reactive_power_pn = round(voltcurpow["pn"][5], 3)
 
-                if self.__debug: print(gen)
+                if self.__debug:
+                    print(gen)
 
             # LOADS
-            print('Updating loads...')
+            print("Updating loads...")
             # set the active class to 'Load'
-            dss.Circuit.SetActiveClass('load')
+            dss.Circuit.SetActiveClass("load")
 
             for name in dss.Loads.AllNames():
                 # set the current load as the active element
                 dss.Circuit.SetActiveElement(name)
 
-                load = self.elements['load_{}'.format(name)]
+                load = self.elements[f"load_{name}"]
 
                 assert load
 
@@ -1230,47 +1628,48 @@ class OpenDSS(Provider):
 
                 voltcurpow = self.__get_voltcurpow_1_terminal(load.phases)
 
-                if 'p1' in voltcurpow:
-                    load.voltage_mag_p1 = round(voltcurpow['p1'][0], 3)
-                    load.voltage_ang_p1 = round(voltcurpow['p1'][1], 3)
-                    load.current_mag_p1 = round(voltcurpow['p1'][2], 3)
-                    load.current_ang_p1 = round(voltcurpow['p1'][3], 3)
-                    load.real_power_p1 = round(voltcurpow['p1'][4], 3)
-                    load.reactive_power_p1 = round(voltcurpow['p1'][5], 3)
-                if 'p2' in voltcurpow:
-                    load.voltage_mag_p2 = round(voltcurpow['p2'][0], 3)
-                    load.voltage_ang_p2 = round(voltcurpow['p2'][1], 3)
-                    load.current_mag_p2 = round(voltcurpow['p2'][2], 3)
-                    load.current_ang_p2 = round(voltcurpow['p2'][3], 3)
-                    load.real_power_p2 = round(voltcurpow['p2'][4], 3)
-                    load.reactive_power_p2 = round(voltcurpow['p2'][5], 3)
-                if 'p3' in voltcurpow:
-                    load.voltage_mag_p3 = round(voltcurpow['p3'][0], 3)
-                    load.voltage_ang_p3 = round(voltcurpow['p3'][1], 3)
-                    load.current_mag_p3 = round(voltcurpow['p3'][2], 3)
-                    load.current_ang_p3 = round(voltcurpow['p3'][3], 3)
-                    load.real_power_p3 = round(voltcurpow['p3'][4], 3)
-                    load.reactive_power_p3 = round(voltcurpow['p3'][5], 3)
-                if 'pn' in voltcurpow:
-                    load.voltage_mag_pn = round(voltcurpow['pn'][0], 3)
-                    load.voltage_ang_pn = round(voltcurpow['pn'][1], 3)
-                    load.current_mag_pn = round(voltcurpow['pn'][2], 3)
-                    load.current_ang_pn = round(voltcurpow['pn'][3], 3)
-                    load.real_power_pn = round(voltcurpow['pn'][4], 3)
-                    load.reactive_power_pn = round(voltcurpow['pn'][5], 3)
+                if "p1" in voltcurpow:
+                    load.voltage_mag_p1 = round(voltcurpow["p1"][0], 3)
+                    load.voltage_ang_p1 = round(voltcurpow["p1"][1], 3)
+                    load.current_mag_p1 = round(voltcurpow["p1"][2], 3)
+                    load.current_ang_p1 = round(voltcurpow["p1"][3], 3)
+                    load.real_power_p1 = round(voltcurpow["p1"][4], 3)
+                    load.reactive_power_p1 = round(voltcurpow["p1"][5], 3)
+                if "p2" in voltcurpow:
+                    load.voltage_mag_p2 = round(voltcurpow["p2"][0], 3)
+                    load.voltage_ang_p2 = round(voltcurpow["p2"][1], 3)
+                    load.current_mag_p2 = round(voltcurpow["p2"][2], 3)
+                    load.current_ang_p2 = round(voltcurpow["p2"][3], 3)
+                    load.real_power_p2 = round(voltcurpow["p2"][4], 3)
+                    load.reactive_power_p2 = round(voltcurpow["p2"][5], 3)
+                if "p3" in voltcurpow:
+                    load.voltage_mag_p3 = round(voltcurpow["p3"][0], 3)
+                    load.voltage_ang_p3 = round(voltcurpow["p3"][1], 3)
+                    load.current_mag_p3 = round(voltcurpow["p3"][2], 3)
+                    load.current_ang_p3 = round(voltcurpow["p3"][3], 3)
+                    load.real_power_p3 = round(voltcurpow["p3"][4], 3)
+                    load.reactive_power_p3 = round(voltcurpow["p3"][5], 3)
+                if "pn" in voltcurpow:
+                    load.voltage_mag_pn = round(voltcurpow["pn"][0], 3)
+                    load.voltage_ang_pn = round(voltcurpow["pn"][1], 3)
+                    load.current_mag_pn = round(voltcurpow["pn"][2], 3)
+                    load.current_ang_pn = round(voltcurpow["pn"][3], 3)
+                    load.real_power_pn = round(voltcurpow["pn"][4], 3)
+                    load.reactive_power_pn = round(voltcurpow["pn"][5], 3)
 
-                if self.__debug: print(load)
+                if self.__debug:
+                    print(load)
 
             # SHUNTS
-            print('Updating shunts...')
+            print("Updating shunts...")
             # set the active class to 'Capacitor'
-            dss.Circuit.SetActiveClass('capacitor')
+            dss.Circuit.SetActiveClass("capacitor")
 
             for name in dss.Capacitors.AllNames():
                 # set the current capacitor as the active element
                 dss.Circuit.SetActiveElement(name)
 
-                shunt = self.elements['shunt_{}'.format(name)]
+                shunt = self.elements[f"shunt_{name}"]
 
                 assert shunt
 
@@ -1282,47 +1681,48 @@ class OpenDSS(Provider):
 
                 voltcurpow = self.__get_voltcurpow_1_terminal(shunt.phases)
 
-                if 'p1' in voltcurpow:
-                    shunt.voltage_mag_p1 = round(voltcurpow['p1'][0], 3)
-                    shunt.voltage_ang_p1 = round(voltcurpow['p1'][1], 3)
-                    shunt.current_mag_p1 = round(voltcurpow['p1'][2], 3)
-                    shunt.current_ang_p1 = round(voltcurpow['p1'][3], 3)
-                    shunt.real_power_p1 = round(voltcurpow['p1'][4], 3)
-                    shunt.reactive_power_p1 = round(voltcurpow['p1'][5], 3)
-                if 'p2' in voltcurpow:
-                    shunt.voltage_mag_p2 = round(voltcurpow['p2'][0], 3)
-                    shunt.voltage_ang_p2 = round(voltcurpow['p2'][1], 3)
-                    shunt.current_mag_p2 = round(voltcurpow['p2'][2], 3)
-                    shunt.current_ang_p2 = round(voltcurpow['p2'][3], 3)
-                    shunt.real_power_p2 = round(voltcurpow['p2'][4], 3)
-                    shunt.reactive_power_p2 = round(voltcurpow['p2'][5], 3)
-                if 'p3' in voltcurpow:
-                    shunt.voltage_mag_p3 = round(voltcurpow['p3'][0], 3)
-                    shunt.voltage_ang_p3 = round(voltcurpow['p3'][1], 3)
-                    shunt.current_mag_p3 = round(voltcurpow['p3'][2], 3)
-                    shunt.current_ang_p3 = round(voltcurpow['p3'][3], 3)
-                    shunt.real_power_p3 = round(voltcurpow['p3'][4], 3)
-                    shunt.reactive_power_p3 = round(voltcurpow['p3'][5], 3)
-                if 'pn' in voltcurpow:
-                    shunt.voltage_mag_pn = round(voltcurpow['pn'][0], 3)
-                    shunt.voltage_ang_pn = round(voltcurpow['pn'][1], 3)
-                    shunt.current_mag_pn = round(voltcurpow['pn'][2], 3)
-                    shunt.current_ang_pn = round(voltcurpow['pn'][3], 3)
-                    shunt.real_power_pn = round(voltcurpow['pn'][4], 3)
-                    shunt.reactive_power_pn = round(voltcurpow['pn'][5], 3)
+                if "p1" in voltcurpow:
+                    shunt.voltage_mag_p1 = round(voltcurpow["p1"][0], 3)
+                    shunt.voltage_ang_p1 = round(voltcurpow["p1"][1], 3)
+                    shunt.current_mag_p1 = round(voltcurpow["p1"][2], 3)
+                    shunt.current_ang_p1 = round(voltcurpow["p1"][3], 3)
+                    shunt.real_power_p1 = round(voltcurpow["p1"][4], 3)
+                    shunt.reactive_power_p1 = round(voltcurpow["p1"][5], 3)
+                if "p2" in voltcurpow:
+                    shunt.voltage_mag_p2 = round(voltcurpow["p2"][0], 3)
+                    shunt.voltage_ang_p2 = round(voltcurpow["p2"][1], 3)
+                    shunt.current_mag_p2 = round(voltcurpow["p2"][2], 3)
+                    shunt.current_ang_p2 = round(voltcurpow["p2"][3], 3)
+                    shunt.real_power_p2 = round(voltcurpow["p2"][4], 3)
+                    shunt.reactive_power_p2 = round(voltcurpow["p2"][5], 3)
+                if "p3" in voltcurpow:
+                    shunt.voltage_mag_p3 = round(voltcurpow["p3"][0], 3)
+                    shunt.voltage_ang_p3 = round(voltcurpow["p3"][1], 3)
+                    shunt.current_mag_p3 = round(voltcurpow["p3"][2], 3)
+                    shunt.current_ang_p3 = round(voltcurpow["p3"][3], 3)
+                    shunt.real_power_p3 = round(voltcurpow["p3"][4], 3)
+                    shunt.reactive_power_p3 = round(voltcurpow["p3"][5], 3)
+                if "pn" in voltcurpow:
+                    shunt.voltage_mag_pn = round(voltcurpow["pn"][0], 3)
+                    shunt.voltage_ang_pn = round(voltcurpow["pn"][1], 3)
+                    shunt.current_mag_pn = round(voltcurpow["pn"][2], 3)
+                    shunt.current_ang_pn = round(voltcurpow["pn"][3], 3)
+                    shunt.real_power_pn = round(voltcurpow["pn"][4], 3)
+                    shunt.reactive_power_pn = round(voltcurpow["pn"][5], 3)
 
-                if self.__debug: print(shunt)
+                if self.__debug:
+                    print(shunt)
 
             # BRANCHES
-            print('Updating branches...')
+            print("Updating branches...")
             # set the active class to 'Line'
-            dss.Circuit.SetActiveClass('line')
+            dss.Circuit.SetActiveClass("line")
 
             for name in dss.Lines.AllNames():
                 # set the current line as the active element
                 dss.Circuit.SetActiveElement(name)
 
-                branch = self.elements['branch_{}'.format(name)]
+                branch = self.elements[f"branch_{name}"]
 
                 assert branch
 
@@ -1338,73 +1738,76 @@ class OpenDSS(Provider):
                 # phase 3, then the branch phase that will hold the voltage,
                 # current, and power output will be considered phase 1, not
                 # phase 3.
-                voltcurpow_src, voltcurpow_dst = self.__get_voltcurpow_2_terminal(branch.phases)
+                voltcurpow_src, voltcurpow_dst = self.__get_voltcurpow_2_terminal(
+                    branch.phases
+                )
 
-                if 'p1' in voltcurpow_src:
-                    branch.voltage_mag_src_p1 = round(voltcurpow_src['p1'][0], 3)
-                    branch.voltage_ang_src_p1 = round(voltcurpow_src['p1'][1], 3)
-                    branch.current_mag_src_p1 = round(voltcurpow_src['p1'][2], 3)
-                    branch.current_ang_src_p1 = round(voltcurpow_src['p1'][3], 3)
-                    branch.real_power_src_p1 = round(voltcurpow_src['p1'][4], 3)
-                    branch.reactive_power_src_p1 = round(voltcurpow_src['p1'][5], 3)
-                    branch.voltage_mag_dst_p1 = round(voltcurpow_dst['p1'][0], 3)
-                    branch.voltage_ang_dst_p1 = round(voltcurpow_dst['p1'][1], 3)
-                    branch.current_mag_dst_p1 = round(voltcurpow_dst['p1'][2], 3)
-                    branch.current_ang_dst_p1 = round(voltcurpow_dst['p1'][3], 3)
-                    branch.real_power_dst_p1 = round(voltcurpow_dst['p1'][4], 3)
-                    branch.reactive_power_dst_p1 = round(voltcurpow_dst['p1'][5], 3)
-                if 'p2' in voltcurpow_src:
-                    branch.voltage_mag_src_p2 = round(voltcurpow_src['p2'][0], 3)
-                    branch.voltage_ang_src_p2 = round(voltcurpow_src['p2'][1], 3)
-                    branch.current_mag_src_p2 = round(voltcurpow_src['p2'][2], 3)
-                    branch.current_ang_src_p2 = round(voltcurpow_src['p2'][3], 3)
-                    branch.real_power_src_p2 = round(voltcurpow_src['p2'][4], 3)
-                    branch.reactive_power_src_p2 = round(voltcurpow_src['p2'][5], 3)
-                    branch.voltage_mag_dst_p2 = round(voltcurpow_dst['p2'][0], 3)
-                    branch.voltage_ang_dst_p2 = round(voltcurpow_dst['p2'][1], 3)
-                    branch.current_mag_dst_p2 = round(voltcurpow_dst['p2'][2], 3)
-                    branch.current_ang_dst_p2 = round(voltcurpow_dst['p2'][3], 3)
-                    branch.real_power_dst_p2 = round(voltcurpow_dst['p2'][4], 3)
-                    branch.reactive_power_dst_p2 = round(voltcurpow_dst['p2'][5], 3)
-                if 'p3' in voltcurpow_src:
-                    branch.voltage_mag_src_p3 = round(voltcurpow_src['p3'][0], 3)
-                    branch.voltage_ang_src_p3 = round(voltcurpow_src['p3'][1], 3)
-                    branch.current_mag_src_p3 = round(voltcurpow_src['p3'][2], 3)
-                    branch.current_ang_src_p3 = round(voltcurpow_src['p3'][3], 3)
-                    branch.real_power_src_p3 = round(voltcurpow_src['p3'][4], 3)
-                    branch.reactive_power_src_p3 = round(voltcurpow_src['p3'][5], 3)
-                    branch.voltage_mag_dst_p3 = round(voltcurpow_dst['p3'][0], 3)
-                    branch.voltage_ang_dst_p3 = round(voltcurpow_dst['p3'][1], 3)
-                    branch.current_mag_dst_p3 = round(voltcurpow_dst['p3'][2], 3)
-                    branch.current_ang_dst_p3 = round(voltcurpow_dst['p3'][3], 3)
-                    branch.real_power_dst_p3 = round(voltcurpow_dst['p3'][4], 3)
-                    branch.reactive_power_dst_p3 = round(voltcurpow_dst['p3'][5], 3)
-                if 'pn' in voltcurpow_src:
-                    branch.voltage_mag_src_pn = round(voltcurpow_src['pn'][0], 3)
-                    branch.voltage_ang_src_pn = round(voltcurpow_src['pn'][1], 3)
-                    branch.current_mag_src_pn = round(voltcurpow_src['pn'][2], 3)
-                    branch.current_ang_src_pn = round(voltcurpow_src['pn'][3], 3)
-                    branch.real_power_pn = round(voltcurpow_src['pn'][4], 3)
-                    branch.reactive_power_pn = round(voltcurpow_src['pn'][5], 3)
-                    branch.voltage_mag_dst_pn = round(voltcurpow_dst['pn'][0], 3)
-                    branch.voltage_ang_dst_pn = round(voltcurpow_dst['pn'][1], 3)
-                    branch.current_mag_dst_pn = round(voltcurpow_dst['pn'][2], 3)
-                    branch.current_ang_dst_pn = round(voltcurpow_dst['pn'][3], 3)
-                    branch.real_power_dst_pn = round(voltcurpow_dst['pn'][4], 3)
-                    branch.reactive_power_dst_pn = round(voltcurpow_dst['pn'][5], 3)
+                if "p1" in voltcurpow_src:
+                    branch.voltage_mag_src_p1 = round(voltcurpow_src["p1"][0], 3)
+                    branch.voltage_ang_src_p1 = round(voltcurpow_src["p1"][1], 3)
+                    branch.current_mag_src_p1 = round(voltcurpow_src["p1"][2], 3)
+                    branch.current_ang_src_p1 = round(voltcurpow_src["p1"][3], 3)
+                    branch.real_power_src_p1 = round(voltcurpow_src["p1"][4], 3)
+                    branch.reactive_power_src_p1 = round(voltcurpow_src["p1"][5], 3)
+                    branch.voltage_mag_dst_p1 = round(voltcurpow_dst["p1"][0], 3)
+                    branch.voltage_ang_dst_p1 = round(voltcurpow_dst["p1"][1], 3)
+                    branch.current_mag_dst_p1 = round(voltcurpow_dst["p1"][2], 3)
+                    branch.current_ang_dst_p1 = round(voltcurpow_dst["p1"][3], 3)
+                    branch.real_power_dst_p1 = round(voltcurpow_dst["p1"][4], 3)
+                    branch.reactive_power_dst_p1 = round(voltcurpow_dst["p1"][5], 3)
+                if "p2" in voltcurpow_src:
+                    branch.voltage_mag_src_p2 = round(voltcurpow_src["p2"][0], 3)
+                    branch.voltage_ang_src_p2 = round(voltcurpow_src["p2"][1], 3)
+                    branch.current_mag_src_p2 = round(voltcurpow_src["p2"][2], 3)
+                    branch.current_ang_src_p2 = round(voltcurpow_src["p2"][3], 3)
+                    branch.real_power_src_p2 = round(voltcurpow_src["p2"][4], 3)
+                    branch.reactive_power_src_p2 = round(voltcurpow_src["p2"][5], 3)
+                    branch.voltage_mag_dst_p2 = round(voltcurpow_dst["p2"][0], 3)
+                    branch.voltage_ang_dst_p2 = round(voltcurpow_dst["p2"][1], 3)
+                    branch.current_mag_dst_p2 = round(voltcurpow_dst["p2"][2], 3)
+                    branch.current_ang_dst_p2 = round(voltcurpow_dst["p2"][3], 3)
+                    branch.real_power_dst_p2 = round(voltcurpow_dst["p2"][4], 3)
+                    branch.reactive_power_dst_p2 = round(voltcurpow_dst["p2"][5], 3)
+                if "p3" in voltcurpow_src:
+                    branch.voltage_mag_src_p3 = round(voltcurpow_src["p3"][0], 3)
+                    branch.voltage_ang_src_p3 = round(voltcurpow_src["p3"][1], 3)
+                    branch.current_mag_src_p3 = round(voltcurpow_src["p3"][2], 3)
+                    branch.current_ang_src_p3 = round(voltcurpow_src["p3"][3], 3)
+                    branch.real_power_src_p3 = round(voltcurpow_src["p3"][4], 3)
+                    branch.reactive_power_src_p3 = round(voltcurpow_src["p3"][5], 3)
+                    branch.voltage_mag_dst_p3 = round(voltcurpow_dst["p3"][0], 3)
+                    branch.voltage_ang_dst_p3 = round(voltcurpow_dst["p3"][1], 3)
+                    branch.current_mag_dst_p3 = round(voltcurpow_dst["p3"][2], 3)
+                    branch.current_ang_dst_p3 = round(voltcurpow_dst["p3"][3], 3)
+                    branch.real_power_dst_p3 = round(voltcurpow_dst["p3"][4], 3)
+                    branch.reactive_power_dst_p3 = round(voltcurpow_dst["p3"][5], 3)
+                if "pn" in voltcurpow_src:
+                    branch.voltage_mag_src_pn = round(voltcurpow_src["pn"][0], 3)
+                    branch.voltage_ang_src_pn = round(voltcurpow_src["pn"][1], 3)
+                    branch.current_mag_src_pn = round(voltcurpow_src["pn"][2], 3)
+                    branch.current_ang_src_pn = round(voltcurpow_src["pn"][3], 3)
+                    branch.real_power_pn = round(voltcurpow_src["pn"][4], 3)
+                    branch.reactive_power_pn = round(voltcurpow_src["pn"][5], 3)
+                    branch.voltage_mag_dst_pn = round(voltcurpow_dst["pn"][0], 3)
+                    branch.voltage_ang_dst_pn = round(voltcurpow_dst["pn"][1], 3)
+                    branch.current_mag_dst_pn = round(voltcurpow_dst["pn"][2], 3)
+                    branch.current_ang_dst_pn = round(voltcurpow_dst["pn"][3], 3)
+                    branch.real_power_dst_pn = round(voltcurpow_dst["pn"][4], 3)
+                    branch.reactive_power_dst_pn = round(voltcurpow_dst["pn"][5], 3)
 
-                if self.__debug: print(branch)
+                if self.__debug:
+                    print(branch)
 
             # TRANSFORMERS
-            print('Updating transformers...')
+            print("Updating transformers...")
             # set the active class to 'Transformer'
-            dss.Circuit.SetActiveClass('transformer')
+            dss.Circuit.SetActiveClass("transformer")
 
             for name in dss.Transformers.AllNames():
                 # set the current transformer as the active element
                 dss.Circuit.SetActiveElement(name)
 
-                transformer = self.elements['transformer_{}'.format(name)]
+                transformer = self.elements[f"transformer_{name}"]
 
                 assert transformer
 
@@ -1431,65 +1834,68 @@ class OpenDSS(Provider):
                 # the transformer. assumption is that the power seen between
                 # winding 1 and winding 2 will be practically identical
 
-                voltcurpow_wdg1, voltcurpow_wdg2 = self.__get_voltcurpow_2_terminal(transformer.phases)
+                voltcurpow_wdg1, voltcurpow_wdg2 = self.__get_voltcurpow_2_terminal(
+                    transformer.phases
+                )
 
-                if 'p1' in voltcurpow_wdg1:
-                    transformer.voltage_mag_wdg1_p1 = round(voltcurpow_wdg1['p1'][0], 3)
-                    transformer.voltage_ang_wdg1_p1 = round(voltcurpow_wdg1['p1'][1], 3)
-                    transformer.current_mag_wdg1_p1 = round(voltcurpow_wdg1['p1'][2], 3)
-                    transformer.current_ang_wdg1_p1 = round(voltcurpow_wdg1['p1'][3], 3)
-                    transformer.real_power_p1 = round(voltcurpow_wdg1['p1'][4], 3)
-                    transformer.reactive_power_p1 = round(voltcurpow_wdg1['p1'][5], 3)
-                    transformer.voltage_mag_wdg2_p1 = round(voltcurpow_wdg2['p1'][0], 3)
-                    transformer.voltage_ang_wdg2_p1 = round(voltcurpow_wdg2['p1'][1], 3)
-                    transformer.current_mag_wdg2_p1 = round(voltcurpow_wdg2['p1'][2], 3)
-                    transformer.current_ang_wdg2_p1 = round(voltcurpow_wdg2['p1'][3], 3)
-                if 'p2' in voltcurpow_wdg1:
-                    transformer.voltage_mag_wdg1_p2 = round(voltcurpow_wdg1['p2'][0], 3)
-                    transformer.voltage_ang_wdg1_p2 = round(voltcurpow_wdg1['p2'][1], 3)
-                    transformer.current_mag_wdg1_p2 = round(voltcurpow_wdg1['p2'][2], 3)
-                    transformer.current_ang_wdg1_p2 = round(voltcurpow_wdg1['p2'][3], 3)
-                    transformer.real_power_p2 = round(voltcurpow_wdg1['p2'][4], 3)
-                    transformer.reactive_power_p2 = round(voltcurpow_wdg1['p2'][5], 3)
-                    transformer.voltage_mag_wdg2_p2 = round(voltcurpow_wdg2['p2'][0], 3)
-                    transformer.voltage_ang_wdg2_p2 = round(voltcurpow_wdg2['p2'][1], 3)
-                    transformer.current_mag_wdg2_p2 = round(voltcurpow_wdg2['p2'][2], 3)
-                    transformer.current_ang_wdg2_p2 = round(voltcurpow_wdg2['p2'][3], 3)
-                if 'p3' in voltcurpow_wdg1:
-                    transformer.voltage_mag_wdg1_p3 = round(voltcurpow_wdg1['p3'][0], 3)
-                    transformer.voltage_ang_wdg1_p3 = round(voltcurpow_wdg1['p3'][1], 3)
-                    transformer.current_mag_wdg1_p3 = round(voltcurpow_wdg1['p3'][2], 3)
-                    transformer.current_ang_wdg1_p3 = round(voltcurpow_wdg1['p3'][3], 3)
-                    transformer.real_power_p3 = round(voltcurpow_wdg1['p3'][4], 3)
-                    transformer.reactive_power_p3 = round(voltcurpow_wdg1['p3'][5], 3)
-                    transformer.voltage_mag_wdg2_p3 = round(voltcurpow_wdg2['p3'][0], 3)
-                    transformer.voltage_ang_wdg2_p3 = round(voltcurpow_wdg2['p3'][1], 3)
-                    transformer.current_mag_wdg2_p3 = round(voltcurpow_wdg2['p3'][2], 3)
-                    transformer.current_ang_wdg2_p3 = round(voltcurpow_wdg2['p3'][3], 3)
-                if 'pn' in voltcurpow_wdg1:
-                    transformer.voltage_mag_wdg1_pn = round(voltcurpow_wdg1['pn'][0], 3)
-                    transformer.voltage_ang_wdg1_pn = round(voltcurpow_wdg1['pn'][1], 3)
-                    transformer.current_mag_wdg1_pn = round(voltcurpow_wdg1['pn'][2], 3)
-                    transformer.current_ang_wdg1_pn = round(voltcurpow_wdg1['pn'][3], 3)
-                    transformer.real_power_pn = round(voltcurpow_wdg1['pn'][4], 3)
-                    transformer.reactive_power_pn = round(voltcurpow_wdg1['pn'][5], 3)
-                    transformer.voltage_mag_wdg2_pn = round(voltcurpow_wdg2['pn'][0], 3)
-                    transformer.voltage_ang_wdg2_pn = round(voltcurpow_wdg2['pn'][1], 3)
-                    transformer.current_mag_wdg2_pn = round(voltcurpow_wdg2['pn'][2], 3)
-                    transformer.current_ang_wdg2_pn = round(voltcurpow_wdg2['pn'][3], 3)
+                if "p1" in voltcurpow_wdg1:
+                    transformer.voltage_mag_wdg1_p1 = round(voltcurpow_wdg1["p1"][0], 3)
+                    transformer.voltage_ang_wdg1_p1 = round(voltcurpow_wdg1["p1"][1], 3)
+                    transformer.current_mag_wdg1_p1 = round(voltcurpow_wdg1["p1"][2], 3)
+                    transformer.current_ang_wdg1_p1 = round(voltcurpow_wdg1["p1"][3], 3)
+                    transformer.real_power_p1 = round(voltcurpow_wdg1["p1"][4], 3)
+                    transformer.reactive_power_p1 = round(voltcurpow_wdg1["p1"][5], 3)
+                    transformer.voltage_mag_wdg2_p1 = round(voltcurpow_wdg2["p1"][0], 3)
+                    transformer.voltage_ang_wdg2_p1 = round(voltcurpow_wdg2["p1"][1], 3)
+                    transformer.current_mag_wdg2_p1 = round(voltcurpow_wdg2["p1"][2], 3)
+                    transformer.current_ang_wdg2_p1 = round(voltcurpow_wdg2["p1"][3], 3)
+                if "p2" in voltcurpow_wdg1:
+                    transformer.voltage_mag_wdg1_p2 = round(voltcurpow_wdg1["p2"][0], 3)
+                    transformer.voltage_ang_wdg1_p2 = round(voltcurpow_wdg1["p2"][1], 3)
+                    transformer.current_mag_wdg1_p2 = round(voltcurpow_wdg1["p2"][2], 3)
+                    transformer.current_ang_wdg1_p2 = round(voltcurpow_wdg1["p2"][3], 3)
+                    transformer.real_power_p2 = round(voltcurpow_wdg1["p2"][4], 3)
+                    transformer.reactive_power_p2 = round(voltcurpow_wdg1["p2"][5], 3)
+                    transformer.voltage_mag_wdg2_p2 = round(voltcurpow_wdg2["p2"][0], 3)
+                    transformer.voltage_ang_wdg2_p2 = round(voltcurpow_wdg2["p2"][1], 3)
+                    transformer.current_mag_wdg2_p2 = round(voltcurpow_wdg2["p2"][2], 3)
+                    transformer.current_ang_wdg2_p2 = round(voltcurpow_wdg2["p2"][3], 3)
+                if "p3" in voltcurpow_wdg1:
+                    transformer.voltage_mag_wdg1_p3 = round(voltcurpow_wdg1["p3"][0], 3)
+                    transformer.voltage_ang_wdg1_p3 = round(voltcurpow_wdg1["p3"][1], 3)
+                    transformer.current_mag_wdg1_p3 = round(voltcurpow_wdg1["p3"][2], 3)
+                    transformer.current_ang_wdg1_p3 = round(voltcurpow_wdg1["p3"][3], 3)
+                    transformer.real_power_p3 = round(voltcurpow_wdg1["p3"][4], 3)
+                    transformer.reactive_power_p3 = round(voltcurpow_wdg1["p3"][5], 3)
+                    transformer.voltage_mag_wdg2_p3 = round(voltcurpow_wdg2["p3"][0], 3)
+                    transformer.voltage_ang_wdg2_p3 = round(voltcurpow_wdg2["p3"][1], 3)
+                    transformer.current_mag_wdg2_p3 = round(voltcurpow_wdg2["p3"][2], 3)
+                    transformer.current_ang_wdg2_p3 = round(voltcurpow_wdg2["p3"][3], 3)
+                if "pn" in voltcurpow_wdg1:
+                    transformer.voltage_mag_wdg1_pn = round(voltcurpow_wdg1["pn"][0], 3)
+                    transformer.voltage_ang_wdg1_pn = round(voltcurpow_wdg1["pn"][1], 3)
+                    transformer.current_mag_wdg1_pn = round(voltcurpow_wdg1["pn"][2], 3)
+                    transformer.current_ang_wdg1_pn = round(voltcurpow_wdg1["pn"][3], 3)
+                    transformer.real_power_pn = round(voltcurpow_wdg1["pn"][4], 3)
+                    transformer.reactive_power_pn = round(voltcurpow_wdg1["pn"][5], 3)
+                    transformer.voltage_mag_wdg2_pn = round(voltcurpow_wdg2["pn"][0], 3)
+                    transformer.voltage_ang_wdg2_pn = round(voltcurpow_wdg2["pn"][1], 3)
+                    transformer.current_mag_wdg2_pn = round(voltcurpow_wdg2["pn"][2], 3)
+                    transformer.current_ang_wdg2_pn = round(voltcurpow_wdg2["pn"][3], 3)
 
-                if self.__debug: print(transformer)
+                if self.__debug:
+                    print(transformer)
 
             # INVERTERS
-            print('Updating inverters...\n')
+            print("Updating inverters...\n")
             # set the active class to 'PVsystem'
-            dss.Circuit.SetActiveClass('pvsystem')
+            dss.Circuit.SetActiveClass("pvsystem")
 
             for name in dss.PVsystems.AllNames():
                 # set the current inverter as the active element
                 dss.Circuit.SetActiveElement(name)
 
-                inverter = self.elements['inverter_{}'.format(name)]
+                inverter = self.elements[f"inverter_{name}"]
 
                 assert inverter
 
@@ -1501,52 +1907,58 @@ class OpenDSS(Provider):
 
                 voltcurpow = self.__get_voltcurpow_1_terminal(inverter.phases)
 
-                if 'p1' in voltcurpow:
-                    inverter.voltage_mag_p1 = round(voltcurpow['p1'][0], 3)
-                    inverter.voltage_ang_p1 = round(voltcurpow['p1'][1], 3)
-                    inverter.current_mag_p1 = round(voltcurpow['p1'][2], 3)
-                    inverter.current_ang_p1 = round(voltcurpow['p1'][3], 3)
-                    inverter.real_power_p1 = round((voltcurpow['p1'][4])*1000, 3)
-                    inverter.reactive_power_p1 = round((voltcurpow['p1'][5])*1000, 3)
-                if 'p2' in voltcurpow:
-                    inverter.voltage_mag_p2 = round(voltcurpow['p2'][0], 3)
-                    inverter.voltage_ang_p2 = round(voltcurpow['p2'][1], 3)
-                    inverter.current_mag_p2 = round(voltcurpow['p2'][2], 3)
-                    inverter.current_ang_p2 = round(voltcurpow['p2'][3], 3)
-                    inverter.real_power_p2 = round((voltcurpow['p2'][4])*1000, 3)
-                    inverter.reactive_power_p2 = round((voltcurpow['p2'][5])*1000, 3)
-                if 'p3' in voltcurpow:
-                    inverter.voltage_mag_p3 = round(voltcurpow['p3'][0], 3)
-                    inverter.voltage_ang_p3 = round(voltcurpow['p3'][1], 3)
-                    inverter.current_mag_p3 = round(voltcurpow['p3'][2], 3)
-                    inverter.current_ang_p3 = round(voltcurpow['p3'][3], 3)
-                    inverter.real_power_p3 = round((voltcurpow['p3'][4])*1000, 3)
-                    inverter.reactive_power_p3 = round((voltcurpow['p3'][5])*1000, 3)
-                if 'pn' in voltcurpow:
-                    inverter.voltage_mag_pn = round(voltcurpow['pn'][0], 3)
-                    inverter.voltage_ang_pn = round(voltcurpow['pn'][1], 3)
-                    inverter.current_mag_pn = round(voltcurpow['pn'][2], 3)
-                    inverter.current_ang_pn = round(voltcurpow['pn'][3], 3)
-                    inverter.real_power_pn = round((voltcurpow['pn'][4])*1000, 3)
-                    inverter.reactive_power_pn = round((voltcurpow['pn'][5])*1000, 3)
+                if "p1" in voltcurpow:
+                    inverter.voltage_mag_p1 = round(voltcurpow["p1"][0], 3)
+                    inverter.voltage_ang_p1 = round(voltcurpow["p1"][1], 3)
+                    inverter.current_mag_p1 = round(voltcurpow["p1"][2], 3)
+                    inverter.current_ang_p1 = round(voltcurpow["p1"][3], 3)
+                    inverter.real_power_p1 = round((voltcurpow["p1"][4]) * 1000, 3)
+                    inverter.reactive_power_p1 = round((voltcurpow["p1"][5]) * 1000, 3)
+                if "p2" in voltcurpow:
+                    inverter.voltage_mag_p2 = round(voltcurpow["p2"][0], 3)
+                    inverter.voltage_ang_p2 = round(voltcurpow["p2"][1], 3)
+                    inverter.current_mag_p2 = round(voltcurpow["p2"][2], 3)
+                    inverter.current_ang_p2 = round(voltcurpow["p2"][3], 3)
+                    inverter.real_power_p2 = round((voltcurpow["p2"][4]) * 1000, 3)
+                    inverter.reactive_power_p2 = round((voltcurpow["p2"][5]) * 1000, 3)
+                if "p3" in voltcurpow:
+                    inverter.voltage_mag_p3 = round(voltcurpow["p3"][0], 3)
+                    inverter.voltage_ang_p3 = round(voltcurpow["p3"][1], 3)
+                    inverter.current_mag_p3 = round(voltcurpow["p3"][2], 3)
+                    inverter.current_ang_p3 = round(voltcurpow["p3"][3], 3)
+                    inverter.real_power_p3 = round((voltcurpow["p3"][4]) * 1000, 3)
+                    inverter.reactive_power_p3 = round((voltcurpow["p3"][5]) * 1000, 3)
+                if "pn" in voltcurpow:
+                    inverter.voltage_mag_pn = round(voltcurpow["pn"][0], 3)
+                    inverter.voltage_ang_pn = round(voltcurpow["pn"][1], 3)
+                    inverter.current_mag_pn = round(voltcurpow["pn"][2], 3)
+                    inverter.current_ang_pn = round(voltcurpow["pn"][3], 3)
+                    inverter.real_power_pn = round((voltcurpow["pn"][4]) * 1000, 3)
+                    inverter.reactive_power_pn = round((voltcurpow["pn"][5]) * 1000, 3)
 
-                inverter.current_mag_total = inverter.current_mag_p1 + \
-                                             inverter.current_mag_p2 + \
-                                             inverter.current_mag_p3
+                inverter.current_mag_total = (
+                    inverter.current_mag_p1
+                    + inverter.current_mag_p2
+                    + inverter.current_mag_p3
+                )
 
-                inverter.real_power_total = inverter.real_power_p1 + \
-                                            inverter.real_power_p2 + \
-                                            inverter.real_power_p3
+                inverter.real_power_total = (
+                    inverter.real_power_p1
+                    + inverter.real_power_p2
+                    + inverter.real_power_p3
+                )
 
-                inverter.reactive_power_total = inverter.reactive_power_p1 + \
-                                                inverter.reactive_power_p2 + \
-                                                inverter.reactive_power_p3
+                inverter.reactive_power_total = (
+                    inverter.reactive_power_p1
+                    + inverter.reactive_power_p2
+                    + inverter.reactive_power_p3
+                )
 
                 # TODO: need to figure out a better way of
                 # selecting the XYCurve associated with the
                 # current inverter other than looping through
                 # all of them and matching on the name
-                for xy_name in dss_utils.Iterator(dss.XYCurves, 'Name'):
+                for xy_name in dss_utils.Iterator(dss.XYCurves, "Name"):
                     # check for the volt/var curve name
                     # associated with this inverter
                     if xy_name() == inverter.volt_var_curve_name:
@@ -1565,16 +1977,17 @@ class OpenDSS(Provider):
                         inverter.curve_var_pt_5 = var_points[4]
                         inverter.curve_var_pt_6 = var_points[5]
 
-                if self.__debug: print(inverter)
+                if self.__debug:
+                    print(inverter)
 
-    def __solve(self, first='false'):
+    def __solve(self, first="false"):
         """Triggers a solve in OpenDSS and checks for any errors. It then
         calls the `__update` function to update the internal representation
         of the system under test."""
 
-        print('Solving circuit (first solve: {})'.format(first))
+        print(f"Solving circuit (first solve: {first})")
 
-        if self.clear_circuit and first == 'false':
+        if self.clear_circuit and first == "false":
             self.__solve_count += 1
 
             secs = int(time.time() - self.__time_offset)
@@ -1583,36 +1996,40 @@ class OpenDSS(Provider):
             hour %= 24
             secs %= 3600
 
-            self.__run_command('set mode=duty controlmode=static hour={} sec={} maxcontroliter=1000'.format(hour, secs))
+            self.__run_command(
+                f"set mode=duty controlmode=static hour={hour} sec={secs} maxcontroliter=1000"
+            )
 
-            print('Solve parameters configured (clearing circuit)')
+            print("Solve parameters configured (clearing circuit)")
 
         start = timer()
         dss.Solution.Solve()
         end = timer()
 
-        print('Solving circuit took {} seconds'.format(end - start))
+        print(f"Solving circuit took {end - start} seconds")
 
-        if self.clear_circuit and first == 'false':
-            event_log_path = '/etc/sceptre/log/opendss-event-log.{}.txt'.format(self.__solve_count)
+        if self.clear_circuit and first == "false":
+            event_log_path = (
+                f"/etc/sceptre/log/opendss-event-log.{self.__solve_count}.txt"
+            )
 
-            print('Writing OpenDSS Event Log to {}'.format(event_log_path))
+            print(f"Writing OpenDSS Event Log to {event_log_path}")
 
-            with open(event_log_path, 'w') as log:
+            with open(event_log_path, "w") as log:
                 for line in dss.Solution.EventLog():
-                    log.write('{}\n'.format(line))
+                    log.write(f"{line}\n")
 
         res = dss.Error.Description()
         if res:
-            raise PowerSolverError('Error solving circuit: %s' % res)
+            raise PowerSolverError("Error solving circuit: %s" % res)
 
         converged = dss.Solution.Converged()
         if not converged:
-            raise PowerSolverError('OpenDSS model failed to converge!')
+            raise PowerSolverError("OpenDSS model failed to converge!")
 
         # if its the very first solve, initialize phase data.
         # otherwise, perform an update.
-        if first == 'true':
+        if first == "true":
             self.__initialize_phases()
         else:
             self.__update()
@@ -1625,53 +2042,55 @@ class OpenDSS(Provider):
         res = dss_utils.run_command(text)
         if res:
             # Could be done better
-            if not res.startswith('Circuit saved in directory'):
+            if not res.startswith("Circuit saved in directory"):
                 raise PowerSolverError(res)
 
         # the run_command function doesn't always return errors encountered.
         res = dss.Error.Description()
         if res:
             # Could be done better
-            if not res.startswith('Circuit saved in directory'):
+            if not res.startswith("Circuit saved in directory"):
                 raise PowerSolverError(res)
 
     def __compile_circuit(self, filename=None):
         if not filename:
-            if not self.clear_circuit: return
+            if not self.clear_circuit:
+                return
 
-            filename = self.temp_dir.name + '/Master.DSS'
+            filename = self.temp_dir.name + "/Master.DSS"
 
             if not os.path.isfile(filename):
-                raise RuntimeError('temp directory does not contain Master.DSS file')
+                raise RuntimeError("temp directory does not contain Master.DSS file")
 
         start = timer()
 
-        print('Compiling {}'.format(filename))
-        self.__run_command('Compile {}'.format(filename))
+        print(f"Compiling {filename}")
+        self.__run_command(f"Compile {filename}")
 
         end = timer()
-        print('Compiling circuit took {} seconds'.format(end - start))
+        print(f"Compiling circuit took {end - start} seconds")
 
     def __save_and_clear_circuit(self):
-        if not self.clear_circuit: return
+        if not self.clear_circuit:
+            return
 
         start = timer()
 
         # Save circuit to a temp directory
         self.temp_dir = tempfile.TemporaryDirectory()
-        print('Saving circuit to {}'.format(self.temp_dir.name))
-        self.__run_command('Save Circuit Dir={}'.format(self.temp_dir.name))
+        print(f"Saving circuit to {self.temp_dir.name}")
+        self.__run_command(f"Save Circuit Dir={self.temp_dir.name}")
 
         # Rename BusVoltageBases.DSS to .dss since Linux is case sensitive and
         # the Master.DSS file references .dss.
-        base_name = self.temp_dir.name + '/BusVoltageBases'
-        os.rename(base_name + '.DSS', base_name + '.dss')
+        base_name = self.temp_dir.name + "/BusVoltageBases"
+        os.rename(base_name + ".DSS", base_name + ".dss")
 
-        print('Clearing circuit')
+        print("Clearing circuit")
         dss.Basic.ClearAll()
 
         end = timer()
-        print('Saving and clearing circuit took {} seconds'.format(end - start))
+        print(f"Saving and clearing circuit took {end - start} seconds")
 
     def __initialize_phases(self):
         """Identifies and initializes phases for all elements in the internal
@@ -1679,23 +2098,23 @@ class OpenDSS(Provider):
         once immediately after initialization of the system element names and
         the initial solve."""
 
-        print('Initializing element phases.')
+        print("Initializing element phases.")
 
         # GENERATORS
         # set the active class to 'Generator'
-        dss.Circuit.SetActiveClass('generator')
+        dss.Circuit.SetActiveClass("generator")
 
         for name in dss.Generators.AllNames():
             # set the current generator as the active element
             dss.Circuit.SetActiveElement(name)
 
-            gen = self.elements['generator_{}'.format(name)]
+            gen = self.elements[f"generator_{name}"]
             assert gen
 
             # creating a dictionary to identify which phases this
             # generator is connected to, then converting to json to
             # store the data class
-            phases = dict.fromkeys(['p1', 'p2', 'p3', 'pn'], False)
+            phases = dict.fromkeys(["p1", "p2", "p3", "pn"], False)
 
             # if the element is enabled, then we can use 'NodeOrder()' to
             # get phase information, if not, try to infer it from it's bus
@@ -1703,33 +2122,35 @@ class OpenDSS(Provider):
             if dss.CktElement.Enabled():
                 element_phases = dss.CktElement.NodeOrder()
             else:
-                element_phases = list(map(int, dss.Properties.Value('2').split('.')[1:]))
+                element_phases = list(
+                    map(int, dss.Properties.Value("2").split(".")[1:])
+                )
                 # if element_phases is nothing, it's 3 phase
                 if not element_phases:
                     element_phases = [1, 2, 3]
 
             for phase in element_phases:
                 if phase == 0:
-                    phases['pn'] = True
+                    phases["pn"] = True
                 else:
-                    phases['p{}'.format(phase)] = True
+                    phases[f"p{phase}"] = True
             gen.phases = base64.b64encode(json.dumps(phases).encode())
 
         # LOADS
         # set the active class to 'Load'
-        dss.Circuit.SetActiveClass('load')
+        dss.Circuit.SetActiveClass("load")
 
         for name in dss.Loads.AllNames():
             # set the current load as the active element
             dss.Circuit.SetActiveElement(name)
 
-            load = self.elements['load_{}'.format(name)]
+            load = self.elements[f"load_{name}"]
             assert load
 
             # creating a dictionary to identify which phases this
             # load is connected to, then converting to json to
             # store in the data class
-            phases = dict.fromkeys(['p1', 'p2', 'p3', 'pn'], False)
+            phases = dict.fromkeys(["p1", "p2", "p3", "pn"], False)
 
             # if the element is enabled, then we can use 'NodeOrder()' to
             # get phase information, if not, try to infer it from it's bus
@@ -1737,33 +2158,35 @@ class OpenDSS(Provider):
             if dss.CktElement.Enabled():
                 element_phases = dss.CktElement.NodeOrder()
             else:
-                element_phases = list(map(int, dss.Properties.Value('2').split('.')[1:]))
+                element_phases = list(
+                    map(int, dss.Properties.Value("2").split(".")[1:])
+                )
                 # if element_phases is nothing, it's 3 phase
                 if not element_phases:
                     element_phases = [1, 2, 3]
 
             for phase in element_phases:
                 if phase == 0:
-                    phases['pn'] = True
+                    phases["pn"] = True
                 else:
-                    phases['p{}'.format(phase)] = True
+                    phases[f"p{phase}"] = True
             load.phases = base64.b64encode(json.dumps(phases).encode())
 
         # SHUNTS
         # set the active class to 'Capacitor'
-        dss.Circuit.SetActiveClass('capacitor')
+        dss.Circuit.SetActiveClass("capacitor")
 
         for name in dss.Capacitors.AllNames():
             # set the current capacitor as the active element
             dss.Circuit.SetActiveElement(name)
 
-            shunt = self.elements['shunt_{}'.format(name)]
+            shunt = self.elements[f"shunt_{name}"]
             assert shunt
 
             # creating a dictionary to identify which phases this
             # shunt is connected to, then converting to json to
             # store in the data class
-            phases = dict.fromkeys(['p1', 'p2', 'p3', 'pn'], False)
+            phases = dict.fromkeys(["p1", "p2", "p3", "pn"], False)
 
             # if the element is enabled, then we can use 'NodeOrder()' to
             # get phase information, if not, try to infer it from it's bus
@@ -1771,31 +2194,35 @@ class OpenDSS(Provider):
             if dss.CktElement.Enabled():
                 element_phases = dss.CktElement.NodeOrder()
             else:
-                element_phases = list(map(int, dss.Properties.Value('1').split('.')[1:]))
+                element_phases = list(
+                    map(int, dss.Properties.Value("1").split(".")[1:])
+                )
                 # how I'm deciding phases is really weak for shunts. need
                 # to improve, but for now just looking at the length of
                 # the 'bus2' property. this will only work for shunt
                 # capacitors
                 if not element_phases:
-                    bus2_phases = list(map(int, dss.Properties.Value('2').split('.')[1:]))
-                    element_phases = [i for i in range(1, len(bus2_phases)+1)]
+                    bus2_phases = list(
+                        map(int, dss.Properties.Value("2").split(".")[1:])
+                    )
+                    element_phases = [i for i in range(1, len(bus2_phases) + 1)]
 
             for phase in dss.CktElement.NodeOrder():
                 if phase == 0:
-                    phases['pn'] = True
+                    phases["pn"] = True
                 else:
-                    phases['p{}'.format(phase)] = True
+                    phases[f"p{phase}"] = True
             shunt.phases = base64.b64encode(json.dumps(phases).encode())
 
         # BRANCHES
         # set the active class to 'Line'
-        dss.Circuit.SetActiveClass('line')
+        dss.Circuit.SetActiveClass("line")
 
         for name in dss.Lines.AllNames():
             # set the current line as the active element
             dss.Circuit.SetActiveElement(name)
 
-            branch = self.elements['branch_{}'.format(name)]
+            branch = self.elements[f"branch_{name}"]
             assert branch
 
             # creating a dictionary to identify which phases this
@@ -1805,7 +2232,7 @@ class OpenDSS(Provider):
             # the other side of the branch will have the same number
             # of phases.
 
-            phases = dict.fromkeys(['p1', 'p2', 'p3', 'pn'], False)
+            phases = dict.fromkeys(["p1", "p2", "p3", "pn"], False)
 
             # if the element is enabled, then we can use 'NodeOrder()' to
             # get phase information, if not, try to infer it from it's bus
@@ -1814,36 +2241,51 @@ class OpenDSS(Provider):
             if dss.CktElement.Enabled():
                 element_phases = dss.CktElement.NodeOrder()[:num_conductors]
             else:
-                element_phases = list(map(int, dss.Properties.Value('1').split('.')[1:]))
+                element_phases = list(
+                    map(int, dss.Properties.Value("1").split(".")[1:])
+                )
                 # if element_phases is nothing, it's 3 phase
                 if not element_phases:
                     element_phases = [1, 2, 3]
 
             for phase in element_phases:
                 if phase == 0:
-                    phases['pn'] = True
+                    phases["pn"] = True
                 else:
-                    phases['p{}'.format(phase)] = True
+                    phases[f"p{phase}"] = True
             branch.phases = base64.b64encode(json.dumps(phases).encode())
 
         # TRANSFORMERS
         # set the active class to 'Transformer'
-        dss.Circuit.SetActiveClass('transformer')
+        dss.Circuit.SetActiveClass("transformer")
 
         for name in dss.Transformers.AllNames():
             # set the current transformer as the active element
             dss.Circuit.SetActiveElement(name)
 
-            transformer = self.elements['transformer_{}'.format(name)]
+            transformer = self.elements[f"transformer_{name}"]
             assert transformer
 
             # creating a dictionary to identify which phases this
             # transformer is connected to, then converting to json to
             # store in the data class
-            phases = dict.fromkeys(['wdg1_p1', 'wdg1_p2', 'wdg1_p3', 'wdg1_pn',
-                                    'wdg2_p1', 'wdg2_p2', 'wdg2_p3', 'wdg2_pn',
-                                    'wdg3_p1', 'wdg3_p2', 'wdg3_p3', 'wdg3_pn'],
-                                   False)
+            phases = dict.fromkeys(
+                [
+                    "wdg1_p1",
+                    "wdg1_p2",
+                    "wdg1_p3",
+                    "wdg1_pn",
+                    "wdg2_p1",
+                    "wdg2_p2",
+                    "wdg2_p3",
+                    "wdg2_pn",
+                    "wdg3_p1",
+                    "wdg3_p2",
+                    "wdg3_p3",
+                    "wdg3_pn",
+                ],
+                False,
+            )
 
             # here I'm trying to extract the phases per winding. This only
             # works when the NodeOrder() method returns the same number of
@@ -1856,16 +2298,18 @@ class OpenDSS(Provider):
             if dss.CktElement.Enabled():
                 phase_order = dss.CktElement.NodeOrder()
                 num_conductors = dss.CktElement.NumConductors()
-                phases_by_winding = [phase_order[i:i+num_conductors] for i in \
-                                    range(0, len(phase_order), num_conductors)]
+                phases_by_winding = [
+                    phase_order[i : i + num_conductors]
+                    for i in range(0, len(phase_order), num_conductors)
+                ]
             else:
                 dss.Transformers.Wdg(1)
-                phases_wdg1 = list(map(int, dss.Properties.Value('4').split('.')[1:]))
+                phases_wdg1 = list(map(int, dss.Properties.Value("4").split(".")[1:]))
                 # if phases_wdg1 is nothing, it's 3 phase
                 if not phases_wdg1:
                     phases_wdg1 = [1, 2, 3]
                 dss.Transformers.Wdg(2)
-                phases_wdg2 = list(map(int, dss.Properties.Value('4').split('.')[1:]))
+                phases_wdg2 = list(map(int, dss.Properties.Value("4").split(".")[1:]))
                 # if phases_wdg2 is nothing, it's 3 phase
                 if not phases_wdg2:
                     phases_wdg2 = [1, 2, 3]
@@ -1874,26 +2318,26 @@ class OpenDSS(Provider):
             for num, winding in enumerate(phases_by_winding):
                 for phase in winding:
                     if phase == 0:
-                        phases['wdg{}_pn'.format(num+1)] = True
+                        phases[f"wdg{num + 1}_pn"] = True
                     else:
-                        phases['wdg{}_p{}'.format(num+1, phase)] = True
+                        phases[f"wdg{num + 1}_p{phase}"] = True
             transformer.phases = base64.b64encode(json.dumps(phases).encode())
 
         # INVERTERS
         # set the active class to 'PVsystem'
-        dss.Circuit.SetActiveClass('pvsystem')
+        dss.Circuit.SetActiveClass("pvsystem")
 
         for name in dss.PVsystems.AllNames():
             # set the current inverter as the active element
             dss.Circuit.SetActiveElement(name)
 
-            inverter = self.elements['inverter_{}'.format(name)]
+            inverter = self.elements[f"inverter_{name}"]
             assert inverter
 
             # creating a dictionary to identify which phases this
             # generator is connected to, then converting to json to
             # store in the data class
-            phases = dict.fromkeys(['p1', 'p2', 'p3', 'pn'], False)
+            phases = dict.fromkeys(["p1", "p2", "p3", "pn"], False)
 
             # if the element is enabled, then we can use 'NodeOrder()' to
             # get phase information, if not, try to infer it from it's bus
@@ -1901,16 +2345,18 @@ class OpenDSS(Provider):
             if dss.CktElement.Enabled():
                 element_phases = dss.CktElement.NodeOrder()
             else:
-                element_phases = list(map(int, dss.Properties.Value('2').split('.')[1:]))
+                element_phases = list(
+                    map(int, dss.Properties.Value("2").split(".")[1:])
+                )
                 # if element_phases is nothing, than it means it's 3 phase
                 if not element_phases:
                     element_phases = [1, 2, 3]
 
             for phase in element_phases:
                 if phase == 0:
-                    phases['pn'] = True
+                    phases["pn"] = True
                 else:
-                    phases['p{}'.format(phase)] = True
+                    phases[f"p{phase}"] = True
             inverter.phases = base64.b64encode(json.dumps(phases).encode())
 
         # executing a system update because the first solve from the create
@@ -1938,19 +2384,27 @@ class OpenDSS(Provider):
             powers = dss.CktElement.Powers()
 
             # grouping all voltages and currents per phase (mag,ang)
-            voltages_by_phase = [voltages[x:x+2] for x in range(0, len(voltages), 2)]
-            currents_by_phase = [currents[x:x+2] for x in range(0, len(currents), 2)]
+            voltages_by_phase = [
+                voltages[x : x + 2] for x in range(0, len(voltages), 2)
+            ]
+            currents_by_phase = [
+                currents[x : x + 2] for x in range(0, len(currents), 2)
+            ]
             # mapping voltages and currents to phase numbers
             voltages_per_phase = dict(zip(phase_order, voltages_by_phase))
             currents_per_phase = dict(zip(phase_order, currents_by_phase))
             # do the same with powers
-            powers_by_phase = [powers[x:x+2] for x in range(0, len(powers), 2)]
+            powers_by_phase = [powers[x : x + 2] for x in range(0, len(powers), 2)]
             powers_per_phase = dict(zip(phase_order, powers_by_phase))
 
             # combine voltages, currents, and powers
-            voltcurpow = {k:voltages_per_phase[k] + currents_per_phase[k] +
-                          powers_per_phase[k] for k in voltages_per_phase}
-            voltcurpow = {'p' + i.replace('0', 'n'): voltcurpow[i] for i in voltcurpow.keys()}
+            voltcurpow = {
+                k: voltages_per_phase[k] + currents_per_phase[k] + powers_per_phase[k]
+                for k in voltages_per_phase
+            }
+            voltcurpow = {
+                "p" + i.replace("0", "n"): voltcurpow[i] for i in voltcurpow.keys()
+            }
         else:
             voltcurpow = {}
             element_phases = json.loads(base64.b64decode(phases).decode())
@@ -1976,37 +2430,67 @@ class OpenDSS(Provider):
             powers = dss.CktElement.Powers()
 
             # grouping all voltages per phase (mag,ang)
-            voltages_by_phase = [voltages[x:x+2] for x in range(0, len(voltages), 2)]
+            voltages_by_phase = [
+                voltages[x : x + 2] for x in range(0, len(voltages), 2)
+            ]
             # split voltages up by terminal
             voltages_by_phase_src = voltages_by_phase[:num_conductors]
             voltages_by_phase_dst = voltages_by_phase[-num_conductors:]
             # mapping voltages to phase numbers for each terminal
-            voltages_per_phase_src = dict(zip(phase_order[:num_conductors], voltages_by_phase_src))
-            voltages_per_phase_dst = dict(zip(phase_order[-num_conductors:], voltages_by_phase_dst))
+            voltages_per_phase_src = dict(
+                zip(phase_order[:num_conductors], voltages_by_phase_src)
+            )
+            voltages_per_phase_dst = dict(
+                zip(phase_order[-num_conductors:], voltages_by_phase_dst)
+            )
             # grouping all currents per phase (mag,ang)
-            currents_by_phase = [currents[x:x+2] for x in range(0, len(currents), 2)]
+            currents_by_phase = [
+                currents[x : x + 2] for x in range(0, len(currents), 2)
+            ]
             # split currents up by terminal
             currents_by_phase_src = currents_by_phase[:num_conductors]
             currents_by_phase_dst = currents_by_phase[-num_conductors:]
             # mapping currents to phase numbers for each terminal
-            currents_per_phase_src = dict(zip(phase_order[:num_conductors], currents_by_phase_src))
-            currents_per_phase_dst = dict(zip(phase_order[-num_conductors:], currents_by_phase_dst))
+            currents_per_phase_src = dict(
+                zip(phase_order[:num_conductors], currents_by_phase_src)
+            )
+            currents_per_phase_dst = dict(
+                zip(phase_order[-num_conductors:], currents_by_phase_dst)
+            )
             # grouping all powers per phase (mag,ang)
-            powers_by_phase = [powers[x:x+2] for x in range(0, len(powers), 2)]
+            powers_by_phase = [powers[x : x + 2] for x in range(0, len(powers), 2)]
             # split powers up by terminal
             powers_by_phase_src = powers_by_phase[:num_conductors]
             powers_by_phase_dst = powers_by_phase[-num_conductors:]
             # mapping powers to phase numbers for each terminal
-            powers_per_phase_src = dict(zip(phase_order[:num_conductors], powers_by_phase_src))
-            powers_per_phase_dst = dict(zip(phase_order[-num_conductors:], powers_by_phase_dst))
+            powers_per_phase_src = dict(
+                zip(phase_order[:num_conductors], powers_by_phase_src)
+            )
+            powers_per_phase_dst = dict(
+                zip(phase_order[-num_conductors:], powers_by_phase_dst)
+            )
 
             # combine voltages, currents, and power for each terminal
-            voltcurpow_src = {k:voltages_per_phase_src[k] + currents_per_phase_src[k] +
-                              powers_per_phase_src[k] for k in voltages_per_phase_src}
-            voltcurpow_src = {'p' + i.replace('0', 'n'): voltcurpow_src[i] for i in voltcurpow_src.keys()}
-            voltcurpow_dst = {k:voltages_per_phase_dst[k] + currents_per_phase_dst[k] +
-                              powers_per_phase_dst[k] for k in voltages_per_phase_dst}
-            voltcurpow_dst = {'p' + i.replace('0', 'n'): voltcurpow_dst[i] for i in voltcurpow_dst.keys()}
+            voltcurpow_src = {
+                k: voltages_per_phase_src[k]
+                + currents_per_phase_src[k]
+                + powers_per_phase_src[k]
+                for k in voltages_per_phase_src
+            }
+            voltcurpow_src = {
+                "p" + i.replace("0", "n"): voltcurpow_src[i]
+                for i in voltcurpow_src.keys()
+            }
+            voltcurpow_dst = {
+                k: voltages_per_phase_dst[k]
+                + currents_per_phase_dst[k]
+                + powers_per_phase_dst[k]
+                for k in voltages_per_phase_dst
+            }
+            voltcurpow_dst = {
+                "p" + i.replace("0", "n"): voltcurpow_dst[i]
+                for i in voltcurpow_dst.keys()
+            }
         else:
             voltcurpow_src = {}
             voltcurpow_dst = {}

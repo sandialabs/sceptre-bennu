@@ -87,9 +87,7 @@ class Siren(Provider):
         )  # Populates self.device_configs (dict)
 
         self.devices = {}
-        self.to_endpoint_states = (
-            {}
-        )  # Holds hardware values before written to internal_state
+        self.to_endpoint_states = {}  # Holds hardware values before written to internal_state
         self.to_hardware_threads = []
         self.from_hardware_threads = []
 
@@ -146,7 +144,7 @@ class Siren(Provider):
             config: (str) Path to the siren.json config file
             devices: Specific devices to create
         """
-        with open(config, "r") as f:
+        with open(config) as f:
             self.siren_config = json.load(f)
 
         self.device_configs = {}
@@ -229,7 +227,7 @@ class Siren(Provider):
 
         Classes nested in the device class are ok and preferred
         """
-        path = "pybennu.siren.hil_device.{}".format(device_config.type)
+        path = f"pybennu.siren.hil_device.{device_config.type}"
         module = importlib.import_module(path)
         classes = inspect.getmembers(module, inspect.isclass)
         for _class in classes:
@@ -319,7 +317,6 @@ class Siren(Provider):
         )  # before polling the devices sleep so that siren has a chance to get the values from the provider
         filters = self.device_configs[dev].to_endpoint.keys()
         while self.run_thread:
-
             for _filter in filters:
                 label = self.device_configs[dev].to_endpoint[_filter]
                 if "analog" in label:

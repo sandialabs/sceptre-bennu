@@ -1,40 +1,41 @@
 import argparse
 import os
-from pathlib import Path
 import platform
-import sys
 import signal
+import sys
 import time
-
 from configparser import ConfigParser, NoOptionError
+from pathlib import Path
 
 import pybennu.distributed.swig._Endpoint as E
 from pybennu.providers.utils.daemon import Daemon
-from pybennu.settings import PybennuSettings, load_settings_yaml
+from pybennu.settings import load_settings_yaml
 
 
 class ServerDaemon(Daemon):
     def __init__(self, args: argparse.Namespace) -> None:
-        signal.signal(signal.SIGINT,  self.handle_exit)  # ctrl + c
+        signal.signal(signal.SIGINT, self.handle_exit)  # ctrl + c
 
         self.system: str = platform.system().lower()
         self.debug: bool = args.debug
 
         # only care about the config file when starting
-        if args.operation in ('start', 'restart'):
+        if args.operation in ("start", "restart"):
             if os.path.exists(args.config_file):
                 self.config_file = os.path.abspath(args.config_file)
             else:
-                print(f"\nThe file {args.config_file} does not exist - "
-                       "please provide a valid config file.\n")
+                print(
+                    f"\nThe file {args.config_file} does not exist - "
+                    "please provide a valid config file.\n"
+                )
                 sys.exit(-1)
 
         Daemon.__init__(
             self,
-            f'/var/run/bennu-{args.env}.pid',
-            '/dev/null',
-            f'/var/log/bennu-{args.env}.out',
-            f'/var/log/bennu-{args.env}.err',
+            f"/var/run/bennu-{args.env}.pid",
+            "/dev/null",
+            f"/var/log/bennu-{args.env}.out",
+            f"/var/log/bennu-{args.env}.err",
         )
 
     def run(self) -> None:
@@ -43,45 +44,55 @@ class ServerDaemon(Daemon):
 
         try:
             debug = self.debug
-            if 'debug' in config['power-solver-service']:
-                debug = config.get('power-solver-service', 'debug').strip().lower()
-                debug = True if debug == 'true' else False
+            if "debug" in config["power-solver-service"]:
+                debug = config.get("power-solver-service", "debug").strip().lower()
+                debug = True if debug == "true" else False
         except NoOptionError:
-            print("\nERROR: The following must be defined in the "
-                  "configuration file: 'debug'\n")
+            print(
+                "\nERROR: The following must be defined in the "
+                "configuration file: 'debug'\n"
+            )
             sys.exit(-1)
 
         self.running = False
 
-        if 'power-solver-service' in config.sections():
+        if "power-solver-service" in config.sections():
             server_endpoint = E.new_Endpoint()
             publish_endpoint = E.new_Endpoint()
 
             try:
-                solver = config.get('power-solver-service', 'solver-type').strip()
+                solver = config.get("power-solver-service", "solver-type").strip()
             except NoOptionError:
-                print("\nERROR: 'solver-type' must be defined in the "
-                      "configuration file\n")
+                print(
+                    "\nERROR: 'solver-type' must be defined in the configuration file\n"
+                )
                 sys.exit(-1)
 
             #########################################
             ################ Dummy ##################
             #########################################
-            if solver == 'Dummy':
+            if solver == "Dummy":
                 try:
-                    E.Endpoint_str_set(server_endpoint,
-                        config.get('power-solver-service',
-                                   'server-endpoint').strip())
-                    E.Endpoint_str_set(publish_endpoint,
-                        config.get('power-solver-service',
-                                   'publish-endpoint').strip())
+                    E.Endpoint_str_set(
+                        server_endpoint,
+                        config.get("power-solver-service", "server-endpoint").strip(),
+                    )
+                    E.Endpoint_str_set(
+                        publish_endpoint,
+                        config.get("power-solver-service", "publish-endpoint").strip(),
+                    )
                 except NoOptionError:
-                    print("\nERROR: The following must be defined in the "
-                          "configuration file: 'server-endpoint', 'publish-"
-                          "endpoint'\n")
+                    print(
+                        "\nERROR: The following must be defined in the "
+                        "configuration file: 'server-endpoint', 'publish-"
+                        "endpoint'\n"
+                    )
                     sys.exit(-1)
 
-                from pybennu.executables.pybennu_test_ep_server import ElectricPowerService
+                from pybennu.executables.pybennu_test_ep_server import (
+                    ElectricPowerService,
+                )
+
                 self.solver = ElectricPowerService(
                     server_endpoint, publish_endpoint, debug
                 )
@@ -89,22 +100,29 @@ class ServerDaemon(Daemon):
             #########################################
             ################ PyPower ################
             #########################################
-            elif solver == 'PyPower':
+            elif solver == "PyPower":
                 try:
-                    E.Endpoint_str_set(server_endpoint,
-                        config.get('power-solver-service',
-                                   'server-endpoint').strip())
-                    E.Endpoint_str_set(publish_endpoint,
-                        config.get('power-solver-service',
-                                   'publish-endpoint').strip().replace("*;",""))
-                    case_file = config.get('power-solver-service', 'case-file').strip()
+                    E.Endpoint_str_set(
+                        server_endpoint,
+                        config.get("power-solver-service", "server-endpoint").strip(),
+                    )
+                    E.Endpoint_str_set(
+                        publish_endpoint,
+                        config.get("power-solver-service", "publish-endpoint")
+                        .strip()
+                        .replace("*;", ""),
+                    )
+                    case_file = config.get("power-solver-service", "case-file").strip()
                 except NoOptionError:
-                    print("\nERROR: The following must be defined in the "
-                          "configuration file: 'server-endpoint,"
-                          "'publish-endpoint', 'case-file'\n")
+                    print(
+                        "\nERROR: The following must be defined in the "
+                        "configuration file: 'server-endpoint,"
+                        "'publish-endpoint', 'case-file'\n"
+                    )
                     sys.exit(-1)
 
                 from pybennu.providers.power.solvers.python_power import PyPower
+
                 self.solver = PyPower(
                     server_endpoint, publish_endpoint, case_file, debug
                 )
@@ -112,54 +130,69 @@ class ServerDaemon(Daemon):
             #########################################
             ############## PowerWorld ###############
             #########################################
-            elif solver == 'PowerWorld':
+            elif solver == "PowerWorld":
                 try:
-                    E.Endpoint_str_set(server_endpoint,
-                                       config.get('power-solver-service',
-                                                  'server-endpoint').strip())
-                    E.Endpoint_str_set(publish_endpoint,
-                                       config.get('power-solver-service',
-                                                  'publish-endpoint').strip())
-                    case_file = config.get('power-solver-service',
-                                           'case-file').strip()
-                    oneline_file = config.get('power-solver-service',
-                                              'oneline-file').strip()
-                    objects_file = config.get('power-solver-service',
-                                              'objects-file').strip()
-                    noise = config.get('power-solver-service',
-                                       'noise').strip().lower()
+                    E.Endpoint_str_set(
+                        server_endpoint,
+                        config.get("power-solver-service", "server-endpoint").strip(),
+                    )
+                    E.Endpoint_str_set(
+                        publish_endpoint,
+                        config.get("power-solver-service", "publish-endpoint").strip(),
+                    )
+                    case_file = config.get("power-solver-service", "case-file").strip()
+                    oneline_file = config.get(
+                        "power-solver-service", "oneline-file"
+                    ).strip()
+                    objects_file = config.get(
+                        "power-solver-service", "objects-file"
+                    ).strip()
+                    noise = config.get("power-solver-service", "noise").strip().lower()
                 except NoOptionError:
-                    print("\nERROR: The following must be defined in the "
-                          "configuration file: 'server-endpoint', "
-                          "'publish-endpoint', 'case-file', "
-                          "'oneline-file', 'objects-file'\n")
+                    print(
+                        "\nERROR: The following must be defined in the "
+                        "configuration file: 'server-endpoint', "
+                        "'publish-endpoint', 'case-file', "
+                        "'oneline-file', 'objects-file'\n"
+                    )
                     sys.exit(-1)
 
                 from pybennu.providers.power.solvers.power_world import PowerWorld
+
                 self.solver = PowerWorld(
-                    server_endpoint, publish_endpoint,
-                    case_file, oneline_file, objects_file,
-                    debug, noise
+                    server_endpoint,
+                    publish_endpoint,
+                    case_file,
+                    oneline_file,
+                    objects_file,
+                    debug,
+                    noise,
                 )
 
             #########################################
             ########### PowerWorldHelics ############
             #########################################
-            elif solver == 'PowerWorldHelics':
+            elif solver == "PowerWorldHelics":
                 try:
-                    case_file = config.get('power-solver-service',
-                                           'case-file').strip()
-                    oneline_file = config.get('power-solver-service',
-                                              'oneline-file').strip()
-                    config_file = config.get('power-solver-service',
-                                             'config-file').strip()
+                    case_file = config.get("power-solver-service", "case-file").strip()
+                    oneline_file = config.get(
+                        "power-solver-service", "oneline-file"
+                    ).strip()
+                    config_file = config.get(
+                        "power-solver-service", "config-file"
+                    ).strip()
                 except NoOptionError:
-                    print("\nERROR: The following must be defined in the "
-                          "configuration file: 'case-file', "
-                          "'oneline-file', 'config-file'\n")
+                    print(
+                        "\nERROR: The following must be defined in the "
+                        "configuration file: 'case-file', "
+                        "'oneline-file', 'config-file'\n"
+                    )
                     sys.exit(-1)
 
-                from pybennu.providers.power.solvers.power_world_helics import PowerWorldHelics
+                from pybennu.providers.power.solvers.power_world_helics import (
+                    PowerWorldHelics,
+                )
+
                 self.solver = PowerWorldHelics(
                     case_file, config_file, oneline_file, debug
                 )
@@ -167,73 +200,87 @@ class ServerDaemon(Daemon):
             #########################################
             ################# PWDS ##################
             #########################################
-            elif solver == 'PowerWorldDynamics':
+            elif solver == "PowerWorldDynamics":
                 try:
-                    E.Endpoint_str_set(server_endpoint,
-                                       config.get('power-solver-service',
-                                                  'server-endpoint').strip())
-                    E.Endpoint_str_set(publish_endpoint,
-                                       config.get('power-solver-service',
-                                                  'publish-endpoint').strip())
+                    E.Endpoint_str_set(
+                        server_endpoint,
+                        config.get("power-solver-service", "server-endpoint").strip(),
+                    )
+                    E.Endpoint_str_set(
+                        publish_endpoint,
+                        config.get("power-solver-service", "publish-endpoint").strip(),
+                    )
 
-                    pwds_endpoint = config.get('power-solver-service',
-                                               'pwds-endpoint').strip()
+                    pwds_endpoint = config.get(
+                        "power-solver-service", "pwds-endpoint"
+                    ).strip()
                 except NoOptionError:
-                    print("\nERROR: The following must be defined in the "
-                          "configuration file: 'server-endpoint', "
-                          "'publish-endpoint', 'pwds-endpoint'\n")
+                    print(
+                        "\nERROR: The following must be defined in the "
+                        "configuration file: 'server-endpoint', "
+                        "'publish-endpoint', 'pwds-endpoint'\n"
+                    )
                     sys.exit(-1)
 
                 kwargs = {}
 
-                if config.has_option('power-solver-service', 'objects-file'):
-                    kwargs['objects-file'] = config.get('power-solver-service',
-                                                        'objects-file').strip()
+                if config.has_option("power-solver-service", "objects-file"):
+                    kwargs["objects-file"] = config.get(
+                        "power-solver-service", "objects-file"
+                    ).strip()
 
-                from pybennu.providers.power.solvers.pwds.power_world_dynamics import PowerWorldDynamics
+                from pybennu.providers.power.solvers.pwds.power_world_dynamics import (
+                    PowerWorldDynamics,
+                )
+
                 self.solver = PowerWorldDynamics(
-                    server_endpoint, publish_endpoint,
-                    pwds_endpoint, debug, **kwargs
+                    server_endpoint, publish_endpoint, pwds_endpoint, debug, **kwargs
                 )
 
             #########################################
             ################ OpenDSS ################
             #########################################
-            elif solver == 'OpenDSS':
+            elif solver == "OpenDSS":
                 try:
-                    E.Endpoint_str_set(server_endpoint,
-                                       config.get('power-solver-service',
-                                                  'server-endpoint').strip())
-                    E.Endpoint_str_set(publish_endpoint,
-                                       config.get('power-solver-service',
-                                                  'publish-endpoint').strip())
-                    case_file = config.get('power-solver-service',
-                                           'case-file').strip()
+                    E.Endpoint_str_set(
+                        server_endpoint,
+                        config.get("power-solver-service", "server-endpoint").strip(),
+                    )
+                    E.Endpoint_str_set(
+                        publish_endpoint,
+                        config.get("power-solver-service", "publish-endpoint").strip(),
+                    )
+                    case_file = config.get("power-solver-service", "case-file").strip()
                 except NoOptionError:
-                    print("\nERROR: The following must be defined in the "
-                          "configuration file: 'server-endpoint', "
-                          "'publish-endpoint', 'case-file'\n")
+                    print(
+                        "\nERROR: The following must be defined in the "
+                        "configuration file: 'server-endpoint', "
+                        "'publish-endpoint', 'case-file'\n"
+                    )
                     sys.exit(-1)
 
-                jitter = config.get('power-solver-service',
-                                    'jitter',
-                                    fallback='enabled').strip().lower()
-                clear  = config.get('power-solver-service',
-                                    'clear-circuit',
-                                    fallback='disabled').strip().lower()
+                jitter = (
+                    config.get("power-solver-service", "jitter", fallback="enabled")
+                    .strip()
+                    .lower()
+                )
+                clear = (
+                    config.get(
+                        "power-solver-service", "clear-circuit", fallback="disabled"
+                    )
+                    .strip()
+                    .lower()
+                )
 
                 # Because OpenDSS won't create it's own directories (whyyyyyy???)
-                os.makedirs('/home/root/Documents/OpenDSS', exist_ok=True)
-                os.makedirs('/root/Documents/OpenDSS',      exist_ok=True)
-                os.makedirs('/Documents/OpenDSS',           exist_ok=True)
+                os.makedirs("/home/root/Documents/OpenDSS", exist_ok=True)
+                os.makedirs("/root/Documents/OpenDSS", exist_ok=True)
+                os.makedirs("/Documents/OpenDSS", exist_ok=True)
 
-                kwargs = {
-                    "debug":         debug,
-                    "jitter":        jitter,
-                    "clear_circuit": clear
-                }
+                kwargs = {"debug": debug, "jitter": jitter, "clear_circuit": clear}
 
                 from pybennu.providers.power.solvers.opendss import OpenDSS
+
                 self.solver = OpenDSS(
                     server_endpoint, publish_endpoint, case_file, **kwargs
                 )
@@ -241,10 +288,12 @@ class ServerDaemon(Daemon):
             #########################################
             ################# RTDS ##################
             #########################################
-            elif solver == 'RTDS':
+            elif solver == "RTDS":
                 from pybennu.providers.power.solvers.rtds import RTDS
 
-                config_path = Path(config.get('power-solver-service', 'config-file').strip())
+                config_path = Path(
+                    config.get("power-solver-service", "config-file").strip()
+                )
                 settings = load_settings_yaml(config_path)  # type: PybennuSettings
 
                 E.Endpoint_str_set(server_endpoint, settings.server_endpoint)
@@ -255,30 +304,42 @@ class ServerDaemon(Daemon):
             #########################################
             ############ Genaric Python #############
             #########################################
-            elif solver == 'GenericPython':
+            elif solver == "GenericPython":
                 try:
-                    E.Endpoint_str_set(server_endpoint,
-                        config.get('power-solver-service',
-                                   'server-endpoint').strip())
-                    E.Endpoint_str_set(publish_endpoint,
-                        config.get('power-solver-service',
-                                   'publish-endpoint').strip())
-                    python_sim = config.get('power-solver-service', 'simulation-file').strip()
+                    E.Endpoint_str_set(
+                        server_endpoint,
+                        config.get("power-solver-service", "server-endpoint").strip(),
+                    )
+                    E.Endpoint_str_set(
+                        publish_endpoint,
+                        config.get("power-solver-service", "publish-endpoint").strip(),
+                    )
+                    python_sim = config.get(
+                        "power-solver-service", "simulation-file"
+                    ).strip()
                 except NoOptionError:
-                    print("\nERROR: The following must be defined in the configuration file: 'server-endpoint', 'publish-endpoint', and 'simulation-file'\n")
+                    print(
+                        "\nERROR: The following must be defined in the configuration file: 'server-endpoint', 'publish-endpoint', and 'simulation-file'\n"
+                    )
                     sys.exit(-1)
-                
-                from pybennu.providers.power.solvers.generic_python.generic_python import GenericPython
-                self.solver = GenericPython(server_endpoint, publish_endpoint, python_sim, debug
-                                                                                                                            )
+
+                from pybennu.providers.power.solvers.generic_python.generic_python import (
+                    GenericPython,
+                )
+
+                self.solver = GenericPython(
+                    server_endpoint, publish_endpoint, python_sim, debug
+                )
             #########################################
             ################# Siren #################
             #########################################
             elif solver == "Siren":
                 from pybennu.providers.power.solvers.siren import Siren
 
-                config_path = Path(config.get('power-solver-service', 'config-file').strip())
-                settings = load_settings_yaml(config_path) # type: PybennuSettings
+                config_path = Path(
+                    config.get("power-solver-service", "config-file").strip()
+                )
+                settings = load_settings_yaml(config_path)  # type: PybennuSettings
 
                 E.Endpoint_str_set(server_endpoint, settings.server_endpoint)
                 E.Endpoint_str_set(publish_endpoint, settings.publish_endpoint)
@@ -288,10 +349,12 @@ class ServerDaemon(Daemon):
             #########################################
             ################ OpalRT #################
             #########################################
-            elif solver == 'OPALRT':
+            elif solver == "OPALRT":
                 from pybennu.providers.power.solvers.opal_rt import OPALRT
 
-                config_path = Path(config.get('power-solver-service', 'config-file').strip())
+                config_path = Path(
+                    config.get("power-solver-service", "config-file").strip()
+                )
                 settings = load_settings_yaml(config_path)  # type: PybennuSettings
 
                 E.Endpoint_str_set(server_endpoint, settings.server_endpoint)
@@ -302,53 +365,63 @@ class ServerDaemon(Daemon):
             #########################################
             ################ HELICS #################
             #########################################
-            elif solver == 'Helics':
+            elif solver == "Helics":
                 try:
-                    E.Endpoint_str_set(server_endpoint,
-                                       config.get('power-solver-service',
-                                                  'server-endpoint').strip())
-                    E.Endpoint_str_set(publish_endpoint,
-                                       config.get('power-solver-service',
-                                                  'publish-endpoint').strip())
+                    E.Endpoint_str_set(
+                        server_endpoint,
+                        config.get("power-solver-service", "server-endpoint").strip(),
+                    )
+                    E.Endpoint_str_set(
+                        publish_endpoint,
+                        config.get("power-solver-service", "publish-endpoint").strip(),
+                    )
 
-                    config_file = config.get('power-solver-service',
-                                             'config-file').strip()
+                    config_file = config.get(
+                        "power-solver-service", "config-file"
+                    ).strip()
                 except NoOptionError:
-                    print("\nERROR: The following must be defined in the "
-                          "configuration file: 'server-endpoint', "
-                          "'publish-endpoint', 'config-file'\n")
+                    print(
+                        "\nERROR: The following must be defined in the "
+                        "configuration file: 'server-endpoint', "
+                        "'publish-endpoint', 'config-file'\n"
+                    )
                     sys.exit(-1)
 
                 from pybennu.providers.power.solvers.helics import Helics
+
                 self.solver = Helics(
-                    server_endpoint, publish_endpoint,
-                    config_file, debug
+                    server_endpoint, publish_endpoint, config_file, debug
                 )
 
             #########################################
             ############### ALICANTO ################
             #########################################
-            elif solver == 'Alicanto':
+            elif solver == "Alicanto":
                 try:
-                    E.Endpoint_str_set(server_endpoint,
-                                       config.get('power-solver-service',
-                                                  'server-endpoint').strip())
-                    E.Endpoint_str_set(publish_endpoint,
-                                       config.get('power-solver-service',
-                                                  'publish-endpoint').strip())
+                    E.Endpoint_str_set(
+                        server_endpoint,
+                        config.get("power-solver-service", "server-endpoint").strip(),
+                    )
+                    E.Endpoint_str_set(
+                        publish_endpoint,
+                        config.get("power-solver-service", "publish-endpoint").strip(),
+                    )
 
-                    config_file = config.get('power-solver-service',
-                                             'config-file').strip()
+                    config_file = config.get(
+                        "power-solver-service", "config-file"
+                    ).strip()
                 except NoOptionError:
-                    print("\nERROR: The following must be defined in the "
-                          "configuration file: 'server-endpoint', "
-                          "'publish-endpoint', 'config-file'\n")
+                    print(
+                        "\nERROR: The following must be defined in the "
+                        "configuration file: 'server-endpoint', "
+                        "'publish-endpoint', 'config-file'\n"
+                    )
                     sys.exit(-1)
 
                 from pybennu.providers.alicanto.alicanto import Alicanto
+
                 self.solver = Alicanto(
-                    server_endpoint, publish_endpoint,
-                    config_file, debug
+                    server_endpoint, publish_endpoint, config_file, debug
                 )
 
             #########################################
@@ -356,19 +429,26 @@ class ServerDaemon(Daemon):
             #########################################
             else:
                 try:
-                    E.Endpoint_str_set(server_endpoint,
-                                       config.get('power-solver-service',
-                                                  'server-endpoint').strip())
-                    E.Endpoint_str_set(publish_endpoint,
-                                       config.get('power-solver-service',
-                                                  'publish-endpoint').strip())
+                    E.Endpoint_str_set(
+                        server_endpoint,
+                        config.get("power-solver-service", "server-endpoint").strip(),
+                    )
+                    E.Endpoint_str_set(
+                        publish_endpoint,
+                        config.get("power-solver-service", "publish-endpoint").strip(),
+                    )
                 except NoOptionError:
-                    print("\nERROR: The following must be defined in the "
-                          "configuration file: 'server-endpoint', 'publish-"
-                          "endpoint'\n")
+                    print(
+                        "\nERROR: The following must be defined in the "
+                        "configuration file: 'server-endpoint', 'publish-"
+                        "endpoint'\n"
+                    )
                     sys.exit(-1)
 
-                from pybennu.executables.pybennu_test_ep_server import ElectricPowerService
+                from pybennu.executables.pybennu_test_ep_server import (
+                    ElectricPowerService,
+                )
+
                 self.solver = ElectricPowerService(
                     server_endpoint, publish_endpoint, debug
                 )
@@ -394,80 +474,84 @@ def server():
         description="SCEPTRE Power Solver Service",
     )
     parser.add_argument(
-        '-c', '--config-file',
-        dest='config_file',
-        default='/etc/sceptre/config.ini',
-        help='Config file to load (.ini)',
+        "-c",
+        "--config-file",
+        dest="config_file",
+        default="/etc/sceptre/config.ini",
+        help="Config file to load (.ini)",
     )
     parser.add_argument(
-        '-d', '--daemonize',
-        dest='daemonize',
-        action='store_true',
-        help='Run as a daemon',
+        "-d",
+        "--daemonize",
+        dest="daemonize",
+        action="store_true",
+        help="Run as a daemon",
     )
     parser.add_argument(
-        '-e', '--env',
-        dest='env',
-        default='pybennu',  # previous default: sceptre
-        help='Environment for daemon to run in, this determines names of files in /var, e.g. /var/log/bennu-pybennu.err for --env=pybennu',
+        "-e",
+        "--env",
+        dest="env",
+        default="pybennu",  # previous default: sceptre
+        help="Environment for daemon to run in, this determines names of files in /var, e.g. /var/log/bennu-pybennu.err for --env=pybennu",
     )
     parser.add_argument(
-        'operation',
-        metavar='OPERATION',
+        "operation",
+        metavar="OPERATION",
         type=str,
-        choices=['start', 'stop', 'restart', 'status'],
-        help='Daemon operation - accepts any of these values: start, stop, restart, status',
+        choices=["start", "stop", "restart", "status"],
+        help="Daemon operation - accepts any of these values: start, stop, restart, status",
     )
     parser.add_argument(
-        '-v', '--debug',
-        dest='debug',
-        action='store_true',
-        help='Enable debug option',
+        "-v",
+        "--debug",
+        dest="debug",
+        action="store_true",
+        help="Enable debug option",
     )
 
     args = parser.parse_args()
 
     handle = ServerDaemon(args)
 
-    if handle.system == 'linux':
-        if args.operation == 'start':
+    if handle.system == "linux":
+        if args.operation == "start":
             if args.daemonize:
                 handle.start()
                 pid = handle.get_pid()
                 if not pid:
-                    print('Unable to start as a daemon')
+                    print("Unable to start as a daemon")
             else:
                 handle.run()
-        elif args.operation == 'stop':
+        elif args.operation == "stop":
             handle.stop()
-        elif args.operation == 'restart':
-            print('Restarting daemon')
+        elif args.operation == "restart":
+            print("Restarting daemon")
             pid = handle.get_pid()
             if not pid:
-                print('Daemon is not already running - cannot restart')
+                print("Daemon is not already running - cannot restart")
             else:
                 handle.restart()
-        elif args.operation == 'status':
-            print('Viewing daemon status')
+        elif args.operation == "status":
+            print("Viewing daemon status")
             pid = handle.get_pid()
             if not pid:
-                print('Daemon is not running')
+                print("Daemon is not running")
             else:
-                print(f'Daemon is running as PID {pid}')
+                print(f"Daemon is running as PID {pid}")
     else:
-        if args.operation == 'start':
+        if args.operation == "start":
             handle.run()
-        elif args.operation == 'stop':
+        elif args.operation == "stop":
             handle.running = False
-        elif args.operation == 'restart':
-            print('Restarting')
+        elif args.operation == "restart":
+            print("Restarting")
             handle.running = False
             time.sleep(5)
             handle.run()
-        elif args.operation == 'status':
+        elif args.operation == "status":
             if handle.running:
-                print('Daemon is running')
+                print("Daemon is running")
             else:
-                print('Daemon is not running')
+                print("Daemon is not running")
 
     sys.exit(0)

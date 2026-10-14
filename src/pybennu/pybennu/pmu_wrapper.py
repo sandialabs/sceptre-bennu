@@ -2,7 +2,7 @@ import atexit
 import logging
 import re
 import time
-from typing import Any, Dict, List, Optional, Literal
+from typing import Any, Literal
 
 from pybennu.pypmu.synchrophasor.frame import CommonFrame, DataFrame, HeaderFrame
 from pybennu.pypmu.synchrophasor.pdc import Pdc
@@ -42,7 +42,9 @@ class PMU:
         self.retry_delay: float = retry_delay
 
         if self.protocol not in ["tcp", "udp", "multicast"]:
-            raise ValueError(f"PMU protocol must be 'tcp', 'udp' or 'multicast', got {self.protocol}")
+            raise ValueError(
+                f"PMU protocol must be 'tcp', 'udp' or 'multicast', got {self.protocol}"
+            )
 
         # Configure PDC instance (pypmu.synchrophasor.pdc.Pdc)
         self.pdc = Pdc(
@@ -53,17 +55,17 @@ class PMU:
             udp_bind_ip=self.bind_ip,
         )
 
-        self.pdc_header: Optional[HeaderFrame] = None
-        self.pdc_config: Optional[CommonFrame] = None
-        self.channel_names: List[str] = []
-        self.csv_writer: Optional[RotatingCSVWriter] = None
+        self.pdc_header: HeaderFrame | None = None
+        self.pdc_config: CommonFrame | None = None
+        self.channel_names: list[str] = []
+        self.csv_writer: RotatingCSVWriter | None = None
         self.station_name: str = ""
         self.started: bool = False  # if start command has been issued
 
         # Configure logging
-        self.log: logging.Logger = logging.getLogger(f"PMU [{str(self)}]")
+        self.log: logging.Logger = logging.getLogger(f"PMU [{self!s}]")
         self.log.setLevel(logging.DEBUG)
-        self.pdc.logger = logging.getLogger(f"Pdc [{str(self)}]")
+        self.pdc.logger = logging.getLogger(f"Pdc [{self!s}]")
         # NOTE: pypmu logs a LOT of stuff at DEBUG, leave at INFO
         # unless you're doing deep debugging of the pypmu code.
         self.pdc.logger.setLevel(logging.INFO)
@@ -71,7 +73,7 @@ class PMU:
         # cleanup on exit
         atexit.register(self.quit)
 
-        self.log.info(f"Initialized {repr(self)}")
+        self.log.info(f"Initialized {self!r}")
 
     def __repr__(self) -> str:
         return f"PMU(ip={self.ip}, port={self.port}, pdc_id={self.pdc_id}, name={self.name}, label={self.label}, protocol={self.protocol})"
@@ -79,10 +81,9 @@ class PMU:
     def __str__(self) -> str:
         if self.name and self.label:
             return f"{self.name}_{self.label}"
-        elif self.name:
+        if self.name:
             return self.name
-        else:
-            return f"{self.ip}:{self.port}_{self.pdc_id}"
+        return f"{self.ip}:{self.port}_{self.pdc_id}"
 
     @property
     def connected(self) -> bool:
@@ -102,7 +103,9 @@ class PMU:
             self.pdc_header = self.pdc.get_header()  # Get header message from PMU
             self.log.debug(f"PMU header: {self.pdc_header.__dict__}")
         except Exception as ex:
-            self.log.warning(f"Failed to get header: {ex} (device may be a SEL PDC, or something else happened)")
+            self.log.warning(
+                f"Failed to get header: {ex} (device may be a SEL PDC, or something else happened)"
+            )
 
         self.pdc_config = self.pdc.get_config()  # Get configuration from PMU
         self.log.debug(f"PMU config: {self.pdc_config.__dict__}")
@@ -117,7 +120,10 @@ class PMU:
         # Post-processing: ["VA", "VB", "VC", "IA", "IB", "IC"]
         def _process_name(cn: str) -> str:
             """Strip 'PHASOR CH *' from channel names, so we get a nice 'VA', 'IA', etc."""
-            return re.sub(r"PHASOR CH \d\:", "", cn.strip(), re.IGNORECASE | re.ASCII).strip()
+            return re.sub(
+                r"PHASOR CH \d\:", "", cn.strip(), re.IGNORECASE | re.ASCII
+            ).strip()
+
         self.channel_names = []  # type: List[str]
         for channel in self.pdc_config.__dict__.get("_channel_names", []):
             if isinstance(channel, list):
@@ -154,20 +160,22 @@ class PMU:
         self.started = False
         self.pdc.quit()
 
-    def get_data_frame(self) -> Optional[Dict[str, Any]]:
+    def get_data_frame(self) -> dict[str, Any] | None:
         data = self.pdc.get()  # Keep receiving data
         if not data:
             self.log.error("Failed to get data from PMU!")
             return None
 
         if not isinstance(data, DataFrame):
-            self.log.critical(f"Invalid type {type(data).__name__}. Raw data: {repr(data)}")
+            self.log.critical(f"Invalid type {type(data).__name__}. Raw data: {data!r}")
             return None
 
         data_frame = data.get_measurements()
 
         if data_frame["pmu_id"] != self.pdc_id:
-            self.log.warning(f"The received PMU ID {data_frame['pmu_id']} is not same as configured ID {self.pdc_id}")
+            self.log.warning(
+                f"The received PMU ID {data_frame['pmu_id']} is not same as configured ID {self.pdc_id}"
+            )
 
         return data_frame
 

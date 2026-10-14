@@ -38,13 +38,18 @@ LogicModule::LogicModule()
 bool LogicModule::handleTreeData(const boost::property_tree::ptree& tree)
 {
     bool success = true;
-    try {
+    try
+    {
         mLogic = tree.get<std::string>("logic", "");
         boost::algorithm::trim(mLogic);
-    } catch (boost::property_tree::ptree_bad_path& e) {
+    }
+    catch (boost::property_tree::ptree_bad_path& e)
+    {
         std::cerr << "ERROR: Format was incorrect in the Logic module XML: " << e.what() << std::endl;
         success = false;
-    } catch (boost::property_tree::ptree_error& e) {
+    }
+    catch (boost::property_tree::ptree_error& e)
+    {
         std::cerr << "ERROR: There was a problem parsing the Logic module XML: " << e.what() << std::endl;
         success = false;
     }
@@ -76,7 +81,10 @@ void LogicModule::scanLogic(unsigned int cycleTime)
     std::string logic;
     while (std::getline(ss, line, '\n'))
     {
-        if (line == "") { continue; } // ignore blank lines
+        if (line == "")
+        {
+            continue;
+        } // ignore blank lines
 
         exprParts = mSplitExpression(line, "="); // e.g. line = 'foo = (((bar - baz) >= 90) || ((bar - baz) <= -90)),delay:5000'
         std::string lhs = exprParts[0];
@@ -96,19 +104,18 @@ void LogicModule::scanLogic(unsigned int cycleTime)
             if (newDelay > 0)
             {
                 setDelayedTag(lhs, newDelay);
-                std::cout << "LOGIC (" << delay << "): " + lhs <<
-                             " = " << logic << " ----> [ DELAYED " << newDelay << "ms ]" << std::endl;
+                std::cout << "LOGIC (" << delay << "): " + lhs << " = " << logic << " ----> [ DELAYED " << newDelay << "ms ]" << std::endl;
                 continue;
             }
         }
 
         // evaluate logic expression
-        try {
+        try
+        {
             if (mDataManager->isBinary(lhs))
             {
                 bool result = calculator::calculate(logic.data(), &vars).asBool();
-                std::cout << "LOGIC (" << delay << "): " + lhs <<
-                             " = " << logic << " ----> " << result << std::endl;
+                std::cout << "LOGIC (" << delay << "): " + lhs << " = " << logic << " ----> " << result << std::endl;
                 // if new evaluated data has changed from the datastore, update the tag
                 if (result != mDataManager->getDataByTag<bool>(lhs) && !mDataManager->isUpdatedBinaryTag(lhs))
                 {
@@ -132,8 +139,7 @@ void LogicModule::scanLogic(unsigned int cycleTime)
             else if (mDataManager->isAnalog(lhs))
             {
                 double result = calculator::calculate(logic.data(), &vars).asDouble();
-                std::cout << "LOGIC (" << delay << "): " + lhs <<
-                             " = " << logic << " ----> " << result << std::endl;
+                std::cout << "LOGIC (" << delay << "): " + lhs << " = " << logic << " ----> " << result << std::endl;
                 // if new evaluated data has changed from the datastore, update the tag
                 if (result != mDataManager->getDataByTag<double>(lhs) && !mDataManager->isUpdatedAnalogTag(lhs))
                 {
@@ -154,7 +160,9 @@ void LogicModule::scanLogic(unsigned int cycleTime)
                     removeDelayedTag(lhs);
                 }
             }
-        } catch (std::exception& e) {
+        }
+        catch (std::exception& e)
+        {
             std::cout << "ERROR: [ " << logic << " ] Failed to parse logic: " << e.what() << std::endl;
             continue;
         }
@@ -170,10 +178,13 @@ int LogicModule::mGetDelay(std::vector<std::string> rhsParts)
         auto delayParts = mSplitStr(delayStr, ":");
         if (delayParts.size() == 2 && delayParts[0] == "delay")
         {
-            try {
+            try
+            {
                 int val = std::stoi(delayParts[1]);
                 delay = (val >= 0) ? val : 0; // cannot have negative delay
-            } catch (std::invalid_argument& e) {
+            }
+            catch (std::invalid_argument& e)
+            {
                 std::cout << "ERROR: Invalid delay in logic. Setting delay to 0: " << e.what() << std::endl;
             }
         }
@@ -204,11 +215,12 @@ void LogicModule::mReplaceAllRhs(std::string& data, std::string toSearch, std::s
         // Get the first occurrence
         size_t pos = line.find(toSearch);
         // Repeat till end is reached
-        while(pos != std::string::npos) {
+        while (pos != std::string::npos)
+        {
             // Replace this occurrence, only if it is RHS of expression. Also check pos+1 to make
             // sure this isn't a substring of a different variable.
             //   e.g. 'var_O1' vs 'var_O12'
-            if (pos != 0 && !std::isalnum(line[pos+toSearch.size()]))
+            if (pos != 0 && !std::isalnum(line[pos + toSearch.size()]))
             {
                 line.replace(pos, toSearch.size(), replaceStr);
             }

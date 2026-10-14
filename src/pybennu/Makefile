@@ -1,7 +1,8 @@
 .ONESHELL:
 SHELL := /bin/bash
 .SHELLFLAGS := -eu -o pipefail -c
-.PHONY: help dist sdist wheelhouse clean clean-build clean-pyc
+.PHONY: all check clean clean-build clean-pyc coverage dist format help install install-dev lint sdist test wheelhouse
+.DEFAULT_GOAL := help
 
 BUILD_DIR = $(CURDIR)/build
 DIST_DIR = $(CURDIR)/dist
@@ -15,9 +16,89 @@ HELICS_VERSION ?= 3.6.1
 PIP = pipx run --spec pip python -m pip
 UV = pipx run uv
 
-# Show this help
+# Define a helper for checking command existence
+check-command = @if ! command -v $(1) > /dev/null; then \
+		echo "Error: '$(1)' not found. Please run 'make install-dev' to install development tools, or ensure it is in your PATH."; \
+		exit 1; \
+	fi
+
+# Show help message
 help:
-	@cat $(MAKEFILE_LIST) | docker run --rm -i xanders/make-help
+	@echo "Available targets:"
+	@echo ""
+	@echo "Development:"
+	@echo "  all         - Run all tools (format, lint, test)"
+	@echo "  check       - Run all checks without fixing (ruff, codespell, vulture)"
+	@echo "  coverage    - Run unit tests with coverage report"
+	@echo "  format      - Format code (ruff)"
+	@echo "  lint        - Lint code and fix issues (ruff, codespell)"
+	@echo "  test        - Run unit tests (use TEST=... for specific test)"
+	@echo ""
+	@echo "Packaging:"
+	@echo "  dist        - Build pybennu wheel"
+	@echo "  sdist       - Build pybennu source distribution"
+	@echo "  wheelhouse  - Build wheelhouse of pybennu and its dependencies"
+	@echo "  libzmq-deb, libzmq-install, helics-deb, helics-install - dependency debs"
+	@echo ""
+	@echo "Installation:"
+	@echo "  install     - Install package in editable mode"
+	@echo "  install-dev - Install development tools (ruff, codespell, vulture, pytest)"
+	@echo ""
+	@echo "Cleanup:"
+	@echo "  clean       - Clean build and lint/test artifacts"
+	@echo ""
+	@echo "Help:"
+	@echo "  help        - Show this help message"
+
+##
+## --- Development ---
+##
+
+# Run all tools (format, lint, test)
+all: format lint test
+
+# Run linting checks (no fix) - suitable for CI
+check:
+	$(call check-command,ruff)
+	$(call check-command,codespell)
+	$(call check-command,vulture)
+	ruff check .
+	ruff format --check .
+	codespell --config ../../.codespellrc .
+	vulture
+
+# Run unit tests with coverage report
+coverage:
+	$(call check-command,pytest)
+	PYTHONPATH=$(CURDIR) pytest --cov=pybennu --cov-report=term-missing --cov-report=xml:coverage.xml $(TEST)
+
+# Format code (ruff)
+format:
+	$(call check-command,ruff)
+	ruff check --fix .
+	ruff format .
+
+# Install package in editable mode (builds pyzmq/helics from source; needs libzmq/helics debs)
+install:
+	$(call check-command,pip)
+	PIP_BREAK_SYSTEM_PACKAGES=1 pip install -e "."
+
+# Install only the dev tools (the full ".[dev]" extra would also build pyzmq/helics from git)
+install-dev:
+	$(call check-command,pip)
+	PIP_BREAK_SYSTEM_PACKAGES=1 pip install "codespell>=2.2.4" pytest pytest-cov ruff vulture pyzmq
+
+# Lint code (ruff, codespell) and fix issues
+lint:
+	$(call check-command,ruff)
+	$(call check-command,codespell)
+	ruff check . --fix
+	codespell --config ../../.codespellrc . -w
+
+# Run unit tests
+test:
+	$(call check-command,pytest)
+	PYTHONPATH=$(CURDIR) pytest $(TEST)
 
 ##
 ## --- Library dependencies (debs) ---
@@ -132,6 +213,7 @@ clean-build:
 	@rm -rfv .eggs
 
 clean-pyc:
+	@rm -rf .ruff_cache .pytest_cache htmlcov .coverage coverage.xml
 	@find . -name "*~" -exec rm -fv {} +
 	@find . -name "__pycache__" -exec rm -rfv {} +
 	@find . -name ".cache" -exec rm -rfv {} +

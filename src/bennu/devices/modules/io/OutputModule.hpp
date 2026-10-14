@@ -21,7 +21,6 @@ public:
 
 private:
     std::shared_ptr<distributed::Client> mClient;
-
 };
 
 } // namespace io

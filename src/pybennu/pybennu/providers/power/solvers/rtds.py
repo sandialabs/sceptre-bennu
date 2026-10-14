@@ -10,16 +10,16 @@ import sys
 from datetime import datetime, timezone
 from logging.handlers import QueueHandler, QueueListener
 from pathlib import Path
-from time import sleep
-from typing import Any, Dict, List, Optional
-from threading import Thread, Lock
 from queue import Queue
+from threading import Lock, Thread
+from time import sleep
+from typing import Any
 
 from pybennu.distributed.provider import Provider
 from pybennu.elastic import ElasticPusher
-from pybennu.settings import PybennuSettings
-from pybennu.pmu_wrapper import PMU
 from pybennu.gtnet_skt import GtnetSkt
+from pybennu.pmu_wrapper import PMU
+from pybennu.settings import PybennuSettings
 from pybennu.utils import RotatingCSVWriter, utc_now, utc_now_formatted
 
 # TODO: push state of GTNET-SKT values to Elasticsearch
@@ -53,12 +53,12 @@ class RTDS(Provider):
         # a set of values that are from a previous poll and others from a ongoing poll,
         # basically a split-brain/partial-read. Using a lock prevents that from happening.
         self.__current_values_lock: Lock = Lock()
-        self.current_values: Dict[str, Any] = {}
+        self.current_values: dict[str, Any] = {}
 
         # Hack
         # TODO: rotate out values to keep this from eating up memory if running for a long time
         self.__time_map_lock: Lock = Lock()
-        self.time_map: Dict[int, datetime] = {}
+        self.time_map: dict[int, datetime] = {}
 
         # asynchronous logging. Log messages are placed into a queue,
         # which is serviced by a thread that runs each handler with
@@ -69,12 +69,14 @@ class RTDS(Provider):
 
         formatter = logging.Formatter(
             fmt="%(asctime)s.%(msecs)03d [%(levelname)s] (%(name)s) %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S"
+            datefmt="%Y-%m-%d %H:%M:%S",
         )
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(formatter)
         console_handler.setLevel(logging.DEBUG if self.conf.debug else logging.INFO)
-        queue_listener = QueueListener(self.log_queue, console_handler, respect_handler_level=True)
+        queue_listener = QueueListener(
+            self.log_queue, console_handler, respect_handler_level=True
+        )
         queue_listener.start()
 
         # Configure logging to stdout (includes debug messages from pypmu)
@@ -90,17 +92,19 @@ class RTDS(Provider):
         self.log.setLevel(logging.DEBUG if self.conf.debug else logging.INFO)
 
         # Elasticsearch setup
-        self.es: Optional[ElasticPusher] = None
+        self.es: ElasticPusher | None = None
         if self.conf.elastic.enabled:
             self.es = ElasticPusher(conf=self.conf)
         else:
-            self.log.warning("NOTE: Elasticsearch output is DISABLED ('elastic.enabled' is false or unset)")
+            self.log.warning(
+                "NOTE: Elasticsearch output is DISABLED ('elastic.enabled' is false or unset)"
+            )
 
         # PMU setup
         if self.conf.pmu.enabled:
             self.log.info("Configuring PMU streaming")
 
-            self.pmus: List[PMU] = []
+            self.pmus: list[PMU] = []
 
             for p in self.conf.pmu.pmus:
                 pmu = PMU(
@@ -115,11 +119,13 @@ class RTDS(Provider):
                 )
                 self.pmus.append(pmu)
 
-            self.__pmu_polling_thread: Thread = Thread(target=self._start_poll_pmus, daemon=True)
+            self.__pmu_polling_thread: Thread = Thread(
+                target=self._start_poll_pmus, daemon=True
+            )
         else:
             self.log.warning("NOTE: PMU is DISABLED ('pmu.enabled' is false or unset)")
 
-        self.gtnet: Optional[GtnetSkt] = None
+        self.gtnet: GtnetSkt | None = None
         if self.conf.gtnet_skt.enabled:
             self.gtnet = GtnetSkt(conf=self.conf)
             self.current_values.update(self.gtnet.state)
@@ -151,15 +157,13 @@ class RTDS(Provider):
         if isinstance(value, bool):
             if value is True:
                 return "true"
-            else:
-                return "false"
+            return "false"
 
         if self.gtnet:
             if tag in self.gtnet.tags and self.gtnet.tags[tag].type == "int":
                 if int(value) >= 1:
                     return "true"
-                else:
-                    return "false"
+                return "false"
 
         return str(value)
 
@@ -217,7 +221,7 @@ class RTDS(Provider):
         NOTE: This method is intended to be run in a thread,
         since it's loop that runs forever until killed.
         """
-        self.log.info(f"Started polling thread for {str(pmu)}")
+        self.log.info(f"Started polling thread for {pmu!s}")
         retry_count = 0
 
         # Setup the PMU connection (UDP or TCP)
@@ -230,20 +234,26 @@ class RTDS(Provider):
             try:
                 data_frame = pmu.get_data_frame()
             except Exception as ex:
-                self.log.error(f"Failed to get data frame from {str(pmu)} due to an exception '{ex}', attempting to rebuild connection...")
+                self.log.error(
+                    f"Failed to get data frame from {pmu!s} due to an exception '{ex}', attempting to rebuild connection..."
+                )
                 if self.conf.debug:  # only log traceback if debugging
-                    self.log.exception(f"traceback for {str(pmu)}")
+                    self.log.exception(f"traceback for {pmu!s}")
                 pmu.rebuild_tcp_connection()
                 continue
 
             if not data_frame:
                 if retry_count >= 3:
-                    self.log.error(f"Failed to request data {retry_count} times from {str(pmu)}, attempting to rebuild connection...")
+                    self.log.error(
+                        f"Failed to request data {retry_count} times from {pmu!s}, attempting to rebuild connection..."
+                    )
                     pmu.rebuild_tcp_connection()
                     retry_count = 0
                 else:
                     retry_count += 1
-                    self.log.error(f"No data in frame from {str(pmu)}, sleeping for {self.conf.pmu.retry_delay} seconds before retrying (retry count: {retry_count})")
+                    self.log.error(
+                        f"No data in frame from {pmu!s}, sleeping for {self.conf.pmu.retry_delay} seconds before retrying (retry count: {retry_count})"
+                    )
                     sleep(self.conf.pmu.retry_delay)
                 continue
 
@@ -275,7 +285,9 @@ class RTDS(Provider):
                 if mm["stat"] != "ok":
                     pmu.log.error(f"Bad/unknown PMU status: {mm['stat']}")
                 if mm["stream_id"] != pmu.pdc_id:
-                    pmu.log.warning(f"Unknown PMU stream ID: {mm['stream_id']} (expected {pmu.pdc_id})")
+                    pmu.log.warning(
+                        f"Unknown PMU stream ID: {mm['stream_id']} (expected {pmu.pdc_id})"
+                    )
 
                 # TODO: support PMU "digital" fields (mm["digital"])
                 line = {
@@ -346,8 +358,12 @@ class RTDS(Provider):
                     # TODO: better handling of analog values, this is a hack for the HARMONIE LDRD
                     if mm["analog"]:
                         for i, analog_value in enumerate(mm["analog"]):
-                            self.current_values[f"{pmu.name}_ANALOG_{i+1}.real"] = analog_value
-                            self.current_values[f"{pmu.name}_ANALOG_{i+1}.angle"] = analog_value
+                            self.current_values[f"{pmu.name}_ANALOG_{i + 1}.real"] = (
+                                analog_value
+                            )
+                            self.current_values[f"{pmu.name}_ANALOG_{i + 1}.angle"] = (
+                                analog_value
+                            )
 
                 # Create CSV writer if it doesn't exist
                 if self.conf.csv.enabled and pmu.csv_writer is None:
@@ -362,19 +378,23 @@ class RTDS(Provider):
                         name=str(pmu),
                         csv_dir=Path(self.conf.csv.file_path) / str(pmu),
                         header=header,
-                        filename_base=f"{str(pmu)}",
+                        filename_base=f"{pmu!s}",
                         rows_per_file=self.conf.csv.rows_per_file,
                         max_files=self.conf.csv.max_files,
                     )
 
                 # Write data to CSV file
                 if self.conf.csv.enabled:
-                    csv_row = [line["time"], sceptre_ts.timestamp(), line["freq"], line["dfreq"]]
+                    csv_row = [
+                        line["time"],
+                        sceptre_ts.timestamp(),
+                        line["freq"],
+                        line["dfreq"],
+                    ]
                     for ph in line["phasors"].values():
                         for v in ph.values():
                             csv_row.append(v)
                     pmu.csv_writer.write(csv_row)
-
 
     # ===== Provider API =====
 
@@ -502,7 +522,9 @@ class RTDS(Provider):
             WRITE=<tag name>:<value>[,<tag name>:<value>,...]
             WRITE={tag name:value,tag name:value}
         """
-        self.log.info(f"Beginning periodic publish (publish rate: {self.conf.publish_rate})")
+        self.log.info(
+            f"Beginning periodic publish (publish rate: {self.conf.publish_rate})"
+        )
         while True:
             # mutex to prevent threads from writing while we're reading
             with self.__current_values_lock:

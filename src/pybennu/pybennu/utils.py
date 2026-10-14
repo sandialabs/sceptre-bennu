@@ -8,10 +8,9 @@ import os
 import platform
 import re
 from datetime import datetime, timezone
+from io import TextIOWrapper
 from pathlib import Path
 from subprocess import check_output
-from io import TextIOWrapper
-from typing import List, Optional
 
 BENNU_VERSION = None
 
@@ -36,10 +35,9 @@ def str_to_bool(val: str) -> bool:
     val = val.strip().lower()
     if val in ("y", "yes", "t", "true", "on", "1", "enable", "enabled"):
         return True
-    elif val in ("n", "no", "f", "false", "off", "0", "disable", "disabled"):
+    if val in ("n", "no", "f", "false", "off", "0", "disable", "disabled"):
         return False
-    else:
-        raise ValueError(f"invalid bool string {val}")
+    raise ValueError(f"invalid bool string {val}")
 
 
 def utc_now() -> datetime:
@@ -94,23 +92,25 @@ class RotatingCSVWriter:
         self,
         name: str,
         csv_dir: Path,
-        header: List[str],
+        header: list[str],
         filename_base: str = "data",
         rows_per_file: int = 1000000,
-        max_files: int = 0
+        max_files: int = 0,
     ) -> None:
         self.name: str = name
         self.csv_dir: Path = csv_dir
-        self.header: List[str] = header
+        self.header: list[str] = header
         self.filename_base: str = filename_base
         self.max_rows: int = rows_per_file
         self.max_files: int = max_files
-        self.files_written: List[Path] = []
+        self.files_written: list[Path] = []
         self.rows_written: int = 0
-        self.current_path: Optional[Path] = None
-        self.fp: Optional[TextIOWrapper] = None
+        self.current_path: Path | None = None
+        self.fp: TextIOWrapper | None = None
 
-        self.log: logging.Logger = logging.getLogger(f"{self.__class__.__name__} [{self.name}]")
+        self.log: logging.Logger = logging.getLogger(
+            f"{self.__class__.__name__} [{self.name}]"
+        )
         self.log.setLevel(logging.DEBUG)
 
         if not self.csv_dir.exists():
@@ -134,7 +134,9 @@ class RotatingCSVWriter:
     def rotate(self) -> None:
         self._close_file()  # close current CSV before starting new one
         if self.current_path:
-            self.log.debug(f"Wrote {self.rows_written} rows and {self.current_path.stat().st_size} bytes to {self.current_path}")
+            self.log.debug(
+                f"Wrote {self.rows_written} rows and {self.current_path.stat().st_size} bytes to {self.current_path}"
+            )
             self.files_written.append(self.current_path)
 
         timestamp = utc_now_formatted()
@@ -169,7 +171,9 @@ class RotatingCSVWriter:
             self.rotate()
 
         if len(data) != len(self.header):
-            raise RuntimeError(f"length of CSV data ({len(data)}) does not match length of CSV header ({len(self.header)})")
+            raise RuntimeError(
+                f"length of CSV data ({len(data)}) does not match length of CSV header ({len(self.header)})"
+            )
         assert len(data) == len(self.header)
 
         self._emit(data)

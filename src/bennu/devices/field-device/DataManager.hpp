@@ -19,14 +19,14 @@ class DataManager
 public:
     DataManager() :
         mInternalData(new DataStore<std::string>), // tags
-        mExternalData(new DataStore<std::string>) // i/o points
+        mExternalData(new DataStore<std::string>)  // i/o points
     {
     }
 
     ~DataManager() = default;
 
     // add Binary/Analog data point from Input/Output modules
-    template<typename T>
+    template <typename T>
     void addExternalData(const std::string& id, const std::string& point)
     {
         mExternalData->addData(point, T());
@@ -34,7 +34,7 @@ public:
     }
 
     // add 'internal-tag' data point
-    template<typename T>
+    template <typename T>
     void addInternalData(const std::string& tag, const T& value)
     {
         mInternalData->addData(tag, value);
@@ -55,7 +55,7 @@ public:
         return false;
     }
 
-    template<typename T>
+    template <typename T>
     T getDataByTag(const std::string& tag) const
     {
         auto iter = mTagToPoint.find(tag);
@@ -89,7 +89,7 @@ public:
         return 0;
     }
 
-    template<typename T>
+    template <typename T>
     bool setDataByTag(const std::string& tag, const T& value) const
     {
         auto iter = mTagToPoint.find(tag);
@@ -105,7 +105,7 @@ public:
         return false;
     }
 
-    template<typename T>
+    template <typename T>
     bool setDataByPoint(const std::string& point, const T& value) const
     {
         double ts = std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -252,7 +252,6 @@ public:
         {
             std::lock_guard<std::shared_mutex> lock(mBinaryMutex);
             mUpdatedBinaryTags.clear();
-            
         }
         {
             std::lock_guard<std::shared_mutex> lock(mAnalogMutex);
@@ -270,19 +269,17 @@ public:
         return std::find(mAnalogTags.begin(), mAnalogTags.end(), tag) != mAnalogTags.end();
     }
 
-
 private:
     std::shared_ptr<DataStore<std::string>> mInternalData; // internal tags
     std::shared_ptr<DataStore<std::string>> mExternalData; // i/o points
-    std::map<std::string, std::string> mExternalPoints; // id ==> point
-    std::map<std::string, std::string> mTagToPoint; // tag ==> point
+    std::map<std::string, std::string> mExternalPoints;    // id ==> point
+    std::map<std::string, std::string> mTagToPoint;        // tag ==> point
     std::vector<std::string> mBinaryTags;
     std::vector<std::string> mAnalogTags;
     std::map<std::string, bool> mUpdatedBinaryTags;
     std::map<std::string, double> mUpdatedAnalogTags;
     std::shared_mutex mBinaryMutex;
     std::shared_mutex mAnalogMutex;
-
 };
 
 } // namespace field_device

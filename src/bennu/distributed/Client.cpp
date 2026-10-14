@@ -9,8 +9,8 @@
 namespace bennu {
 namespace distributed {
 
-#define REQUEST_TIMEOUT     5000    //  msecs, (> 1000!)
-#define REQUEST_RETRIES     3       //  Before we abandon
+#define REQUEST_TIMEOUT 5000 //  msecs, (> 1000!)
+#define REQUEST_RETRIES 3    //  Before we abandon
 
 Client::Client(const Endpoint& endpoint) :
     mSocket(zmq::socket_t(Context::the()->getContext(), ZMQ_REQ)),
@@ -57,14 +57,14 @@ void Client::send(const std::string& msg)
     int retriesLeft = REQUEST_RETRIES;
     while (retriesLeft)
     {
-        zmq::message_t message(msg+'\0'); // must include null byte
+        zmq::message_t message(msg + '\0'); // must include null byte
         mSocket.send(message);
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         bool expectReply = true;
         while (expectReply)
         {
             // Poll socket for a reply, with timeout
-            zmq::pollitem_t items[] = { { mSocket, 0, ZMQ_POLLIN, 0 } };
+            zmq::pollitem_t items[] = {{mSocket, 0, ZMQ_POLLIN, 0}};
             zmq::poll(&items[0], 1, REQUEST_TIMEOUT);
             // If we got a reply, process it
             if (items[0].revents & ZMQ_POLLIN)
