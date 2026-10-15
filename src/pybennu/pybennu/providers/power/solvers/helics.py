@@ -3,16 +3,14 @@
 Provides an interface between bennu field devices and a helics federation.
 """
 
-import logging
 import threading
 from distutils.util import strtobool
 
-from pybennu.distributed.provider import Provider
-from pybennu.providers.utils.helics_helper import HelicsFederate
+from loguru import logger
 
-logger = logging.getLogger("helics")
-logger.addHandler(logging.StreamHandler())
-logger.setLevel(logging.INFO)
+from pybennu.distributed.provider import Provider
+from pybennu.log import enable_debug
+from pybennu.providers.utils.helics_helper import HelicsFederate
 
 
 class Helics(Provider, HelicsFederate):
@@ -21,7 +19,7 @@ class Helics(Provider, HelicsFederate):
     def __init__(self, server_endpoint, publish_endpoint, config, debug=False):
         self.__lock = threading.Lock()
         if debug:
-            logger.setLevel(logging.DEBUG)
+            enable_debug()
 
         # Initialize bennu Provider
         Provider.__init__(self, server_endpoint, publish_endpoint)
@@ -70,18 +68,18 @@ class Helics(Provider, HelicsFederate):
     # 'tags' will be a dictionary of key/value pairs
     def write(self, tags):
         with self.__lock:
-            print("### PROCESSING UPDATE ###")
+            logger.debug("### PROCESSING UPDATE ###")
             try:
                 for tag in tags:
-                    print(f"### TAG: {tag} ###")
+                    logger.debug(f"### TAG: {tag} ###")
                     if tag not in self.state:
                         raise NameError(f"{tag} is not a known tag name")
                     value = tags[tag]
                     self.state[tag] = value
                     self.send_msg_to_endpoint(tag, value)
-                    print(f"### UPDATED: {tag}:{value} ###")
+                    logger.debug(f"### UPDATED: {tag}:{value} ###")
             except Exception as err:
-                print(f"ERROR: failed to process update: {err}")
+                logger.error(f"failed to process update: {err}")
                 return f"ERR={err}"
             return "ACK=Success processing Helics write command"
 

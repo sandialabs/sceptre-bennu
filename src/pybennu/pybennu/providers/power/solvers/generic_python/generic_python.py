@@ -13,6 +13,8 @@ import sys
 import threading
 import time
 
+from loguru import logger
+
 from pybennu.distributed.provider import Provider
 from pybennu.providers.power.solvers.generic_python.base_simulation import (
     BaseSimulation,
@@ -53,11 +55,13 @@ class GenericPython(Provider):
         try:
             spec.loader.exec_module(module)
         except Exception as e:
-            print(f"Failed to load module {simulation_dir}: {e}")
+            logger.error("Failed to load module {}: {}", simulation_dir, e)
             raise
 
         if not hasattr(module, "Simulation"):
-            print(f'The module {simulation_dir} does not have a "Simulation" class.')
+            logger.error(
+                f'The module {simulation_dir} does not have a "Simulation" class.'
+            )
 
         return module.Simulation()  # Assuming the simulation class is named Simulation
 
@@ -77,7 +81,7 @@ class GenericPython(Provider):
         simulation will be collected and returned."""
 
         if self.debug:
-            print("Processing query")
+            logger.debug("Processing query")
         tags = ""
         with self.__lock:
             # Iterate through both 'inputs_to_fd' and 'outputs_from_fd'
@@ -97,7 +101,7 @@ class GenericPython(Provider):
         the system under test will be collected and returned."""
 
         if self.debug:
-            print("Processing read request")
+            logger.debug("Processing read request")
         try:
             with self.__lock:
                 # Iterate through both 'inputs_to_fd' and 'outputs_from_fd'
@@ -121,15 +125,14 @@ class GenericPython(Provider):
         be updated and published after the solve completes."""
 
         if self.debug:
-            print("Processing write command")
+            logger.debug("Processing write command")
 
         try:
             msg = ""
             for tag, value in tags.items():
                 if self.debug:
-                    print(
-                        f"Python.write ---- received write command for: {tag} with value {value}  ->",
-                        end="",
+                    logger.debug(
+                        f"Python.write ---- received write command for: {tag} with value {value}"
                     )
                 val = None
                 # Use only 'outputs_from_fd' since we can only write to simulation inputs
@@ -167,8 +170,8 @@ class GenericPython(Provider):
                         self.simulation.set_parameter(tag, "input", tag_type, val)
             msg = "ACK=Success processing Python write command"
         except Exception as err:
-            print(
-                f"ERROR: Provider failed to process write message with exception: {err}"
+            logger.exception(
+                f"Provider failed to process write message with exception: {err}"
             )
             msg = f"ERR=Provider failed to process write message with exception: {err} on line {sys.exc_info()[-1].tb_lineno}"
 
@@ -182,7 +185,7 @@ class GenericPython(Provider):
             try:
                 self.publish(msg)
             except Exception as e:
-                print(f"provider periodic_publish error: {e}")
+                logger.error(f"provider periodic_publish error: {e}")
             time.sleep(1)
 
     def _pack_data(self) -> str:

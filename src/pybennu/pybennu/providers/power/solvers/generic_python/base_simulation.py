@@ -1,5 +1,7 @@
 import time
 
+from loguru import logger
+
 
 class BaseSimulation:
     """Base class for simulations."""
@@ -22,19 +24,19 @@ class BaseSimulation:
         """Ensure values provided for state are the correct types"""
         for tag, value in self.state["input"]["analog"].items():
             if type(value) is not float:
-                print(f"{tag} must be a float")
+                logger.warning(f"{tag} must be a float")
 
         for tag, value in self.state["input"]["binary"].items():
             if type(value) is not bool:
-                print(f"{tag} must be a bool")
+                logger.warning(f"{tag} must be a bool")
 
         for tag, value in self.state["output"]["analog"].items():
             if type(value) is not float:
-                print(f"{tag} must be a float")
+                logger.warning(f"{tag} must be a float")
 
         for tag, value in self.state["output"]["binary"].items():
             if type(value) is not bool:
-                print(f"{tag} must be a bool")
+                logger.warning(f"{tag} must be a bool")
 
     def get_current_state(self):
         """Get the current state of the simulation"""
@@ -74,7 +76,7 @@ class BaseSimulation:
             if remaining_time > 0:
                 time.sleep(remaining_time)  # Simulate real-time updates
             else:
-                print("Error: simulation running slower than real time.")
+                logger.warning("simulation running slower than real time.")
             t0 = time.time()  # Set the new initial time for the next loop
 
     def stop(self):

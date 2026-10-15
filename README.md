@@ -145,6 +145,16 @@ The pybennu source is under `src/pybennu`.
     pip install pybennu-6.0.0-py3-none-any.whl
     ```
 
+## Logging
+
+pybennu logs with [loguru](https://github.com/Delgan/loguru) to stderr and to a file.
+
+- `BENNU_LOG_LEVEL`: `error`, `warn`, `info` (default), `debug`, or `0`-`3`. The C++ tools read the same variable. An invalid value is an error. A `-d`/`-v` debug flag or a provider's `debug` setting forces `debug`.
+- `BENNU_LOG_FILE`: log file path. Set it empty to disable the file. Unset, services (`pybennu-power-solver`, `pybennu-siren`, `pybennu-alicanto`, `pybennu-groundtruth-monitor`) write `/var/log/bennu/<program>.log`, and the CLI and test tools write no file.
+
+Limitations: the file is not rotated, and the log level is global, so the siren per-device `level_name` no longer filters.
+Applications that import pybennu as a library get no pybennu output until they call `pybennu.log.setup_logging()` or `logger.enable("pybennu")`.
+
 ## Other helpful pybennu build tools
 
 -   Show makefile options

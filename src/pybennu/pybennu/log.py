@@ -34,6 +34,7 @@ _LEVELS = {
     "debug": "DEBUG",
     "3": "DEBUG",
 }
+_config: dict = {}
 
 
 class InterceptHandler(logging.Handler):
@@ -81,20 +82,30 @@ def log_file(prog: str, file_by_default: bool) -> str | None:
     return f"{LOG_DIR}/{prog}.log" if file_by_default else None
 
 
-def setup_logging(
-    prog: str, debug: bool = False, file_by_default: bool = True
-) -> None:
+def setup_logging(prog: str, debug: bool = False, file_by_default: bool = True) -> None:
     """Send pybennu and stdlib logging to stderr and, if configured, a file.
 
     Call once from an entry point, before any daemonizing fork. Raises if the
     level is invalid or the log file cannot be opened.
     """
+    _config.update(prog=prog, debug=debug, file_by_default=file_by_default)
     level = log_level(debug)
     path = log_file(prog, file_by_default)
     logger.remove()
     logger.configure(patcher=_prefix)
-    logger.add(sys.stderr, level=level, format=FORMAT)
+    # diagnose=False keeps local variables (credentials in settings) out of tracebacks.
+    logger.add(sys.stderr, level=level, format=FORMAT, diagnose=False)
     if path:
-        logger.add(path, level=level, format=FORMAT)
+        logger.add(path, level=level, format=FORMAT, diagnose=False)
     logger.enable("pybennu")
-    logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
+    logging.basicConfig(handlers=[InterceptHandler()], level=level, force=True)
+
+
+def enable_debug() -> None:
+    """Re-apply the entry point's logging at DEBUG, e.g. for a config ``debug`` flag.
+
+    Does nothing if ``setup_logging`` was never called (an embedding application
+    owns its logging).
+    """
+    if _config:
+        setup_logging(**{**_config, "debug": True})

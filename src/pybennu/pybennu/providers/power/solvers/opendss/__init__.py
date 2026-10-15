@@ -226,6 +226,7 @@ from timeit import default_timer as timer
 
 import opendssdirect as dss
 import opendssdirect.utils as dss_utils
+from loguru import logger
 
 import pybennu.providers.power.solvers.opendss.data as models
 from pybennu.distributed.provider import Provider
@@ -243,7 +244,7 @@ class OpenDSS(Provider):
         if kwargs["debug"]:
             self.__debug = True
 
-        print(f"Using OpenDSS version {dss.Basic.Version()}")
+        logger.info(f"Using OpenDSS version {dss.Basic.Version()}")
 
         # Detect if a single config file was provided (assumes the .dss
         # or .DSS extension). If not, assume an archive was provided
@@ -309,7 +310,7 @@ class OpenDSS(Provider):
         of the system under test will be collected and returned."""
 
         if self.__debug:
-            print("Processing query command")
+            logger.debug("Processing query command")
 
         msg = []
 
@@ -329,7 +330,7 @@ class OpenDSS(Provider):
         returned."""
 
         if self.__debug:
-            print("Processing read command")
+            logger.debug("Processing read command")
 
         try:
             device, field = tag.split(".")
@@ -353,7 +354,7 @@ class OpenDSS(Provider):
         completes."""
 
         if self.__debug:
-            print("Processing write command")
+            logger.debug("Processing write command")
 
         # Compile circuit definition living in currently tracked temp directory.
         self.__compile_circuit()
@@ -530,7 +531,7 @@ class OpenDSS(Provider):
 
         except Exception as err:
             msg = f"OpenDSS failed to process update message with exception: {err}"
-            print(f"ERROR: processing write command - {msg}")
+            logger.exception(f"processing write command - {msg}")
             return f"ERR={msg}"
 
     def periodic_publish(self):
@@ -538,7 +539,7 @@ class OpenDSS(Provider):
 
         while True:
             if self.__debug:
-                print("Periodically publishing data")
+                logger.debug("Periodically publishing data")
 
             msg = self.__pack_message()
 
@@ -546,7 +547,7 @@ class OpenDSS(Provider):
                 # The publish function is implemented by the Provider.
                 self.publish(msg)
             except Exception as ex:
-                print(f"provider periodic publish error: {ex}")
+                logger.exception(f"provider periodic publish error: {ex}")
 
             time.sleep(2)
 
@@ -555,7 +556,7 @@ class OpenDSS(Provider):
         message."""
 
         if self.__debug:
-            print("Creating publish message")
+            logger.debug("Creating publish message")
 
         # if this solver is self publishing, the periodic publish will run in a
         # separate thread, so we need a mutex around reading and writing data
@@ -572,7 +573,7 @@ class OpenDSS(Provider):
                     bus = temp_elements[device]
 
                     if self.__debug:
-                        print(bus)
+                        logger.debug(bus)
 
                     bus.voltage_mag_p1 = bus.voltage_mag_p1 * self.__gen_rand_num()
                     bus.voltage_ang_p1 = bus.voltage_ang_p1 * self.__gen_rand_num()
@@ -585,7 +586,7 @@ class OpenDSS(Provider):
                     gen = temp_elements[device]
 
                     if self.__debug:
-                        print(gen)
+                        logger.debug(gen)
 
                     phases = json.loads(base64.b64decode(gen.phases).decode())
                     if phases["p1"]:
@@ -629,7 +630,7 @@ class OpenDSS(Provider):
                     load = temp_elements[device]
 
                     if self.__debug:
-                        print(load)
+                        logger.debug(load)
 
                     phases = json.loads(base64.b64decode(load.phases).decode())
                     if phases["p1"]:
@@ -705,7 +706,7 @@ class OpenDSS(Provider):
                     shunt = temp_elements[device]
 
                     if self.__debug:
-                        print(shunt)
+                        logger.debug(shunt)
 
                     phases = json.loads(base64.b64decode(shunt.phases).decode())
                     if phases["p1"]:
@@ -789,7 +790,7 @@ class OpenDSS(Provider):
                     branch = temp_elements[device]
 
                     if self.__debug:
-                        print(branch)
+                        logger.debug(branch)
 
                     phases = json.loads(base64.b64decode(branch.phases).decode())
                     if phases["p1"]:
@@ -945,7 +946,7 @@ class OpenDSS(Provider):
                     transformer = temp_elements[device]
 
                     if self.__debug:
-                        print(transformer)
+                        logger.debug(transformer)
 
                     phases = json.loads(base64.b64decode(transformer.phases).decode())
                     if phases["wdg1_p1"]:
@@ -1138,7 +1139,7 @@ class OpenDSS(Provider):
                     inverter = temp_elements[device]
 
                     if self.__debug:
-                        print(inverter)
+                        logger.debug(inverter)
 
                     phases = json.loads(base64.b64decode(inverter.phases).decode())
                     if phases["p1"]:
@@ -1229,7 +1230,7 @@ class OpenDSS(Provider):
                     )
 
         if self.__debug:
-            print("Packing message")
+            logger.debug("Packing message")
 
         msg = []
 
@@ -1240,7 +1241,7 @@ class OpenDSS(Provider):
                 value = getattr(device, field)
                 msg.append(f"{name}.{field}:{value}")
 
-        print("Done packing message.")
+        logger.debug("Done packing message.")
 
         return ",".join(msg)
 
@@ -1250,7 +1251,7 @@ class OpenDSS(Provider):
         of each element in the OpenDSS circuit."""
 
         if self.__debug:
-            print("Creating system under test")
+            logger.debug("Creating system under test")
 
         # BUSES
         for name in dss.Circuit.AllBusNames():
@@ -1259,7 +1260,7 @@ class OpenDSS(Provider):
                 bus = models.BusData(name=f"bus_{name}")
 
                 if self.__debug:
-                    print(bus)
+                    logger.debug(bus)
 
                 self.elements[bus.name] = bus
 
@@ -1281,7 +1282,7 @@ class OpenDSS(Provider):
             )
 
             if self.__debug:
-                print(gen)
+                logger.debug(gen)
 
             self.elements[gen.name] = gen
 
@@ -1302,7 +1303,7 @@ class OpenDSS(Provider):
             )
 
             if self.__debug:
-                print(load)
+                logger.debug(load)
 
             self.elements[load.name] = load
 
@@ -1324,7 +1325,7 @@ class OpenDSS(Provider):
             )
 
             if self.__debug:
-                print(shunt)
+                logger.debug(shunt)
 
             self.elements[shunt.name] = shunt
 
@@ -1351,7 +1352,7 @@ class OpenDSS(Provider):
             )
 
             if self.__debug:
-                print(branch)
+                logger.debug(branch)
 
             self.elements[branch.name] = branch
 
@@ -1412,7 +1413,7 @@ class OpenDSS(Provider):
                 transformer.reactance_wdg2_wdg3 = dss.Transformers.Xlt()
 
             if self.__debug:
-                print(transformer)
+                logger.debug(transformer)
 
             self.elements[transformer.name] = transformer
 
@@ -1499,7 +1500,7 @@ class OpenDSS(Provider):
                             inverter.curve_var_pt_6 = var_points[5]
 
             if self.__debug:
-                print(inverter)
+                logger.debug(inverter)
 
             self.elements[inverter.name] = inverter
 
@@ -1514,7 +1515,7 @@ class OpenDSS(Provider):
         representation of the system under test."""
 
         if self.__debug:
-            print("Updating system under test")
+            logger.debug("Updating system under test")
 
         # if this solver is self publishing, the periodic publish will run in a
         # separate thread, so we need a mutex around reading and writing data
@@ -1522,7 +1523,7 @@ class OpenDSS(Provider):
         # is also used in the pack_message function.
         with self.__lock:
             # BUSES
-            print("Updating buses...")
+            logger.debug("Updating buses...")
             for name in dss.Circuit.AllBusNames():
                 if name:
                     bus = self.elements[f"bus_{name}"]
@@ -1550,10 +1551,10 @@ class OpenDSS(Provider):
                         pass
 
                     if self.__debug:
-                        print(bus)
+                        logger.debug(bus)
 
             # GENERATORS
-            print("Updating generators...")
+            logger.debug("Updating generators...")
             # set the active class to 'Generator'
             dss.Circuit.SetActiveClass("generator")
 
@@ -1605,10 +1606,10 @@ class OpenDSS(Provider):
                     gen.reactive_power_pn = round(voltcurpow["pn"][5], 3)
 
                 if self.__debug:
-                    print(gen)
+                    logger.debug(gen)
 
             # LOADS
-            print("Updating loads...")
+            logger.debug("Updating loads...")
             # set the active class to 'Load'
             dss.Circuit.SetActiveClass("load")
 
@@ -1658,10 +1659,10 @@ class OpenDSS(Provider):
                     load.reactive_power_pn = round(voltcurpow["pn"][5], 3)
 
                 if self.__debug:
-                    print(load)
+                    logger.debug(load)
 
             # SHUNTS
-            print("Updating shunts...")
+            logger.debug("Updating shunts...")
             # set the active class to 'Capacitor'
             dss.Circuit.SetActiveClass("capacitor")
 
@@ -1711,10 +1712,10 @@ class OpenDSS(Provider):
                     shunt.reactive_power_pn = round(voltcurpow["pn"][5], 3)
 
                 if self.__debug:
-                    print(shunt)
+                    logger.debug(shunt)
 
             # BRANCHES
-            print("Updating branches...")
+            logger.debug("Updating branches...")
             # set the active class to 'Line'
             dss.Circuit.SetActiveClass("line")
 
@@ -1796,10 +1797,10 @@ class OpenDSS(Provider):
                     branch.reactive_power_dst_pn = round(voltcurpow_dst["pn"][5], 3)
 
                 if self.__debug:
-                    print(branch)
+                    logger.debug(branch)
 
             # TRANSFORMERS
-            print("Updating transformers...")
+            logger.debug("Updating transformers...")
             # set the active class to 'Transformer'
             dss.Circuit.SetActiveClass("transformer")
 
@@ -1884,10 +1885,10 @@ class OpenDSS(Provider):
                     transformer.current_ang_wdg2_pn = round(voltcurpow_wdg2["pn"][3], 3)
 
                 if self.__debug:
-                    print(transformer)
+                    logger.debug(transformer)
 
             # INVERTERS
-            print("Updating inverters...\n")
+            logger.debug("Updating inverters...")
             # set the active class to 'PVsystem'
             dss.Circuit.SetActiveClass("pvsystem")
 
@@ -1978,14 +1979,14 @@ class OpenDSS(Provider):
                         inverter.curve_var_pt_6 = var_points[5]
 
                 if self.__debug:
-                    print(inverter)
+                    logger.debug(inverter)
 
     def __solve(self, first="false"):
         """Triggers a solve in OpenDSS and checks for any errors. It then
         calls the `__update` function to update the internal representation
         of the system under test."""
 
-        print(f"Solving circuit (first solve: {first})")
+        logger.debug(f"Solving circuit (first solve: {first})")
 
         if self.clear_circuit and first == "false":
             self.__solve_count += 1
@@ -2000,20 +2001,20 @@ class OpenDSS(Provider):
                 f"set mode=duty controlmode=static hour={hour} sec={secs} maxcontroliter=1000"
             )
 
-            print("Solve parameters configured (clearing circuit)")
+            logger.debug("Solve parameters configured (clearing circuit)")
 
         start = timer()
         dss.Solution.Solve()
         end = timer()
 
-        print(f"Solving circuit took {end - start} seconds")
+        logger.debug(f"Solving circuit took {end - start} seconds")
 
         if self.clear_circuit and first == "false":
             event_log_path = (
                 f"/etc/sceptre/log/opendss-event-log.{self.__solve_count}.txt"
             )
 
-            print(f"Writing OpenDSS Event Log to {event_log_path}")
+            logger.info(f"Writing OpenDSS Event Log to {event_log_path}")
 
             with open(event_log_path, "w") as log:
                 for line in dss.Solution.EventLog():
@@ -2064,11 +2065,11 @@ class OpenDSS(Provider):
 
         start = timer()
 
-        print(f"Compiling {filename}")
+        logger.info(f"Compiling {filename}")
         self.__run_command(f"Compile {filename}")
 
         end = timer()
-        print(f"Compiling circuit took {end - start} seconds")
+        logger.debug(f"Compiling circuit took {end - start} seconds")
 
     def __save_and_clear_circuit(self):
         if not self.clear_circuit:
@@ -2078,7 +2079,7 @@ class OpenDSS(Provider):
 
         # Save circuit to a temp directory
         self.temp_dir = tempfile.TemporaryDirectory()
-        print(f"Saving circuit to {self.temp_dir.name}")
+        logger.debug(f"Saving circuit to {self.temp_dir.name}")
         self.__run_command(f"Save Circuit Dir={self.temp_dir.name}")
 
         # Rename BusVoltageBases.DSS to .dss since Linux is case sensitive and
@@ -2086,11 +2087,11 @@ class OpenDSS(Provider):
         base_name = self.temp_dir.name + "/BusVoltageBases"
         os.rename(base_name + ".DSS", base_name + ".dss")
 
-        print("Clearing circuit")
+        logger.debug("Clearing circuit")
         dss.Basic.ClearAll()
 
         end = timer()
-        print(f"Saving and clearing circuit took {end - start} seconds")
+        logger.debug(f"Saving and clearing circuit took {end - start} seconds")
 
     def __initialize_phases(self):
         """Identifies and initializes phases for all elements in the internal
@@ -2098,7 +2099,7 @@ class OpenDSS(Provider):
         once immediately after initialization of the system element names and
         the initial solve."""
 
-        print("Initializing element phases.")
+        logger.debug("Initializing element phases.")
 
         # GENERATORS
         # set the active class to 'Generator'

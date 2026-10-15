@@ -12,30 +12,15 @@ import contextlib
 import importlib
 import inspect
 import json
-import logging
 import math
 import threading
 import time
 from collections import deque
 
+from loguru import logger
+
 from pybennu.distributed.provider import Provider
 from pybennu.settings import PybennuSettings
-
-LEVELS = {
-    "debug": logging.DEBUG,  # 10
-    "info": logging.INFO,  # 20
-    "warning": logging.WARNING,  # 30
-    "filter": 31,
-    "error": logging.ERROR,  # 40
-    "critical": logging.CRITICAL,  # 50
-}
-
-logging.addLevelName(LEVELS["filter"], "FILTER")
-logging.basicConfig(
-    format="%(asctime)s %(name)-12s  %(levelname)-8s  %(message)s",
-    level=logging.DEBUG,
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
 
 
 class CircularBuffer:
@@ -191,12 +176,7 @@ class Siren(Provider):
         """
         Creates the logger object at the right level
         """
-        self.logger = logging.getLogger(__class__.__name__)
-        if self.conf.debug:
-            level = logging.DEBUG
-        else:
-            level = logging.INFO
-        self.logger.setLevel(level)
+        self.logger = logger
 
     def run(self) -> None:
         """
@@ -297,8 +277,8 @@ class Siren(Provider):
                     else:
                         value = float(value)
                         field = "value"
-                    self.devices[device_name].logger.log(
-                        LEVELS["debug"], f"TO HARDWARE {tag}:{value} with field:{field}"
+                    self.devices[device_name].logger.debug(
+                        f"TO HARDWARE {tag}:{value} with field:{field}"
                     )
                     self._to_hardware(device_name, field, label, value)
             time.sleep(1)
@@ -332,8 +312,7 @@ class Siren(Provider):
                             self.to_endpoint_states[dev][_filter], data, deadband
                         ):
                             self.to_endpoint_states[dev][_filter] = data
-                            self.devices[dev].logger.log(
-                                LEVELS["debug"],
+                            self.devices[dev].logger.debug(
                                 f"FROM HARDWARE TO INTERNAL STATE: {label}:{data}",
                             )
                             with contextlib.redirect_stdout(None):
@@ -347,8 +326,7 @@ class Siren(Provider):
                             and self.to_endpoint_states[dev][_filter] != data
                         ):
                             self.to_endpoint_states[dev][_filter] = data
-                            self.devices[dev].logger.log(
-                                LEVELS["debug"],
+                            self.devices[dev].logger.debug(
                                 f"FROM HARDWARE TO INTERNAL STATE {label}:{data}",
                             )
                             with contextlib.redirect_stdout(None):
@@ -362,8 +340,7 @@ class Siren(Provider):
                             and self.to_endpoint_states[dev][_filter] != data
                         ):
                             self.to_endpoint_states[dev][_filter] = data
-                            self.devices[dev].logger.log(
-                                LEVELS["debug"],
+                            self.devices[dev].logger.debug(
                                 f"FROM HARDWARE TO INTERNAL STATE {label}:{data}",
                             )
                             with contextlib.redirect_stdout(None):

@@ -1,14 +1,10 @@
-import logging
-
 import pythoncom
 import win32com.client
+from loguru import logger
 from win32com.client import VARIANT
 
+from pybennu.log import enable_debug
 from pybennu.providers.utils.helics_helper import HelicsFederate
-
-logger = logging.getLogger("helics")
-logger.addHandler(logging.StreamHandler())
-logger.setLevel(logging.INFO)
 
 
 class PowerWorldHelics(HelicsFederate):
@@ -19,7 +15,7 @@ class PowerWorldHelics(HelicsFederate):
     def __init__(self, case_filename, config, oneline_filename=None, debug=False):
         self.__has_failed = False
         if debug:
-            logger.setLevel(logging.DEBUG)
+            enable_debug()
 
         # Initialize HelicsFederate
         HelicsFederate.__init__(self, config)
@@ -174,14 +170,14 @@ class PowerWorldHelics(HelicsFederate):
         try:
             self.pw.OpenCase(case_filename)
         except OSError:
-            print(f"Failed to open the Power World case file: {case_filename}.")
+            logger.error(f"Failed to open the Power World case file: {case_filename}.")
 
         # open PowerWorld oneline file
         if oneline_filename:
             try:
                 self.pw.RunScriptCommand(f"OpenOneline({oneline_filename}, , YES)")
             except OSError:
-                print(
+                logger.error(
                     f"Failed to open the Power World oneline file: {oneline_filename}."
                 )
 
@@ -200,7 +196,9 @@ class PowerWorldHelics(HelicsFederate):
 
     def write(self, tag, value):
         if self.__has_failed:
-            print("Solution is in failed state. Check PowerWorld log for details.")
+            logger.error(
+                "Solution is in failed state. Check PowerWorld log for details."
+            )
         else:
             name, field = tag.split(".", 1)
             kind, name = name.split("-", 1)
@@ -216,7 +214,7 @@ class PowerWorldHelics(HelicsFederate):
                     else:
                         val = "Closed" if value == "true" else "Open"
                 else:
-                    print(f"Error: Invalid value for tag -- {tag}")
+                    logger.error(f"Invalid value for tag -- {tag}")
             else:
                 val = value
 
@@ -225,11 +223,11 @@ class PowerWorldHelics(HelicsFederate):
         # try to solve power flow after update, handle failure
         status = self.pw.RunScriptCommand("SolvePowerFlow(RECTNEWT)")
         if any(errMsg in status[0].lower() for errMsg in ["error", "err"]):
-            print(f"{status[0]}")
+            logger.error(f"{status[0]}")
             self.__has_failed = True
-            print("Failed to find solution. Check PowerWorld log for details.")
+            logger.error("Failed to find solution. Check PowerWorld log for details.")
         else:
-            print("Successful PowerWorld command: SolvePowerFlow")
+            logger.debug("Successful PowerWorld command: SolvePowerFlow")
 
     def read(self, tag):
         # tag = line-650632.kW
@@ -272,7 +270,7 @@ class PowerWorldHelics(HelicsFederate):
             raise AttributeError(
                 "Error executing command: ChangeParametersSingleElement"
             )
-        print(f"Successfully changed element: {kind}-{name}.{field} = {value}")
+        logger.debug(f"Successfully changed element: {kind}-{name}.{field} = {value}")
 
     def _get_single_element(self, kind, name):
         field_list, value_list = self._get_field_value_lists(kind, name)

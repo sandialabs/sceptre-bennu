@@ -20,7 +20,6 @@ Examples:
 """
 
 import argparse
-import logging
 import os
 import signal
 import sys
@@ -30,9 +29,11 @@ from configparser import ConfigParser, NoOptionError
 from datetime import datetime
 
 from elasticsearch import Elasticsearch, helpers
+from loguru import logger
 
 import pybennu.distributed.swig._Endpoint as E
 from pybennu.distributed.subscriber import Subscriber
+from pybennu.log import setup_logging
 from pybennu.providers.utils.daemon import Daemon
 
 
@@ -66,9 +67,9 @@ class GroundTruthMonitor(Daemon, Subscriber):
             if os.path.exists(config_file):
                 config_file = os.path.abspath(config_file)
             else:
-                print(
-                    "\nThe file %s does not exist - please provide a valid config file.\n"
-                    % (config_file)
+                logger.error(
+                    "The file {} does not exist - please provide a valid config file.",
+                    config_file,
                 )
                 sys.exit(-1)
 
@@ -87,25 +88,27 @@ class GroundTruthMonitor(Daemon, Subscriber):
                     config.get("power-groundtruth-monitor", "publish-endpoint").strip(),
                 )
             except NoOptionError:
-                print(
-                    "WARNING: publish-endpoint not found in the configuration file."
-                    f" Using default: {E.Endpoint_str_get(self.publish_endpoint)}"
+                logger.warning(
+                    "publish-endpoint not found in the configuration file."
+                    " Using default: {}",
+                    E.Endpoint_str_get(self.publish_endpoint),
                 )
             try:
                 elastic_ip = config.get(
                     "power-groundtruth-monitor", "elasticsearch-ip"
                 ).strip()
             except NoOptionError:
-                print(
-                    "WARNING: elasticsearch-ip not found in the configuration file."
-                    f" Using default: {elastic_ip}"
+                logger.warning(
+                    "elasticsearch-ip not found in the configuration file."
+                    " Using default: {}",
+                    elastic_ip,
                 )
             try:
                 self._filter = config.get("power-groundtruth-monitor", "filter").strip()
             except NoOptionError:
-                print(
-                    "WARNING: filter not found in the configuration file."
-                    f" Using default: {self._filter}"
+                logger.warning(
+                    "filter not found in the configuration file. Using default: {}",
+                    self._filter,
                 )
 
         else:
@@ -115,25 +118,27 @@ class GroundTruthMonitor(Daemon, Subscriber):
                     config.get("groundtruth-monitor", "publish-endpoint").strip(),
                 )
             except NoOptionError:
-                print(
-                    "WARNING: publish-endpoint not found in the configuration file."
-                    f" Using default: {E.Endpoint_str_get(self.publish_endpoint)}"
+                logger.warning(
+                    "publish-endpoint not found in the configuration file."
+                    " Using default: {}",
+                    E.Endpoint_str_get(self.publish_endpoint),
                 )
             try:
                 elastic_ip = config.get(
                     "groundtruth-monitor", "elasticsearch-ip"
                 ).strip()
             except NoOptionError:
-                print(
-                    "WARNING: elasticsearch-ip not found in the configuration file."
-                    f" Using default: {elastic_ip}"
+                logger.warning(
+                    "elasticsearch-ip not found in the configuration file."
+                    " Using default: {}",
+                    elastic_ip,
                 )
             try:
                 self._filter = config.get("groundtruth-monitor", "filter").strip()
             except NoOptionError:
-                print(
-                    "WARNING: filter not found in the configuration file."
-                    f" Using default: {self._filter}"
+                logger.warning(
+                    "filter not found in the configuration file. Using default: {}",
+                    self._filter,
                 )
 
         self.__es = Elasticsearch([{"host": elastic_ip, "port": "9200"}])
@@ -157,7 +162,7 @@ class GroundTruthMonitor(Daemon, Subscriber):
 
         def handle_exit(signum, stack):
             """Disconnect from provider when term signal received"""
-            print("\nStopping ground truth monitor...\n")
+            logger.info("Stopping ground truth monitor...")
             self.running = False
             self.disconnect()
 
@@ -258,7 +263,7 @@ class GroundTruthMonitor(Daemon, Subscriber):
             try:
                 helpers.bulk(self.__es, actions, request_timeout=30)
             except Exception:
-                logging.exception("something wrong with bulk push to es")
+                logger.exception("Bulk push to Elasticsearch failed")
 
     def __generate_id(self, device):
         """Generate an elasticsearch doc ID
@@ -277,9 +282,6 @@ class GroundTruthMonitor(Daemon, Subscriber):
 def main():
     """Parse args and start GroundTruthMonitor as a daemon"""
 
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
-    )
     parser = argparse.ArgumentParser(description="SCEPTRE Ground Truth Monitor")
     parser.add_argument(
         "-c", "--config-file", dest="config_file", help="Config file to load (.ini)"
@@ -308,6 +310,10 @@ def main():
     )
 
     args = parser.parse_args()
+    setup_logging(
+        "pybennu-groundtruth-monitor",
+        file_by_default=args.operation in ("start", "restart"),
+    )
 
     handle = GroundTruthMonitor(args)
     handle.subscription_handler = handle._subscription_handler
@@ -316,16 +322,16 @@ def main():
             handle.start()
             pid = handle.get_pid()
             if not pid:
-                print("Unable to start as a daemon")
+                logger.error("Unable to start as a daemon")
         else:
             handle._run()
     elif args.operation == "stop":
         handle.stop()
     elif args.operation == "restart":
-        print("Restarting daemon")
+        logger.info("Restarting daemon")
         pid = handle.get_pid()
         if not pid:
-            print("Daemon is not already running - cannot restart")
+            logger.error("Daemon is not already running - cannot restart")
         else:
             handle.restart()
     elif args.operation == "status":

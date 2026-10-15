@@ -8,8 +8,10 @@ import math
 import os
 import sys
 
+from loguru import logger
 from numpy import array
 
+from pybennu.log import setup_logging
 from pybennu.protobuf.power_transmission_pb2 import PowerSystem
 
 
@@ -31,7 +33,7 @@ class PyPowerConverter:
             with open(model, "rb") as file:
                 self.system.ParseFromString(file.read())
         except OSError:
-            print("Failed to parse the protobuf file " + model + ".")
+            logger.error("Failed to parse the protobuf file " + model + ".")
 
         self.__initialize_indexes(self.system)
         self.__initialize_data(self.system)
@@ -445,6 +447,7 @@ class PyPowerConverter:
 
 
 if __name__ == "__main__":
+    setup_logging("pypower_converter", file_by_default=False)
     if len(sys.argv) == 2 and os.path.isfile(sys.argv[1]):
         system_file = str(sys.argv[1])
     else:
@@ -455,7 +458,7 @@ if __name__ == "__main__":
             )
         elif not os.path.isfile(sys.argv[1]):
             raise OSError("Power system file does not exist.")
-        print(
+        logger.error(
             "Command line usage: python converter.py </path/to/system/definition/file>"
         )
 
@@ -471,7 +474,7 @@ if __name__ == "__main__":
                 f.write("\tppc = " + pti)
                 f.write("\n\n\treturn ppc")
         except OSError:
-            print("Error opening file " + system_filename + ".")
+            logger.error("Error opening file " + system_filename + ".")
         print(pti)
     else:
         # I'm assuming that the PTI file has a function named
@@ -483,5 +486,5 @@ if __name__ == "__main__":
             with open(system_filename + ".pb", "wb") as f:
                 f.write(pb_obj.SerializeToString())
         except OSError:
-            print("Error opening file " + system_filename + ".")
+            logger.error("Error opening file " + system_filename + ".")
         print(pb_obj)
