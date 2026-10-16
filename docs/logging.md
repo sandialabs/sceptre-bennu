@@ -29,23 +29,34 @@ The per-protocol event logs (DNP3, Modbus, ... via `DirectLoggable`) are separat
 
 ## pybennu
 
-`pybennu/distributed/*.py` use `logging.getLogger(__name__)` (`pybennu.distributed.server`, `.provider`,
-`.client`, `.subscriber`, `.publisher`). Library code never calls `basicConfig`.
+Every module logs with [loguru](https://github.com/Delgan/loguru): `from loguru import logger`.
+`pybennu/log.py` holds the setup. Library code never configures logging.
 
-- Per-request, per-ACK and per-publish messages: DEBUG. Errors: ERROR / `exception`. Client replies and
-  subscriber updates: INFO.
-- Entry points call `logging.basicConfig` with format
-  `%(asctime)s %(levelname)s %(name)s: %(message)s`:
+- Entry points call `setup_logging(prog, debug, file_by_default)` before any daemonizing fork. It adds a
+  stderr sink and an optional file sink, and routes stdlib `logging` (pymodbus, elasticsearch, the
+  vendored pypmu) into loguru.
+- `BENNU_LOG_LEVEL`: the same variable as the C++ side, `error|warn|info|debug` or `0-3`. Unset or empty
+  means INFO. An invalid value is an error here; the C++ side falls back to INFO.
+- `BENNU_LOG_FILE`: the log file path. Set it empty to disable the file. Unset, the services write
+  `/var/log/bennu/<program>.log` and the CLI and test tools write no file:
 
-  | Entry point | Level |
+  | Entry point | File by default |
   |---|---|
-  | `pybennu-test-ep-server`, `pybennu-test-ep-server-helics`, `pybennu-power-daemon` | DEBUG with `-d/--debug`, else INFO |
-  | `pybennu-test-subscriber`, `pybennu-probe`, `pybennu-groundtruth-monitor` | INFO (no flag) |
-  | alicanto | configures DEBUG at import; untouched |
+  | `pybennu-power-solver`, `pybennu-groundtruth-monitor` | on `start`/`restart` |
+  | `pybennu-siren`, `pybennu-alicanto` | always |
+  | `pybennu-probe`, `pybennu-test-ep-server`, `pybennu-test-ep-server-helics`, `pybennu-test-subscriber` | no |
 
-- An application embedding a provider must configure logging itself, or the INFO lines are not shown.
-- `pybennu_test_ep_server.py` still has a few `print()` calls, and the helics test server attaches its own
-  handler to the `helics` logger, so those lines appear twice.
+- Debug switches (`-d`/`-v`, the power-solver config `debug` option, the rtds, opal_rt and helics debug
+  settings) call `enable_debug()`, which re-applies the setup at DEBUG. The level is global.
+- Per-request, per-ACK and per-publish messages: DEBUG. Errors: ERROR or `exception`. Client replies and
+  subscriber updates: INFO.
+- Per-instance loggers bind a context: `logger.bind(ctx="Modbus 10.0.0.1:502")` prints `[Modbus ...]`.
+- Messages use `{}` placeholders. A `%s` in a loguru call prints literally; `tests/test_log.py` fails on
+  one, and on any stdlib module logger or `basicConfig` outside `pybennu/log.py`.
+- Sinks use `diagnose=False`, so tracebacks never print local variables such as credentials.
+- An application that imports pybennu gets no pybennu output until it calls `setup_logging()` or
+  `logger.enable("pybennu")`.
+- CLI output stays on stdout: probe replies, daemon `status`, test-subscriber updates.
 
 ## gobennu
 
