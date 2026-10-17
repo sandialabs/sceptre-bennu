@@ -51,8 +51,29 @@ include(UseGoldLinker)
 include(CpackConfig)
 find_package(Boost REQUIRED filesystem system date_time serialization program_options)
 
-set(ZMQ_DIR ${CMAKE_SOURCE_DIR}/src/deps/zmq)
-set(ZMQ_LIB ${ZMQ_DIR}/lib/libzmq.a)
+include(FetchContent)
+
+# Configure libzmq build options
+set(ENABLE_DRAFTS ON CACHE BOOL "Build draft classes and methods" FORCE)
+set(BUILD_SHARED OFF CACHE BOOL "Build shared library" FORCE)
+set(BUILD_STATIC ON CACHE BOOL "Build static library" FORCE)
+set(BUILD_TESTS OFF CACHE BOOL "Build tests" FORCE)
+set(WITH_DOCS OFF CACHE BOOL "Build documentation" FORCE)
+
+FetchContent_Declare(
+    libzmq
+    GIT_REPOSITORY https://github.com/zeromq/libzmq.git
+    GIT_TAG        v4.3.4
+)
+FetchContent_GetProperties(libzmq)
+if(NOT libzmq_POPULATED)
+  FetchContent_Populate(libzmq)
+  add_subdirectory(${libzmq_SOURCE_DIR} ${libzmq_BINARY_DIR} EXCLUDE_FROM_ALL)
+endif()
+
+# libzmq target exports headers and static lib
+set(ZMQ_LIB libzmq-static)
+set(BUILD_TESTS ON CACHE BOOL "Build tests?" FORCE)
 
 set(bennu_INCLUDES
   ${Boost_INCLUDE_DIRS}
