@@ -1,3 +1,4 @@
+#!/bin/bash
 for filepath in ./*.slx; do
   # set required variables
   #echo $filepath;
@@ -5,13 +6,11 @@ for filepath in ./*.slx; do
   #echo $fullfile;
   filename="${fullfile%.*}";
   #echo $filename;
-  extension="${fullfile##*.}";
-  #echo $extension;
   buildfolder="$filename""_grt_rtw"
   #echo $buildfolder
 
   # rm build folders
-  rm -rf $buildfolder
+  rm -rf "$buildfolder"
   rm -rf slprj
 
   # rm extra files
@@ -24,8 +23,7 @@ for filepath in ./*.slx; do
   fi
 
   # rm binary file
-  if [ -f $filename ]; then
-    rm $filename
+  if [ -f "$filename" ]; then
+    rm "$filename"
   fi
 done;
-

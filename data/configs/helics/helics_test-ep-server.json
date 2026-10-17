@@ -8,7 +8,7 @@
             "key": "helics-simulink-provider/Pump1.active",
             "type": "bool",
             "info": "generator-1_bus-1.active = Pump1.active; load-1_bus-1.active = Pump1.active"
-        },
+        }
     ],
     "publications": [
         {

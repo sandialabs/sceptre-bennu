@@ -1,4 +1,4 @@
-![](./.files/images/sceptre.png)
+![SCEPTRE logo](./.files/images/sceptre.png)
 
 # bennu
 
@@ -27,16 +27,16 @@ docker run -it sceptre-bennu:testing bennu-field-deviced --help
 
 ## Documentation
 
--   [docs/protocol.md](docs/protocol.md): provider/field-device REQ/REP and RADIO/DISH protocol
--   [docs/logging.md](docs/logging.md): log levels for C++, pybennu and gobennu
--   [docs/testing.md](docs/testing.md): ctest, pytest, go test, Docker harness, CI
--   [docs/performance.md](docs/performance.md): 800-tag analysis and throughput numbers
+- [docs/protocol.md](docs/protocol.md): provider/field-device REQ/REP and RADIO/DISH protocol
+- [docs/logging.md](docs/logging.md): log levels for C++, pybennu and gobennu
+- [docs/testing.md](docs/testing.md): ctest, pytest, go test, Docker harness, CI
+- [docs/performance.md](docs/performance.md): 800-tag analysis and throughput numbers
 
 ## Installation (Ubuntu)
 
 ### From source
 
--   Install dependencies
+- Install dependencies
 
     ```sh
     apt-get install --no-install-recommends -y \
@@ -55,7 +55,7 @@ docker run -it sceptre-bennu:testing bennu-field-deviced --help
         libzmq5-dev
     ```
 
--   Build and install bennu
+- Build and install bennu
 
     ```sh
     mkdir build
@@ -65,27 +65,27 @@ docker run -it sceptre-bennu:testing bennu-field-deviced --help
     sudo make install
     ```
 
-    > Note if building behind a proxy server, edit `src/pybennu/Makefile`, uncomment lines 124-126, and add appropriate proxy information.
+  > Note if building behind a proxy server, edit `src/pybennu/Makefile`, uncomment lines 124-126, and add appropriate proxy information.
 
 ### From releases
 
--   Download and install `bennu.deb` from the latest release:
+- Download and install `bennu.deb` from the latest release:
 
     ```sh
     wget https://github.com/sandialabs/sceptre-bennu/releases/latest/download/bennu.deb
     sudo apt install ./bennu.deb
     ```
 
-# pybennu
+## pybennu
 
 Pybennu is a Python library and set of applications for interacting with various simulation providers, hardware-in-the-loop (`pybennu-siren`) and bennu field devices.  
 The pybennu source is under `src/pybennu`.
 
-## Installation (Ubuntu)
+### Installation (Ubuntu)
 
-### From source
+#### From source
 
--   Install dependencies
+- Install dependencies
 
     ```sh
     sudo apt install build-essential cmake git wget python3-dev python3-pip \
@@ -93,7 +93,7 @@ The pybennu source is under `src/pybennu`.
         ninja-build pipx checkinstall
     ```
 
--   Build and install libzmq and helics libraries
+- Build and install libzmq and helics libraries
 
     ```sh
     cd src/pybennu/
@@ -104,9 +104,9 @@ The pybennu source is under `src/pybennu`.
     make helics-install
     ```
 
--   Install pybennu
+- Install pybennu
 
-    > Note that the pybennu installation forces pyzmq and pyhelics to be built from source. This is done so that they are built against the libzmq library with draft support installed above. This also means that the libzmq and helics libraries always need to be installed **before** installing pybennu.
+  > Note that the pybennu installation forces pyzmq and pyhelics to be built from source. This is done so that they are built against the libzmq library with draft support installed above. This also means that the libzmq and helics libraries always need to be installed **before** installing pybennu.
 
     ```sh
     cd src/pybennu
@@ -116,15 +116,15 @@ The pybennu source is under `src/pybennu`.
     pip install .
     ```
 
-### From releases (x86_64 builds only)
+#### From releases (x86_64 builds only)
 
--   Install dependencies
+- Install dependencies
 
     ```sh
     sudo apt install git wget python3-dev python3-pip cmake ninja-build libboost-dev
     ```
 
--   Download and install libzmq and helics builds
+- Download and install libzmq and helics builds
 
     ```sh
     wget https://github.com/sandialabs/sceptre-bennu/releases/latest/download/helics_3.6.1-1_amd64.deb
@@ -133,9 +133,9 @@ The pybennu source is under `src/pybennu`.
     sudo apt install ./helics_3.6.1-1_amd64.deb
     ```
 
--   Download and install the pybennu wheel
+- Download and install the pybennu wheel
 
-    > Note that even the pybennu wheel installation forces pyzmq and pyhelics to be built from source. This is done so that they are built against the libzmq library with draft support installed above. This also means that the libzmq and helics libraries always need to be installed **before** installing pybennu.
+  > Note that even the pybennu wheel installation forces pyzmq and pyhelics to be built from source. This is done so that they are built against the libzmq library with draft support installed above. This also means that the libzmq and helics libraries always need to be installed **before** installing pybennu.
 
     ```sh
     wget https://github.com/sandialabs/sceptre-bennu/releases/latest/download/pybennu-6.0.0-py3-none-any.whl
@@ -145,7 +145,7 @@ The pybennu source is under `src/pybennu`.
     pip install pybennu-6.0.0-py3-none-any.whl
     ```
 
-## Logging
+### Logging
 
 pybennu logs with [loguru](https://github.com/Delgan/loguru) to stderr and to a file.
 
@@ -155,14 +155,15 @@ pybennu logs with [loguru](https://github.com/Delgan/loguru) to stderr and to a 
 Limitations: the file is not rotated, and the log level is global, so the siren per-device `level_name` no longer filters.
 Applications that import pybennu as a library get no pybennu output until they call `pybennu.log.setup_logging()` or `logger.enable("pybennu")`.
 
-## Other helpful pybennu build tools
+### Other helpful pybennu build tools
 
--   Show makefile options
+- Show makefile options
 
     ```sh
     make help
     ```
-    ```
+
+    ```text
     Usage: make <command> [ARGUMENT1=value1] [ARGUMENT2=value2]
 
     Commands:
@@ -194,14 +195,14 @@ Applications that import pybennu as a library get no pybennu output until they c
     clean          # Clean up build and dist files
     ```
 
--   build pybennu wheel
+- build pybennu wheel
 
     ```sh
     # requires pipx
     make dist
     ```
 
--   build wheels for pybennu and all dependencies
+- build wheels for pybennu and all dependencies
 
     ```sh
     # requires pipx

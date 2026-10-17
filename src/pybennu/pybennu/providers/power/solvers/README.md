@@ -2,10 +2,9 @@
 
 The Siren provider was created in order to allow SCEPTRE field devices to receive/send analog
 signals from/to HIL devices without another provider mediating. Thus, the Siren provider itself
-is responsible for getting values from hardware  while publishing these values at the same time. 
+is responsible for getting values from hardware while publishing these values at the same time.
 Likewise, clients can send write requests to the provider for tags mapped to hardware, and the
 Siren provider will write these values to the hardware.
-
 
 ### Usage
 
@@ -23,6 +22,5 @@ Siren provider will write these values to the hardware.
     - `type`: (str) Datatype of the tag. Must be `int`, `float`, or `bool`.
     - `initial_value`: The initial value that provider holds for the tag. Either an integer, float, or boolean.
     - `publish_rms`: (bool) Boolean dictating whether the provider publishes the RMS value of a tag (true)
-       or the raw signal from the hardware (false). Should only be set to true if receiving an AC
-       signal from the hardware. Default: `false`
-
+      or the raw signal from the hardware (false). Should only be set to true if receiving an AC
+      signal from the hardware. Default: `false`
