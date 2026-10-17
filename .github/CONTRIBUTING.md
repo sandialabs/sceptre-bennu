@@ -49,6 +49,16 @@ Thank you for your interest in contributing to SCEPTRE Bennu! We welcome contrib
         git push origin main
         ```
 
+5. **Install the Git Hooks**: Formatting, linting and commit-message checks run through [prek](https://prek.j178.dev) (configured in `prek.toml`), and CI runs the same hooks:
+
+    ```bash
+    uv tool install prek   # or: pip install prek
+    prek install           # pre-commit and commit-msg hooks
+    prek run --all-files   # run every hook by hand
+    ```
+
+   clang-format (`make cpp-check`) and golangci-lint (`make go-check`) are not prek hooks; they run as their own CI jobs.
+
 ## How to Contribute
 
 ### Reporting Issues
@@ -79,6 +89,9 @@ We welcome suggestions for improvements! Please open an issue to discuss your id
     - `refactor`: A code change that neither fixes a bug nor adds a feature
     - `test`: Adding missing tests or correcting existing tests
     - `chore`: Changes to the build process or auxiliary tools and libraries
+    - `ci`: Changes to CI configuration
+    - `build`: Changes to the build system or dependencies
+    - `perf`: A code change that improves performance
 
    Example:
 

@@ -1,0 +1,292 @@
+# Configuration file for `prek`, a git hook framework written in Rust.
+# See https://prek.j178.dev for more information.
+# Install the git hooks: prek install
+# Run manually: prek run --all-files
+#:schema https://www.schemastore.org/prek.json
+#
+# Modeled on sceptre-phenix's prek.toml.
+#
+# Not run here (their own CI jobs in .github/workflows/lint.yml):
+#   - clang-format: legacy C++ is not formatted, so only changed lines are
+#     checked (`make cpp-check`, via git-clang-format). A prek hook would
+#     format whole files and reformat the tree under --all-files.
+#   - golangci-lint: gobennu needs libzmq built with the draft API.
+
+update.cooldown_days = 30
+minimum_prek_version = "0.4.11"
+default_language_version.python = "3.12"
+default_install_hook_types = ["pre-commit", "commit-msg"]
+
+# Vendored and generated code, never linted.
+exclude = '(^src/deps/|^src/pybennu/deps/|/(protocol|cparse|pypmu|swig)/|/bennu-simulink-provider-helics/helics/|(^|/)doctest\.h$)'
+
+# All hooks at the same priority level run *concurrently* (in parallel),
+# and hooks with a lower priority run before hooks with a higher priority.
+# See: https://prek.j178.dev/proposals/concurrency
+#   fixers:   built-in hooks that modify files (line endings, trailing whitespace)
+#   format:   language linters/formatters that modify files (ruff format, rumdl fmt)
+#   lint:     linters that don't modify files, run on the fixed files
+[priorities]
+fixers = 0
+format = 1
+lint = 2
+
+
+# Linting of GitHub Actions workflows for security issues
+# https://docs.zizmor.sh/audits/
+[[repos]]
+repo = "https://github.com/zizmorcore/zizmor-pre-commit"
+rev = "v1.26.1"
+
+[[repos.hooks]]
+id = "zizmor"
+args = [
+  "--no-progress",
+  "--fix"
+]
+
+
+# Spell checking (settings in .codespellrc)
+[[repos]]
+repo = "https://github.com/codespell-project/codespell"
+rev = "v2.4.2"
+
+[[repos.hooks]]
+id = "codespell"
+args = ["--config", ".codespellrc"]
+# codespell's own `skip` doesn't apply to filenames passed on the command line
+exclude = '(^|/)settings_schema/'
+priority = "lint"
+
+
+# Shell: ShellCheck, installed from PyPI so it works in CI without Docker
+[[repos]]
+repo = "https://github.com/shellcheck-py/shellcheck-py"
+rev = "v0.11.0.1"
+
+[[repos.hooks]]
+id = "shellcheck"
+priority = "lint"
+
+
+# Python (src/pybennu): Ruff linting and formatting
+[[repos]]
+repo = "https://github.com/astral-sh/ruff-pre-commit"
+rev = "v0.16.4"
+
+[[repos.hooks]]
+id = "ruff-format"
+files = '^src/pybennu/'
+args = [
+  "--config",
+  "src/pybennu/pyproject.toml"
+]
+priority = "format"
+
+[[repos.hooks]]
+id = "ruff-check"
+files = '^src/pybennu/'
+args = [
+  "--fix",
+  "--config",
+  "src/pybennu/pyproject.toml"
+]
+priority = "lint"
+
+
+# Python (src/pybennu): unused code. Its paths in pyproject.toml are relative
+# to src/pybennu, so it runs there on the whole package.
+[[repos]]
+repo = "local"
+
+[[repos.hooks]]
+id = "vulture"
+name = "vulture"
+language = "python"
+entry = "sh -c 'cd src/pybennu && vulture'"
+additional_dependencies = ["vulture==2.14"]
+files = '^src/pybennu/.*\.py$'
+pass_filenames = false
+priority = "lint"
+
+
+# Markdown linting
+[[repos]]
+repo = "https://github.com/rvben/rumdl-pre-commit"
+rev = "v0.2.58"
+
+[[repos.hooks]]
+id = "rumdl"      # Lint only; add args [--fix] to auto-fix
+args = [
+  "--disable",
+  "MD013,MD033,MD041,MD024",  # MD013: line length, MD033: inline HTML, MD041: first line heading, MD024: multiple headers with the same content
+]
+priority = "format"
+
+[[repos.hooks]]
+id = "rumdl-fmt"  # Pure format, always exits 0
+priority = "format"
+
+
+# Dockerfile: hadolint, installed from PyPI so it works in CI without Docker
+[[repos]]
+repo = "https://github.com/AleksaC/hadolint-py"
+rev = "v2.14.0"
+
+[[repos.hooks]]
+id = "hadolint"
+# DL3059 - Ignore consecutive RUN instructions in Dockerfile
+# DL3008/DL3015 - pinning every apt/apt-get package version is impractical for base images rebuilt regularly
+# DL3013 - same for pip packages
+# DL3003 - `cd` inside a RUN chain is how the source builds are written; WORKDIR would split them
+# DL4001 - the test image uses wget for downloads and curl for the golangci-lint installer
+args = [
+  "--ignore", "DL3059",
+  "--ignore", "DL3008",
+  "--ignore", "DL3015",
+  "--ignore", "DL3013",
+  "--ignore", "DL3003",
+  "--ignore", "DL4001"
+]
+priority = "format"
+
+
+# YAML: yamllint
+[[repos]]
+repo = "https://github.com/adrienverge/yamllint.git"
+rev = "v1.29.0"
+
+[[repos.hooks]]
+id = "yamllint"
+args = [
+  "--strict",
+  "--config-file=.yamllint.yml"
+]
+priority = "lint"
+
+
+# Enforce conventional commit messages
+[[repos]]
+repo = "https://github.com/compilerla/conventional-pre-commit"
+rev = "v4.4.0"
+
+[[repos.hooks]]
+id = "conventional-pre-commit"
+stages = ["commit-msg"]
+args = [
+  "feat",
+  "fix",
+  "docs",
+  "style",
+  "refactor",
+  "test",
+  "chore",
+  "ci",
+  "build",
+  "perf"
+]
+priority = "format"
+
+
+# General checks built into prek
+[[repos]]
+repo = "builtin"
+
+# The whitespace fixers skip C/C++: legacy sources aren't clean, and
+# touching them wholesale is what cpp-check avoids.
+[[repos.hooks]]
+id = "trailing-whitespace"
+args = ["--markdown-linebreak-ext=md"]
+types_or = [
+  "python",
+  "go",
+  "markdown",
+  "yaml",
+  "json",
+  "toml",
+  "shell",
+  "dockerfile"
+]
+priority = "fixers"
+
+[[repos.hooks]]
+id = "check-added-large-files"
+priority = "format"
+
+[[repos.hooks]]
+id = "check-case-conflict"
+priority = "format"
+
+[[repos.hooks]]
+id = "check-illegal-windows-names"
+priority = "format"
+
+[[repos.hooks]]
+id = "end-of-file-fixer"
+types_or = [
+  "python",
+  "go",
+  "markdown",
+  "yaml",
+  "toml",
+  "shell",
+  "dockerfile"
+]
+priority = "fixers"
+
+[[repos.hooks]]
+id = "fix-byte-order-marker"
+priority = "fixers"
+
+[[repos.hooks]]
+id = "check-yaml"
+priority = "format"
+
+[[repos.hooks]]
+id = "check-json"
+priority = "format"
+
+[[repos.hooks]]
+id = "check-merge-conflict"
+priority = "format"
+
+[[repos.hooks]]
+id = "check-executables-have-shebangs"
+priority = "format"
+
+[[repos.hooks]]
+id = "check-shebang-scripts-are-executable"
+priority = "format"
+
+[[repos.hooks]]
+id = "check-symlinks"
+priority = "format"
+
+[[repos.hooks]]
+id = "check-toml"
+priority = "format"
+
+[[repos.hooks]]
+id = "mixed-line-ending"
+args = ["--fix=no"]
+priority = "fixers"
+
+[[repos.hooks]]
+id = "check-vcs-permalinks"
+description = "Ensures that links to vcs websites are permalinks"
+priority = "format"
+
+[[repos.hooks]]
+id = "no-commit-to-branch"
+name = "branch name validation"
+description = "Prevent committing to 'main', 'master', or any branch with characters other than letters, numbers, hyphens and slashes"
+# Unlike phenix, allows `/`: CONTRIBUTING.md documents `type/description` branch names.
+args = [
+  "--branch",
+  "main",
+  "--branch",
+  "master",
+  "--pattern",
+  '.*[^\w/-].*'
+]
+priority = "format"
