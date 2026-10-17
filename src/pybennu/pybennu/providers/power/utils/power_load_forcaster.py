@@ -5,10 +5,12 @@ import sys
 import time
 
 from ConfigParser import ConfigParser
+from loguru import logger
 
 from pybennu.base.power.protobuf import PowerSystem
 from pybennu.base.scripts import argparse
 from pybennu.base.scripts.daemon import Daemon
+from pybennu.log import setup_logging
 from pybennu.services.majordomo.mdcliapi import MajorDomoClient
 from pybennu.services.rpc.protobuf import Request
 
@@ -27,9 +29,9 @@ class ServerDaemon(Daemon):
             if os.path.exists(config_file):
                 self.config_file = os.path.abspath(config_file)
             else:
-                print(
-                    "\nThe file %s does not exist - please provide a valid config file.\n"
-                    % (config_file)
+                logger.error(
+                    "The file {} does not exist - please provide a valid config file.",
+                    config_file,
                 )
                 sys.exit(-1)
 
@@ -42,7 +44,7 @@ class ServerDaemon(Daemon):
         )
 
     def run(self):
-        print("\nStarting power load forecasting service...\n")
+        logger.info("Starting power load forecasting service...")
 
         config = ConfigParser()
         config.read(self.config_file)
@@ -79,7 +81,7 @@ class ServerDaemon(Daemon):
                 system.ParseFromString(f.read())
 
         def handle_exit(signum, stack):
-            print("\nStopping power load forecasting service...\n")
+            logger.info("Stopping power load forecasting service...")
             self.running = False
 
         signal.signal(signal.SIGINT, handle_exit)
@@ -96,7 +98,7 @@ class ServerDaemon(Daemon):
             if last_forecast + delay < time.time():
                 forecast = random.randint(min_forecast, max_forecast) / 100.0
 
-                print("About to forecast loads at %f percent..." % (forecast))
+                logger.info("About to forecast loads at {} percent...", forecast)
 
                 updated = PowerSystem()
                 updated.name = system.name
@@ -112,19 +114,19 @@ class ServerDaemon(Daemon):
                 request.data = updated.SerializeToString()
 
                 if client.send("power-solver", request.SerializeToString()) is None:
-                    print("Received invalid reply from broker... exiting")
+                    logger.error("Received invalid reply from broker... exiting")
                     self.running = False
                 else:
-                    print("Forecasted load in power system...")
+                    logger.info("Forecasted load in power system...")
 
                 last_forecast = time.time()
                 delay = random.randint(min_sleep, max_sleep)
 
-                print("Sleeping for %i seconds in load forecaster..." % (delay))
+                logger.info("Sleeping for {} seconds in load forecaster...", delay)
             elif last_jitter + jitter_time < time.time():
                 current_jitter = random.randint(jitter * -1, jitter) / 100.0
 
-                print("About to jitter loads by %f percent..." % (current_jitter))
+                logger.info("About to jitter loads by {} percent...", current_jitter)
 
                 updated = PowerSystem()
                 updated.name = system.name
@@ -140,10 +142,10 @@ class ServerDaemon(Daemon):
                 request.data = updated.SerializeToString()
 
                 if client.send("power-solver", request.SerializeToString()) is None:
-                    print("Received invalid reply from broker... exiting")
+                    logger.error("Received invalid reply from broker... exiting")
                     self.running = False
                 else:
-                    print("Jittered load in power system...")
+                    logger.info("Jittered load in power system...")
 
                 last_jitter = time.time()
 
@@ -180,6 +182,7 @@ def server():
     )
 
     args = parser.parse_args()
+    setup_logging("pybennu-power-load-forecaster", debug=False)
 
     handle = ServerDaemon(args)
     if args.operation == "start":
@@ -187,16 +190,16 @@ def server():
             handle.start()
             pid = handle.get_pid()
             if not pid:
-                print("Unable to start as a daemon")
+                logger.error("Unable to start as a daemon")
         else:
             handle.run()
     elif args.operation == "stop":
         handle.stop()
     elif args.operation == "restart":
-        print("Restarting daemon")
+        logger.info("Restarting daemon")
         pid = handle.get_pid()
         if not pid:
-            print("Daemon is not already running - cannot restart")
+            logger.error("Daemon is not already running - cannot restart")
         else:
             handle.restart()
     elif args.operation == "status":

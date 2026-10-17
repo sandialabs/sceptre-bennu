@@ -7,8 +7,6 @@ Documentation: https://sandialabs.github.io/sceptre-docs/13-providers.html
 from __future__ import annotations
 
 import json
-import logging
-import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,10 +14,12 @@ from queue import Queue
 from threading import Lock, Thread
 from typing import Any
 
+from loguru import logger
 from pymodbus.exceptions import ConnectionException, ModbusException
 
 from pybennu.distributed.provider import Provider
 from pybennu.elastic import ElasticPusher
+from pybennu.log import enable_debug
 from pybennu.modbus import ModbusWrapper
 from pybennu.pmu_wrapper import PMU
 from pybennu.settings import ModbusRegister, PybennuSettings
@@ -63,16 +63,9 @@ class OPALRT(Provider):
         self.__time_map_lock: Lock = Lock()
         self.time_map: dict[int, datetime] = {}
 
-        # Configure logging to stdout (includes debug messages from pypmu)
-        logging.basicConfig(
-            level=logging.DEBUG if self.conf.debug else logging.INFO,
-            format="%(asctime)s.%(msecs)03d [%(levelname)s] (%(name)s) %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-            stream=sys.stdout,
-        )
-
-        self.log: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self.log.setLevel(logging.DEBUG if self.conf.debug else logging.INFO)
+        self.log = logger
+        if self.conf.debug:
+            enable_debug()
 
         # Elasticsearch setup
         self.es: ElasticPusher | None = None

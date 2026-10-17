@@ -32,7 +32,7 @@ numbers in `performance.md`.
 
 ## pybennu (pytest)
 
-    cd src/pybennu && pip install pytest pyzmq && pytest tests
+    cd src/pybennu && pip install pytest pyzmq "loguru>=0.7,<1" && pytest tests
 
 `tests/` covers chunking (`chunk_message`, 800 tags, trailing comma or not, each chunk under the MTU) and
 the provider message handler (QUERY/READ/WRITE parsing via a stub subclass). They avoid the swig/helics

@@ -7,6 +7,9 @@ on:
   push:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   build-bennu:
     # Builds debs for the ubuntu:22.04 images, so it stays on 22.04. On 24.04,
@@ -15,6 +18,8 @@ jobs:
     steps:
       - name: checkout the repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: Install build dependencies
         run: |
           sudo apt-get update
@@ -102,6 +107,8 @@ jobs:
     steps:
       - name: checkout the repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: install build dependencies
         run: |
           sudo apt update
@@ -141,6 +148,8 @@ jobs:
     steps:
       - name: checkout the repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: install build dependencies
         run: |
           sudo apt update
@@ -152,7 +161,7 @@ jobs:
           make dist
       - name: run pybennu unit tests
         run: |
-          python3 -m pip install --break-system-packages pytest pyzmq
+          python3 -m pip install --break-system-packages pytest pyzmq "loguru>=0.7,<1"
           PYTHONPATH=src/pybennu python3 -m pytest src/pybennu/tests
       - name: upload wheel
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -166,6 +175,8 @@ jobs:
     steps:
       - name: checkout the repo
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
       - name: install build dependencies
         run: |
           sudo apt-get update
@@ -224,7 +235,7 @@ jobs:
         run: |
           ls -lh ./artifacts
       - uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1.21.0
-        with:
+        with: # zizmor: ignore[superfluous-actions]
           artifacts: "./artifacts/*"
           tag: release-${{ steps.date.outputs.date }}-${{ env.GITHUB_SHA_SHORT }}
           commit: ${{ env.GITHUB_SHA }}

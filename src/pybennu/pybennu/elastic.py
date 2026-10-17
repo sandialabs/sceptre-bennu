@@ -8,6 +8,7 @@ from pprint import pformat
 from threading import Thread
 
 from elasticsearch import Elasticsearch, helpers
+from loguru import logger
 
 from pybennu.settings import PybennuSettings
 from pybennu.utils import get_bennu_version, utc_now
@@ -135,13 +136,7 @@ class ElasticPusher:
         logging.getLogger("urllib3.connectionpool").setLevel(logging.WARNING)
 
         # Configure logging
-        self.log: logging.Logger = logging.getLogger(
-            f"Elastic [{self.conf.elastic.host}]"
-        )
-        if self.conf.debug:
-            self.log.setLevel(logging.DEBUG)
-        else:
-            self.log.setLevel(logging.INFO)
+        self.log = logger.bind(ctx=f"Elastic {self.conf.elastic.host}")
 
         # Only need to create these fields once, cache and copy into messages
         self.msg_additions: dict = {

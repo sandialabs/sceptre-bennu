@@ -18,24 +18,24 @@ RUN apt-get update \
 
 # setup ZMQ
 ENV ZMQ_VERSION 4.3.4
-RUN wget -O zmq.tgz https://github.com/zeromq/libzmq/releases/download/v${ZMQ_VERSION}/zeromq-${ZMQ_VERSION}.tar.gz \
+RUN wget -qO zmq.tgz https://github.com/zeromq/libzmq/releases/download/v${ZMQ_VERSION}/zeromq-${ZMQ_VERSION}.tar.gz \
   && mkdir -p /tmp/zmq \
   && tar -C /tmp/zmq -xvzf zmq.tgz \
   && rm zmq.tgz \
   && cd /tmp/zmq/zeromq-${ZMQ_VERSION} \
   && ./configure --prefix=/usr/local --enable-drafts \
-  && make -j$(nproc) \
+  && make -j"$(nproc)" \
   && make install
 
 # setup Helics (needed for pybennu)
 ENV HELICS_VERSION 3.6.1
-RUN wget -O helics.tgz https://github.com/GMLC-TDC/HELICS/releases/download/v${HELICS_VERSION}/Helics-v${HELICS_VERSION}-source.tar.gz \
+RUN wget -qO helics.tgz https://github.com/GMLC-TDC/HELICS/releases/download/v${HELICS_VERSION}/Helics-v${HELICS_VERSION}-source.tar.gz \
   && mkdir -p /tmp/helics \
   && tar -C /tmp/helics -xzf helics.tgz \
   && rm helics.tgz \
   && mkdir -p /tmp/helics/build && cd /tmp/helics/build \
   && cmake -D HELICS_USE_SYSTEM_ZEROMQ_ONLY=ON .. \
-  && make -j$(nproc) install
+  && make -j"$(nproc)" install
 
 
 # RUN wget -O pyhelics.tgz https://github.com/GMLC-TDC/pyhelics/releases/download/v${HELICS_VERSION}/helics-${HELICS_VERSION}.tar.gz \
@@ -52,7 +52,7 @@ RUN wget -O helics.tgz https://github.com/GMLC-TDC/HELICS/releases/download/v${H
 #RUN python3 -m pip install .
 
 # install Python bennu package
-ADD src/pybennu /tmp/bennu/src/pybennu
+COPY src/pybennu /tmp/bennu/src/pybennu
 WORKDIR /tmp/bennu/src/pybennu
 RUN pipx run uv pip install --no-cache --system-certs --system .
 
@@ -101,12 +101,12 @@ RUN rm -f /usr/local/bin/dotenv \
 RUN python3 -m pip install --no-cache-dir --upgrade aptly-ctl pip setuptools twine wheel
 
 # copy over bennu source code
-ADD cmake          /tmp/bennu/cmake
-ADD CMakeLists.txt /tmp/bennu/CMakeLists.txt
-ADD src/bennu      /tmp/bennu/src/bennu
-ADD src/deps       /tmp/bennu/src/deps
+COPY cmake          /tmp/bennu/cmake
+COPY CMakeLists.txt /tmp/bennu/CMakeLists.txt
+COPY src/bennu      /tmp/bennu/src/bennu
+COPY src/deps       /tmp/bennu/src/deps
 #ADD src/gobennu    /tmp/bennu/src/gobennu
-ADD test           /tmp/bennu/test
+COPY test           /tmp/bennu/test
 
 #set necessary vars
 #ENV GOPROXY "http://proxy.golang.org"
@@ -117,8 +117,8 @@ ADD test           /tmp/bennu/test
 # install C++ and Golang bennu package
 WORKDIR /tmp/bennu/build
 RUN cmake -D BUILD_GOBENNU=OFF ../ \
-  && make -j$(nproc) install \
+  && make -j"$(nproc)" install \
   && rm -rf /tmp/*
 
 WORKDIR /root
-CMD /bin/bash
+CMD ["/bin/bash"]

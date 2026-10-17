@@ -32,8 +32,11 @@ import sys
 import threading
 import time
 
+from loguru import logger
+
 import pybennu.distributed.swig._Endpoint as E
 from pybennu.distributed.provider import Provider
+from pybennu.log import setup_logging
 from pybennu.providers.power.solvers.pwds.mock_api import PWDSAPI as MOCK_PWDSAPI
 from pybennu.providers.power.solvers.pwds.pwds_api import PWDSAPI
 
@@ -70,9 +73,9 @@ class PowerWorldDynamics(Provider):
                 self.dictionary = self.api.get_system_dictionary()
                 break
             except Exception as ex:
-                print(f"Unable to connect to PWDS API on {pwds_endpoint}.")
-                print(f"Trying again in {sleep_seconds} seconds...")
-                print(f"Exception was: {ex}")
+                logger.warning(f"Unable to connect to PWDS API on {pwds_endpoint}.")
+                logger.warning(f"Trying again in {sleep_seconds} seconds...")
+                logger.warning(f"Exception was: {ex}")
 
                 time.sleep(sleep_seconds)
 
@@ -270,7 +273,7 @@ class PowerWorldDynamics(Provider):
     def periodic_publish(self):
         while True:
             if self.__debug:
-                print("Periodically publishing data")
+                logger.debug("Periodically publishing data")
 
             self.__publish_data()
             time.sleep(2)
@@ -280,14 +283,14 @@ class PowerWorldDynamics(Provider):
             msg = self.get_publish_message()
 
             if self.__debug:
-                print(msg)
+                logger.debug(msg)
 
             self.publish(msg)
 
     # Must return 'ACK=tag1,tag2,...' or 'ERR=<error message>'
     def query(self):
         if self.__debug:
-            print("PowerWorldDynamics::query ---- received query request")
+            logger.debug("PowerWorldDynamics::query ---- received query request")
 
         result = "ACK="
         for t in self.tags:
@@ -298,7 +301,7 @@ class PowerWorldDynamics(Provider):
     # Must return 'ACK=<value>' or 'ERR=<error message>'
     def read(self, tag):
         if self.__debug:
-            print("PowerWorldDynamics::read ---- received read for tag %s" % tag)
+            logger.debug("PowerWorldDynamics::read ---- received read for tag {}", tag)
 
         with self.__lock:
             if tag in self.tags:
@@ -358,9 +361,10 @@ class PowerWorldDynamics(Provider):
         with self.__lock:
             for tag, value in tags.items():
                 if self.__debug:
-                    print(
-                        "PowerWorldDynamics::write ---- received write for tag %s -- %s"
-                        % (tag, value)
+                    logger.debug(
+                        "PowerWorldDynamics::write ---- received write for tag {} -- {}",
+                        tag,
+                        value,
                     )
 
                 if tag in self.tags:
@@ -460,6 +464,8 @@ if __name__ == "__main__":
         )
 
         args = parser.parse_args()
+
+        setup_logging("power-world-dynamics", debug=args.debug, file_by_default=False)
 
         server_endpoint = E.new_Endpoint()
         publish_endpoint = E.new_Endpoint()

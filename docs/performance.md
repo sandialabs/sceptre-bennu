@@ -71,7 +71,7 @@ work per cycle for 800 tags.
 
 Commands:
 
-```
+```text
 THROUGHPUT_TAGS=800 THROUGHPUT_CYCLE_MS=1000 docker/test/run.sh throughput
 git worktree add <dir> <commit-before-batching>
 docker/test/run.sh -s <dir> -v bennu-before build throughput

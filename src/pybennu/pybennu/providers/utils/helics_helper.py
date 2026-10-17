@@ -1,16 +1,14 @@
 """HELICS helper class"""
 
 import json
-import logging
 import signal
 import sys
 from distutils.util import strtobool
 
 import helics as h
+from loguru import logger
 from py_expression_eval import Parser
 
-logger = logging.getLogger("helics")
-logger.setLevel(logging.INFO)
 logger.info(f"Initializing helics version: {h.helicsGetVersion()}")
 
 
@@ -217,5 +215,5 @@ class HelicsFederate:
         sys.exit()
 
     def ctrl_exit_handler(self, signal, frame):
-        print("SIGINT or CTRL-C detected. Exiting gracefully")
+        logger.info("SIGINT or CTRL-C detected. Exiting gracefully")
         self.destroy_federate()

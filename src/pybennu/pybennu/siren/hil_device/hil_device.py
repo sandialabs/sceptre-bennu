@@ -1,16 +1,7 @@
-#!/usr/bin/python3
 import abc
 import enum
-import logging
 
-LEVELS = {
-    "debug": logging.DEBUG,  # 10
-    "info": logging.INFO,  # 20
-    "warning": logging.WARNING,  # 30
-    "filter": 31,
-    "error": logging.ERROR,  # 40
-    "critical": logging.CRITICAL,  # 50
-}
+from loguru import logger
 
 
 class HIL_Device(abc.ABC):
@@ -23,9 +14,8 @@ class HIL_Device(abc.ABC):
         raise NotImplementedError
 
     def setup_logger(self, level_name):
-        self.logger = logging.getLogger(self.device_name)
-        level = LEVELS.get(level_name, logging.NOTSET)
-        self.logger.setLevel(level)
+        # Level is global (set by setup_logging); level_name no longer filters.
+        self.logger = logger.bind(ctx=self.device_name)
 
     @abc.abstractmethod
     def config_to_analog(self, *args):

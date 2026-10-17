@@ -1,6 +1,4 @@
-#!/usr/bin/python3
 import json
-import logging
 import re
 import sys
 import threading
@@ -8,8 +6,15 @@ import time
 from math import atan
 
 import serial
+from loguru import logger
 
 from pybennu.siren.hil_device.hil_device import HIL_Device
+
+# Custom level between WARNING (30) and ERROR (40), previously stdlib level 31.
+try:
+    logger.level("FILTER", no=31, color="<yellow>")
+except ValueError:
+    pass  # already registered
 
 
 class SELAMS(HIL_Device):
@@ -499,7 +504,7 @@ class SELAMS(HIL_Device):
             self.max_input_current == None
         ):  # There is a max output current but no max input current so cannot scale, but will clip the current
             self.logger.log(
-                31,
+                "FILTER",
                 f"Current of {current} is above the max allowed ({self.max_output_current}A) (Device: {device_id})",
             )
             result = self.max_current
@@ -508,12 +513,13 @@ class SELAMS(HIL_Device):
                 current, 0, self.max_input_current, 0, self.max_output_current
             )
             self.logger.log(
-                31,
+                "FILTER",
                 f"Current of {current} will be scaled to {result} (Device: {device_id})",
             )
         elif current < 0:
-            self.logger.filter(
-                f"Current of {current} is below 0, setting to 0. (Device: {device_id})"
+            self.logger.log(
+                "FILTER",
+                f"Current of {current} is below 0, setting to 0. (Device: {device_id})",
             )
             current = 0
 
@@ -636,7 +642,7 @@ class SELAMS(HIL_Device):
     class Branch:
         def __init__(self, id, channels, scale):
             self.id = id
-            self.logger = logging.getLogger(__class__.__name__)
+            self.logger = logger
 
             self.channels = channels
             self.frequency = 60.0
@@ -722,7 +728,7 @@ class SELAMS(HIL_Device):
     class Bus:
         def __init__(self, id, channels, scale):
             self.id = id
-            self.logger = logging.getLogger(__class__.__name__)
+            self.logger = logger
 
             self.channels = channels
             self.frequency = 60.0

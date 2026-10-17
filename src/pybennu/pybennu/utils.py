@@ -3,7 +3,6 @@ Shared utility functions used throughout pybennu.
 """
 
 import atexit
-import logging
 import os
 import platform
 import re
@@ -11,6 +10,8 @@ from datetime import datetime, timezone
 from io import TextIOWrapper
 from pathlib import Path
 from subprocess import check_output
+
+from loguru import logger
 
 BENNU_VERSION = None
 
@@ -75,7 +76,7 @@ def get_bennu_version() -> str:
 
             BENNU_VERSION = re.search(r"Version: ([\w\.]+)\s", apt_result).groups()[0]
         except Exception as ex:
-            print(f"Failed to get bennu version: {ex}", flush=True)
+            logger.warning(f"Failed to get bennu version: {ex}")
             BENNU_VERSION = "unknown-version-failed-check"
     else:
         BENNU_VERSION = "unknown-version-non-linux"
@@ -108,10 +109,7 @@ class RotatingCSVWriter:
         self.current_path: Path | None = None
         self.fp: TextIOWrapper | None = None
 
-        self.log: logging.Logger = logging.getLogger(
-            f"{self.__class__.__name__} [{self.name}]"
-        )
-        self.log.setLevel(logging.DEBUG)
+        self.log = logger.bind(ctx=f"{self.__class__.__name__} {self.name}")
 
         if not self.csv_dir.exists():
             self.csv_dir.mkdir(parents=True, exist_ok=True, mode=0o666)  # rw-rw-rw-

@@ -2,6 +2,7 @@ import atexit
 import logging
 import time
 
+from loguru import logger
 from pymodbus import pymodbus_apply_logging_config
 from pymodbus.client import ModbusTcpClient
 from pymodbus.exceptions import ModbusException
@@ -31,9 +32,7 @@ class ModbusWrapper:
         # DEBUG level for pymodbus outputs for EVERY request, only use
         # if you're debugging a really hairy Modbus issue.
         # Otherwise, we set WARNING+ normally, and INFO+ if debug is set.
-        # This must be called because logging basicConfig() in the provider
-        # will result in the pymodbus logger also getting configured, and
-        # it defaults to DEBUG level.
+        # This must be called because pymodbus defaults to DEBUG level.
         if self.debug:
             pymodbus_apply_logging_config(logging.INFO)
         else:
@@ -48,8 +47,7 @@ class ModbusWrapper:
         atexit.register(self.client.close)
 
         # Configure logging
-        self.log: logging.Logger = logging.getLogger(f"Modbus [{self!s}]")
-        self.log.setLevel(logging.DEBUG if self.debug else logging.INFO)
+        self.log = logger.bind(ctx=f"Modbus {self!s}")
         self.log.info(f"Initialized {self!r}")
 
     def __repr__(self) -> str:

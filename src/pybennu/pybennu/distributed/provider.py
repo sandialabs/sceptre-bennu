@@ -5,14 +5,13 @@ This module defines the pybennu Provider base class. It is the interface which
 all providers will implement.
 """
 
-import logging
 import threading
 from abc import ABC, abstractmethod
 
+from loguru import logger
+
 import pybennu.distributed.publisher as publisher
 import pybennu.distributed.server as server
-
-logger = logging.getLogger(__name__)
 
 
 class Provider(ABC):
@@ -98,7 +97,7 @@ class Provider(ABC):
             return "ERR=Invalid message request"
 
         op, _, payload = message.partition("=")
-        logger.debug("Received %s request with payload %s", op, payload)
+        logger.debug("Received {} request with payload {}", op, payload)
 
         reply = ""
         if op == "QUERY" or op == "query":
@@ -117,5 +116,5 @@ class Provider(ABC):
         else:
             reply += f"ERR=Unknown command type '{op}'"
 
-        logger.debug("Sending reply for payload %s -- %s", payload, reply)
+        logger.debug("Sending reply for payload {} -- {}", payload, reply)
         return reply
