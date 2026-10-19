@@ -24,8 +24,7 @@ public:
 private:
     zmq::socket_t mSocket;
     std::string mGroup;
-    uint mMTU;
-
+    size_t mMaxBody; // datagram body bytes, NUL included, that fit the link MTU
 };
 
 } // namespace distributed

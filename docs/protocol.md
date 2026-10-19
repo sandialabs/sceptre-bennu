@@ -65,10 +65,19 @@ null-terminated body, sent to a RADIO group.
   should come from the same libstdc++.
 - Chunking: a message longer than the MTU is split on commas into chunks, each made of whole `tag:value,`
   parts. A part is never cut. Empty parts are skipped. A single part larger than the MTU goes out alone.
-  Chunk size is held strictly under the MTU (`chunk + next part >= mtu` starts a new chunk).
-  - C++ `Publisher`: `mMTU = 1500` (`distributed::chunkMessage`).
-  - Python `Publisher`: `MTU = 1465` (`pybennu.distributed.utils.chunk_message`).
-  - The two defaults differ. Python leaves more headroom for RADIO framing and the null byte.
+  Chunk size is held strictly under the limit (`chunk + next part >= limit` starts a new chunk).
+- Datagram size: libzmq sends a RADIO message over UDP as `[group length (1 B)][group][body]`, inside 28 B
+  of IPv4 and UDP headers. Both publishers size the body so the whole packet fits the link MTU, because a
+  larger datagram is IP-fragmented and losing either fragment loses it.
+  - Link MTU: env `BENNU_PUBLISH_MTU`, default `1500`. Set it lower when the path is smaller, for example
+    `1450` across a VXLAN overlay. It must be an integer from 576 to 8220 (libzmq caps a UDP message at
+    8192 B), or the publisher fails to start.
+  - Body limit: `MTU - 28 - 1 - len(group)`, 1456 B for the usual 15-character group. The C++ body includes
+    its null byte; the Python body has none.
+  - C++ `Publisher` (`distributed::publishBodyLimit`, `publishLinkMtu`) and Python `Publisher`
+    (`pybennu.distributed.utils.publish_body_limit`, `publish_link_mtu`) share the rule.
+  - Before this, C++ split at 1500 (up to 1516 B datagrams) and Python at 1465 (up to 1480 B), so every full
+    chunk fragmented on a 1500 B link.
 - Fixed bug: the old splitter dropped the final tag when the message had no trailing comma and exceeded
   the MTU (799 of 800 tags delivered in simulation). It affected the helics, rtds, opal_rt and siren
   providers. Both implementations now deliver every tag.
