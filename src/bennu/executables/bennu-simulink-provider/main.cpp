@@ -4,6 +4,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/fcntl.h>
+#include <cerrno>
+#include <cstring>
 #include <iomanip>
 #include <iostream>
 #include <mutex>
@@ -30,6 +32,9 @@ const unsigned int PUBLISH_POINTS_SHM_KEY{10613};
 
 /* fifo queue for UpdatePoints messages */
 static const char* UPDATES_FIFO = "/tmp/updates_fifo";
+/* The solver drains the FIFO once per step, so it must hold a full batch of
+ * MAX_MSG_LEN records (default 64 KiB pipe = 256 records). 1 MiB = 4096. */
+static const int UPDATES_FIFO_SIZE = 1 << 20;
 
 /* provider <-> solver sync */
 const unsigned int MAX_MSG_LEN{256};
@@ -173,6 +178,14 @@ public:
             std::cout << "Fatal: Unable to open UpdatePoints FIFO  at " << UPDATES_FIFO << " for non-blocked writing" << std::endl;
             exit(EXIT_ERROR);
         }
+
+        int fifoSize = fcntl(mUpdatesFifo, F_SETPIPE_SZ, UPDATES_FIFO_SIZE);
+        if (fifoSize < UPDATES_FIFO_SIZE)
+        {
+            std::cout << "Fatal: Unable to size UpdatePoints FIFO: requested " << UPDATES_FIFO_SIZE << " bytes, granted "
+                      << fifoSize << " (" << std::strerror(errno) << "); check /proc/sys/fs/pipe-max-size" << std::endl;
+            exit(EXIT_ERROR);
+        }
     }
 
     // Must return "ACK=tag1,tag2,..." or "ERR=<error message>"
@@ -245,6 +258,7 @@ public:
     {
         std::string result;
 
+        size_t pending = 0;
         sem_wait(mUpdatesSemaphore);
         for (auto& it : tags)
         {
@@ -282,7 +296,13 @@ public:
 
             // write to updatesFifo - need to check appropriate return values to make sure it gets written
             int bytes = ::write(mUpdatesFifo, newDto, MAX_MSG_LEN); // Need :: here so we don't conflict with the write() provider method
-            if (bytes < 0)
+            if (bytes < 0 && errno == EAGAIN)
+            {
+                std::cout << "Error: UpdatePoints FIFO full writing tag " << tag << " (record " << pending + 1 << " of this batch)" << std::endl;
+                result += "ERR=UpdatePoints FIFO full at tag " + tag + " after " + std::to_string(pending) + " pending records";
+                break;
+            }
+            else if (bytes < 0)
             {
                 std::cout << "Error: Problem sending update message to FIFO" << std::endl;
                 std::cout << "\tMsg: " << newDto << std::endl;
@@ -296,6 +316,7 @@ public:
                 result += "ERR=Nothing was written to the simulink provider";
                 break;
             }
+            pending++;
         }
         sem_post(mUpdatesSemaphore);
 
