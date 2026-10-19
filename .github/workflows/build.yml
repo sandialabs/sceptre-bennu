@@ -209,24 +209,62 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: rlespinasse/github-slug-action@0e3299190dac9a700da92a90de4556116ea965ed # v5.7.1
-        with:
-          short-length: 7
-      - name: Get current date
-        id: date
-        run: echo "date=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+      - name: Determine release tag
+        id: tag
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          TARGET: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          TAG_BASE=$(date +'v%Y.%m.%d')
+          TAG="$TAG_BASE"
+          INCREMENT=1
+
+          while gh release view "$TAG" --repo "$REPO" >/dev/null 2>&1 || gh api "repos/${REPO}/git/ref/tags/${TAG}" --silent 2>/dev/null; do
+            TAG_SHA=$(gh api "repos/${REPO}/commits/${TAG}" --jq .sha 2>/dev/null || true)
+            if [ "$TAG_SHA" = "$TARGET" ]; then
+              echo "Commit ${TARGET} is already released as ${TAG}."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            TAG="${TAG_BASE}.${INCREMENT}"
+            INCREMENT=$((INCREMENT + 1))
+          done
+
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
       - name: get artifacts
+        if: steps.tag.outputs.skip != 'true'
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           path: ./artifacts
           merge-multiple: true
+
       - name: show artifacts
+        if: steps.tag.outputs.skip != 'true'
         run: |
           ls -lh ./artifacts
-      - uses: ncipollo/release-action@339a81892b84b4eeb0f6e744e4574d79d0d9b8dd # v1.21.0
-        with:
-          artifacts: "./artifacts/*"
-          tag: release-${{ steps.date.outputs.date }}-${{ env.GITHUB_SHA_SHORT }}
-          commit: ${{ env.GITHUB_SHA }}
-          generateReleaseNotes: true
-          makeLatest: true
+
+      - name: create release
+        if: steps.tag.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.tag.outputs.tag }}
+          REPO: ${{ github.repository }}
+          TARGET: ${{ github.sha }}
+        run: |
+          # Create as draft first so all assets are attached before publication (required for immutable releases)
+          gh release create "$VERSION" ./artifacts/* \
+            --repo "$REPO" \
+            --title "$VERSION" \
+            --generate-notes \
+            --target "$TARGET" \
+            --draft
+
+          # Publish the release and mark it latest
+          gh release edit "$VERSION" \
+            --repo "$REPO" \
+            --draft=false \
+            --latest
