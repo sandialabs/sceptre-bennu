@@ -1,6 +1,8 @@
 #include "doctest.h"
 
+#include <cstdlib>
 #include <set>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -9,6 +11,8 @@
 
 using bennu::distributed::chunkMessage;
 using bennu::distributed::Client;
+using bennu::distributed::publishBodyLimit;
+using bennu::distributed::publishLinkMtu;
 using bennu::distributed::split;
 
 static std::string tags(int n, bool trailingComma)
@@ -97,4 +101,31 @@ TEST_CASE("split without delimiter yields one element, so .at(1) throws")
     auto parts = split("QUERY", "=");
     REQUIRE(parts.size() == 1);
     CHECK_THROWS_AS(parts.at(1), std::out_of_range);
+}
+
+TEST_CASE("publish datagrams fit the link MTU")
+{
+    // 15-char group, as Endpoint::hash() gives: 1 + 15 + body (NUL included) must fit 1500 - 28
+    const size_t limit = publishBodyLimit(1500, 15);
+    CHECK(limit == 1456);
+    auto chunks = chunkMessage(tags(800, true), limit);
+    CHECK(delivered(chunks).size() == 800);
+    for (auto& c : chunks)
+    {
+        CHECK(1 + 15 + c.length() + 1 <= 1472);
+    }
+}
+
+TEST_CASE("BENNU_PUBLISH_MTU sets the link MTU")
+{
+    unsetenv("BENNU_PUBLISH_MTU");
+    CHECK(publishLinkMtu() == 1500);
+    setenv("BENNU_PUBLISH_MTU", "1450", 1);
+    CHECK(publishLinkMtu() == 1450);
+    for (const char* bad : {"abc", "-1", "1450.5", "575", "8221", "1500x", " 1500", "+1500"})
+    {
+        setenv("BENNU_PUBLISH_MTU", bad, 1);
+        CHECK_THROWS_AS(publishLinkMtu(), std::invalid_argument);
+    }
+    unsetenv("BENNU_PUBLISH_MTU");
 }

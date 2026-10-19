@@ -9,7 +9,7 @@ namespace distributed {
 Publisher::Publisher(const Endpoint& endpoint) :
     mSocket(zmq::socket_t(Context::the()->getContext(), ZMQ_RADIO)),
     mGroup(endpoint.hash()),
-    mMTU(1500)
+    mMaxBody(publishBodyLimit(publishLinkMtu(), mGroup.size()))
 {
     mSocket.connect(endpoint.str);
 }
@@ -21,9 +21,10 @@ Publisher::~Publisher()
 
 void Publisher::publish(std::string& msg)
 {
-    if (msg.length() > mMTU)
+    // the body carries a NUL, so it holds at most mMaxBody - 1 message bytes
+    if (msg.length() >= mMaxBody)
     {
-        const auto chunks = chunkMessage(msg, mMTU);
+        const auto chunks = chunkMessage(msg, mMaxBody);
         BENNU_LOG_DEBUG("D: Publisher: %zu bytes -> %zu datagrams\n", msg.length(), chunks.size());
         for (const auto& chunk : chunks)
         {

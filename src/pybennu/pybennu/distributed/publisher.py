@@ -7,7 +7,11 @@ import zmq
 from loguru import logger
 
 import pybennu.distributed.swig._Endpoint as E
-from pybennu.distributed.utils import chunk_message
+from pybennu.distributed.utils import (
+    chunk_message,
+    publish_body_limit,
+    publish_link_mtu,
+)
 
 
 class Publisher:
@@ -19,8 +23,6 @@ class Publisher:
 
     def __init__(self, endpoint):
         """Initialize connection environment."""
-        self.MTU = 1465
-
         if isinstance(endpoint, str):
             # if using a DynamicSimulatorSettings class, endpoint needs to be converted to an actual endpoint
             self.__endpoint = E.new_Endpoint()
@@ -29,6 +31,8 @@ class Publisher:
             self.__endpoint = endpoint
 
         self.__group = E.Endpoint_hash(self.__endpoint)
+        # pybennu sends no NUL, so the whole body is message bytes
+        self.max_body = publish_body_limit(publish_link_mtu(), len(self.__group))
         self.connect()
 
     def connect(self):
@@ -43,8 +47,9 @@ class Publisher:
     def publish(self, msg):
         """Publish a message to the socket."""
         try:
-            if len(msg) > self.MTU:
-                for chunk in chunk_message(msg, self.MTU):
+            if len(msg.encode()) > self.max_body:
+                # chunk_message keeps each chunk strictly under its limit
+                for chunk in chunk_message(msg, self.max_body + 1):
                     self.__socket.send_string(chunk, group=self.__group)
             else:
                 self.__socket.send_string(msg, group=self.__group)
