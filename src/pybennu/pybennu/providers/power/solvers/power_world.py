@@ -426,11 +426,11 @@ class PowerWorld(Provider):
         # the subset of tags in self.need
         #        for i in self.case_object_fields:
         #            self._get_multi_element('branch')
-        tags = ""
+        tags = []
         for item in self.need:
             fields = self.scada_fields[item[1]]
-            tags += ",".join([f"{item[0]}.{f}" for f in fields])
-        return f"ACK={tags}"
+            tags.extend(f"{item[0]}.{f}" for f in fields)
+        return f"ACK={','.join(tags)}"
 
     def read(self, tag):
         """Implements the read command interface for receiving the PowerWorld
