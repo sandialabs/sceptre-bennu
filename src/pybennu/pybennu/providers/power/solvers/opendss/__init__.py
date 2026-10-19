@@ -375,156 +375,156 @@ class OpenDSS(Provider):
 
                 setattr(self.elements[device], field, value)
 
-            # UPDATE GENERATORS
-            if isinstance(self.elements[device], models.GeneratorData):
-                dss.Circuit.SetActiveClass("generator")
+                # UPDATE GENERATORS
+                if isinstance(self.elements[device], models.GeneratorData):
+                    dss.Circuit.SetActiveClass("generator")
 
-                gen = self.elements[device]
+                    gen = self.elements[device]
 
-                # remove the 'generator_' qualifier added during create
-                name = gen.name.replace("generator_", "")
+                    # remove the 'generator_' qualifier added during create
+                    name = gen.name.replace("generator_", "")
 
-                # set the current generator as the active element
-                dss.Circuit.SetActiveElement(name)
+                    # set the current generator as the active element
+                    dss.Circuit.SetActiveElement(name)
 
-                if gen.active:
-                    # enable generator element of active circuit
-                    dss.Circuit.Enable(name)
-                else:
-                    # disable generator element of active circuit
-                    dss.Circuit.Disable(name)
+                    if gen.active:
+                        # enable generator element of active circuit
+                        dss.Circuit.Enable(name)
+                    else:
+                        # disable generator element of active circuit
+                        dss.Circuit.Disable(name)
 
-                dss.Generators.kW(gen.active_power_output)
+                    dss.Generators.kW(gen.active_power_output)
 
-            # UPDATE LOADS
-            if isinstance(self.elements[device], models.LoadData):
-                dss.Circuit.SetActiveClass("load")
+                # UPDATE LOADS
+                if isinstance(self.elements[device], models.LoadData):
+                    dss.Circuit.SetActiveClass("load")
 
-                load = self.elements[device]
+                    load = self.elements[device]
 
-                # remove the 'load_' qualifier added during create
-                name = load.name.replace("load_", "")
+                    # remove the 'load_' qualifier added during create
+                    name = load.name.replace("load_", "")
 
-                # set the current load as the active element
-                dss.Circuit.SetActiveElement(name)
+                    # set the current load as the active element
+                    dss.Circuit.SetActiveElement(name)
 
-                if load.active:
-                    # enable load element of active circuit
-                    dss.Circuit.Enable(name)
-                else:
-                    # disable load element of active circuit
-                    dss.Circuit.Disable(name)
+                    if load.active:
+                        # enable load element of active circuit
+                        dss.Circuit.Enable(name)
+                    else:
+                        # disable load element of active circuit
+                        dss.Circuit.Disable(name)
 
-            # UPDATE SHUNTS
-            if isinstance(self.elements[device], models.ShuntData):
-                dss.Circuit.SetActiveClass("capacitor")
+                # UPDATE SHUNTS
+                if isinstance(self.elements[device], models.ShuntData):
+                    dss.Circuit.SetActiveClass("capacitor")
 
-                shunt = self.elements[device]
+                    shunt = self.elements[device]
 
-                # remove the 'shunt_' qualifier added during create
-                name = shunt.name.replace("shunt_", "")
+                    # remove the 'shunt_' qualifier added during create
+                    name = shunt.name.replace("shunt_", "")
 
-                # set the current shunt as the active element
-                dss.Circuit.SetActiveElement(name)
+                    # set the current shunt as the active element
+                    dss.Circuit.SetActiveElement(name)
 
-                if shunt.active:
-                    # enable capacitor element of active circuit
-                    dss.Circuit.Enable(name)
-                else:
-                    # disable capacitor element of active circuit
-                    dss.Circuit.Disable(name)
+                    if shunt.active:
+                        # enable capacitor element of active circuit
+                        dss.Circuit.Enable(name)
+                    else:
+                        # disable capacitor element of active circuit
+                        dss.Circuit.Disable(name)
 
-            # UPDATE BRANCHES
-            if isinstance(self.elements[device], models.BranchData):
-                dss.Circuit.SetActiveClass("line")
+                # UPDATE BRANCHES
+                if isinstance(self.elements[device], models.BranchData):
+                    dss.Circuit.SetActiveClass("line")
 
-                branch = self.elements[device]
+                    branch = self.elements[device]
 
-                # remove the 'branch_' qualifier added during create
-                name = branch.name.replace("branch_", "")
+                    # remove the 'branch_' qualifier added during create
+                    name = branch.name.replace("branch_", "")
 
-                # set the current branch as the active element
-                dss.Circuit.SetActiveElement(name)
+                    # set the current branch as the active element
+                    dss.Circuit.SetActiveElement(name)
 
-                if branch.active:
-                    # enable line element of active circuit
-                    dss.Circuit.Enable(name)
-                else:
-                    # disable line element of active circuit
-                    dss.Circuit.Disable(name)
+                    if branch.active:
+                        # enable line element of active circuit
+                        dss.Circuit.Enable(name)
+                    else:
+                        # disable line element of active circuit
+                        dss.Circuit.Disable(name)
 
-            # UPDATE TRANSFORMERS
-            if isinstance(self.elements[device], models.TransformerData):
-                dss.Circuit.SetActiveClass("transformer")
+                # UPDATE TRANSFORMERS
+                if isinstance(self.elements[device], models.TransformerData):
+                    dss.Circuit.SetActiveClass("transformer")
 
-                transformer = self.elements[device]
+                    transformer = self.elements[device]
 
-                # remove the 'transformer_' qualifier added during create
-                name = transformer.name.replace("transformer_", "")
+                    # remove the 'transformer_' qualifier added during create
+                    name = transformer.name.replace("transformer_", "")
 
-                # set the current transformer as the active element
-                dss.Circuit.SetActiveElement(name)
+                    # set the current transformer as the active element
+                    dss.Circuit.SetActiveElement(name)
 
-                if transformer.active:
-                    # enable line element of active circuit
-                    dss.Circuit.Enable(name)
-                else:
-                    # disable line element of active circuit
-                    dss.Circuit.Disable(name)
+                    if transformer.active:
+                        # enable line element of active circuit
+                        dss.Circuit.Enable(name)
+                    else:
+                        # disable line element of active circuit
+                        dss.Circuit.Disable(name)
 
-                # set the active winding to 1
-                dss.Transformers.Wdg(1)
-                # Set the tap setting of the transformer winding 1
-                dss.Transformers.Tap(transformer.tap_setting_wdg1)
-                # set the active winding to 2
-                dss.Transformers.Wdg(2)
-                # Set the tap setting of the transformer winding 2
-                dss.Transformers.Tap(transformer.tap_setting_wdg2)
+                    # set the active winding to 1
+                    dss.Transformers.Wdg(1)
+                    # Set the tap setting of the transformer winding 1
+                    dss.Transformers.Tap(transformer.tap_setting_wdg1)
+                    # set the active winding to 2
+                    dss.Transformers.Wdg(2)
+                    # Set the tap setting of the transformer winding 2
+                    dss.Transformers.Tap(transformer.tap_setting_wdg2)
 
-            # UPDATE INVERTERS
-            if isinstance(self.elements[device], models.InverterData):
-                dss.Circuit.SetActiveClass("pvsystem")
+                # UPDATE INVERTERS
+                if isinstance(self.elements[device], models.InverterData):
+                    dss.Circuit.SetActiveClass("pvsystem")
 
-                inverter = self.elements[device]
+                    inverter = self.elements[device]
 
-                # remove the 'inverter_' qualifier added during create
-                name = inverter.name.replace("inverter_", "")
+                    # remove the 'inverter_' qualifier added during create
+                    name = inverter.name.replace("inverter_", "")
 
-                # set the current inverter as the active element
-                dss.Circuit.SetActiveElement(name)
+                    # set the current inverter as the active element
+                    dss.Circuit.SetActiveElement(name)
 
-                if inverter.active:
-                    # enable line element of active circuit
-                    dss.Circuit.Enable(name)
-                else:
-                    # disable line element of active circuit
-                    dss.Circuit.Disable(name)
+                    if inverter.active:
+                        # enable line element of active circuit
+                        dss.Circuit.Enable(name)
+                    else:
+                        # disable line element of active circuit
+                        dss.Circuit.Disable(name)
 
-                # grabbing the volt/var curve points as defined in the
-                # current internal representation of the inverter curve,
-                # then updating the specific point provided in the
-                # update
-                volt_array = [
-                    inverter.curve_volt_pt_1,
-                    inverter.curve_volt_pt_2,
-                    inverter.curve_volt_pt_3,
-                    inverter.curve_volt_pt_4,
-                    inverter.curve_volt_pt_5,
-                    inverter.curve_volt_pt_6,
-                ]
+                    # grabbing the volt/var curve points as defined in the
+                    # current internal representation of the inverter curve,
+                    # then updating the specific point provided in the
+                    # update
+                    volt_array = [
+                        inverter.curve_volt_pt_1,
+                        inverter.curve_volt_pt_2,
+                        inverter.curve_volt_pt_3,
+                        inverter.curve_volt_pt_4,
+                        inverter.curve_volt_pt_5,
+                        inverter.curve_volt_pt_6,
+                    ]
 
-                var_array = [
-                    inverter.curve_var_pt_1,
-                    inverter.curve_var_pt_2,
-                    inverter.curve_var_pt_3,
-                    inverter.curve_var_pt_4,
-                    inverter.curve_var_pt_5,
-                    inverter.curve_var_pt_6,
-                ]
+                    var_array = [
+                        inverter.curve_var_pt_1,
+                        inverter.curve_var_pt_2,
+                        inverter.curve_var_pt_3,
+                        inverter.curve_var_pt_4,
+                        inverter.curve_var_pt_5,
+                        inverter.curve_var_pt_6,
+                    ]
 
-                self.__run_command(
-                    f"edit xycurve.{inverter.volt_var_curve_name} xarray={volt_array} yarray={var_array}"
-                )
+                    self.__run_command(
+                        f"edit xycurve.{inverter.volt_var_curve_name} xarray={volt_array} yarray={var_array}"
+                    )
 
             self.__solve()
             return "ACK=Success processing OpenDSS write command"
