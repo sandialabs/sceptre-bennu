@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 import abc
 import enum
 import logging

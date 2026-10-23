@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 import json
 
 from u3 import U3
