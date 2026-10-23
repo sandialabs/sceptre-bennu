@@ -8,8 +8,15 @@ import time
 from math import atan
 
 import serial
+from loguru import logger
 
 from pybennu.siren.hil_device.hil_device import HIL_Device
+
+# Custom level between WARNING (30) and ERROR (40), previously stdlib level 31.
+try:
+    logger.level("FILTER", no=31, color="<yellow>")
+except ValueError:
+    pass  # already registered
 
 
 class SELAMS(HIL_Device):
@@ -512,8 +519,9 @@ class SELAMS(HIL_Device):
                 f"Current of {current} will be scaled to {result} (Device: {device_id})",
             )
         elif current < 0:
-            self.logger.filter(
-                f"Current of {current} is below 0, setting to 0. (Device: {device_id})"
+            self.logger.log(
+                31,
+                f"Current of {current} is below 0, setting to 0. (Device: {device_id})",
             )
             current = 0
 

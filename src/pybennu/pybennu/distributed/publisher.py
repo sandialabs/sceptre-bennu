@@ -3,14 +3,11 @@
 This module defines the Publisher base class.
 """
 
-import logging
-
 import zmq
+from loguru import logger
 
 import pybennu.distributed.swig._Endpoint as E
 from pybennu.distributed.utils import chunk_message
-
-logger = logging.getLogger(__name__)
 
 
 class Publisher:
@@ -52,4 +49,4 @@ class Publisher:
             else:
                 self.__socket.send_string(msg, group=self.__group)
         except Exception as e:
-            logger.exception("Publish error: %s", e)
+            logger.exception("Publish error: {}", e)

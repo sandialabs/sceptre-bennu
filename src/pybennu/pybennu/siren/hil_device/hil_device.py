@@ -3,6 +3,8 @@ import abc
 import enum
 import logging
 
+from pybennu.log import apply_level
+
 LEVELS = {
     "debug": logging.DEBUG,  # 10
     "info": logging.INFO,  # 20
@@ -26,6 +28,7 @@ class HIL_Device(abc.ABC):
         self.logger = logging.getLogger(self.device_name)
         level = LEVELS.get(level_name, logging.NOTSET)
         self.logger.setLevel(level)
+        apply_level(level)
 
     @abc.abstractmethod
     def config_to_analog(self, *args):

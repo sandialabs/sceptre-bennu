@@ -14,6 +14,7 @@ from time import sleep
 import pybennu.distributed.swig._Endpoint as E
 from pybennu.distributed.client import Client
 from pybennu.distributed.subscriber import Subscriber
+from pybennu.log import apply_level, setup_logging
 
 LEVELS = {
     "debug": logging.DEBUG,  # 10
@@ -23,13 +24,6 @@ LEVELS = {
     "error": logging.ERROR,  # 40
     "critical": logging.CRITICAL,  # 50
 }
-
-logging.addLevelName(LEVELS["filter"], "FILTER")
-logging.basicConfig(
-    format="%(asctime)s %(name)-12s  %(levelname)-8s  %(message)s",
-    level=logging.DEBUG,
-    datefmt="%Y-%m-%d %H:%M:%S",
-)
 
 
 class device_config:
@@ -74,6 +68,7 @@ class siren_start:
         self.logger = logging.getLogger(__class__.__name__)
         level = LEVELS.get(level_name, logging.NOTSET)
         self.logger.setLevel(level)
+        apply_level(level)
 
     """
     Just an empty loop to keep the main thread running, while each
@@ -175,6 +170,7 @@ class siren(Subscriber, Client):
         self.logger = logging.getLogger(__class__.__name__)
         level = LEVELS.get(level_name, logging.NOTSET)
         self.logger.setLevel(level)
+        apply_level(level)
 
     def start(self):
         self.thread.start()
@@ -265,8 +261,8 @@ class siren(Subscriber, Client):
                 else:
                     value = float(value)
                     field = "value"
-                self.device.logger.log(
-                    LEVELS["debug"], f"TO HARDWARE {tag}:{value} with field:{field}"
+                self.device.logger.debug(
+                    f"TO HARDWARE {tag}:{value} with field:{field}"
                 )
                 self._to_hardware(field, label, value)
 
@@ -296,9 +292,7 @@ class siren(Subscriber, Client):
                                 )
                             ):
                                 self.to_endpoint_states[_filter] = data
-                                self.device.logger.log(
-                                    LEVELS["debug"], f"TO PROVIDER {label}:{data}"
-                                )
+                                self.device.logger.debug(f"TO PROVIDER {label}:{data}")
                                 updates[_filter] = data
                     elif "digital" in label:
                         data = self.device.read_digital(label)
@@ -308,9 +302,7 @@ class siren(Subscriber, Client):
                                 and self.to_endpoint_states[_filter] != data
                             ):
                                 self.to_endpoint_states[_filter] = data
-                                self.device.logger.log(
-                                    LEVELS["debug"], f"TO PROVIDER {label}:{data}"
-                                )
+                                self.device.logger.debug(f"TO PROVIDER {label}:{data}")
                                 updates[_filter] = bool(data)
                     elif "flip_flop" in label:
                         data = self.device.read_flip_flop(label)
@@ -320,9 +312,7 @@ class siren(Subscriber, Client):
                                 and self.to_endpoint_states[_filter] != data
                             ):
                                 self.to_endpoint_states[_filter] = data
-                                self.device.logger.log(
-                                    LEVELS["debug"], f"TO PROVIDER {label}:{data}"
-                                )
+                                self.device.logger.debug(f"TO PROVIDER {label}:{data}")
                                 updates[_filter] = bool(data)
                     else:
                         raise NotImplementedError
@@ -372,6 +362,7 @@ def main():
         help="space-separated list of expected devices",
     )
     args = parser.parse_args()
+    setup_logging("pybennu-siren")
 
     # Start the subscriber.
     ss = siren_start(args.config, args.devices, "critical")

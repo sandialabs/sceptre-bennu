@@ -8,6 +8,7 @@ simple binary coded decimal builder and decoder.
 
 from struct import pack
 
+from loguru import logger
 from pymodbus.constants import Endian
 from pymodbus.interfaces import IPayloadBuilder
 from pymodbus.utilities import pack_bitstring
@@ -98,7 +99,7 @@ class BcdPayloadEncoder(IPayloadBuilder):
         value = convert_to_bcd(int(value))
 
         size = size or count_bcd_digits(value)
-        print(f"Value: {value}; Size {size}")
+        logger.debug(f"Value: {value}; Size {size}")
         while size > 0:
             nibble = value & 0xF
             encoded.append(pack("B", nibble))

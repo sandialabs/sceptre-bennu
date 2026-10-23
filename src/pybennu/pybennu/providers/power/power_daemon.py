@@ -1,5 +1,4 @@
 import argparse
-import logging
 import os
 import platform
 import signal
@@ -8,7 +7,10 @@ import time
 from configparser import ConfigParser, NoOptionError
 from pathlib import Path
 
+from loguru import logger
+
 import pybennu.distributed.swig._Endpoint as E
+from pybennu.log import enable_debug, setup_logging
 from pybennu.providers.utils.daemon import Daemon
 from pybennu.settings import load_settings_yaml
 
@@ -25,9 +27,9 @@ class ServerDaemon(Daemon):
             if os.path.exists(args.config_file):
                 self.config_file = os.path.abspath(args.config_file)
             else:
-                print(
-                    f"\nThe file {args.config_file} does not exist - "
-                    "please provide a valid config file.\n"
+                logger.error(
+                    f"The file {args.config_file} does not exist - "
+                    "please provide a valid config file."
                 )
                 sys.exit(-1)
 
@@ -47,13 +49,14 @@ class ServerDaemon(Daemon):
             debug = self.debug
             if "debug" in config["power-solver-service"]:
                 debug = config.get("power-solver-service", "debug").strip().lower()
-                debug = True if debug == "true" else False
+                debug = self.debug or debug == "true"  # -v wins over config
         except NoOptionError:
-            print(
-                "\nERROR: The following must be defined in the "
-                "configuration file: 'debug'\n"
+            logger.error(
+                "The following must be defined in the configuration file: 'debug'"
             )
             sys.exit(-1)
+        if debug:
+            enable_debug()
 
         self.running = False
 
@@ -64,9 +67,7 @@ class ServerDaemon(Daemon):
             try:
                 solver = config.get("power-solver-service", "solver-type").strip()
             except NoOptionError:
-                print(
-                    "\nERROR: 'solver-type' must be defined in the configuration file\n"
-                )
+                logger.error("'solver-type' must be defined in the configuration file")
                 sys.exit(-1)
 
             #########################################
@@ -83,10 +84,10 @@ class ServerDaemon(Daemon):
                         config.get("power-solver-service", "publish-endpoint").strip(),
                     )
                 except NoOptionError:
-                    print(
-                        "\nERROR: The following must be defined in the "
+                    logger.error(
+                        "The following must be defined in the "
                         "configuration file: 'server-endpoint', 'publish-"
-                        "endpoint'\n"
+                        "endpoint'"
                     )
                     sys.exit(-1)
 
@@ -115,10 +116,10 @@ class ServerDaemon(Daemon):
                     )
                     case_file = config.get("power-solver-service", "case-file").strip()
                 except NoOptionError:
-                    print(
-                        "\nERROR: The following must be defined in the "
+                    logger.error(
+                        "The following must be defined in the "
                         "configuration file: 'server-endpoint,"
-                        "'publish-endpoint', 'case-file'\n"
+                        "'publish-endpoint', 'case-file'"
                     )
                     sys.exit(-1)
 
@@ -150,11 +151,11 @@ class ServerDaemon(Daemon):
                     ).strip()
                     noise = config.get("power-solver-service", "noise").strip().lower()
                 except NoOptionError:
-                    print(
-                        "\nERROR: The following must be defined in the "
+                    logger.error(
+                        "The following must be defined in the "
                         "configuration file: 'server-endpoint', "
                         "'publish-endpoint', 'case-file', "
-                        "'oneline-file', 'objects-file'\n"
+                        "'oneline-file', 'objects-file'"
                     )
                     sys.exit(-1)
 
@@ -183,10 +184,10 @@ class ServerDaemon(Daemon):
                         "power-solver-service", "config-file"
                     ).strip()
                 except NoOptionError:
-                    print(
-                        "\nERROR: The following must be defined in the "
+                    logger.error(
+                        "The following must be defined in the "
                         "configuration file: 'case-file', "
-                        "'oneline-file', 'config-file'\n"
+                        "'oneline-file', 'config-file'"
                     )
                     sys.exit(-1)
 
@@ -216,10 +217,10 @@ class ServerDaemon(Daemon):
                         "power-solver-service", "pwds-endpoint"
                     ).strip()
                 except NoOptionError:
-                    print(
-                        "\nERROR: The following must be defined in the "
+                    logger.error(
+                        "The following must be defined in the "
                         "configuration file: 'server-endpoint', "
-                        "'publish-endpoint', 'pwds-endpoint'\n"
+                        "'publish-endpoint', 'pwds-endpoint'"
                     )
                     sys.exit(-1)
 
@@ -253,10 +254,10 @@ class ServerDaemon(Daemon):
                     )
                     case_file = config.get("power-solver-service", "case-file").strip()
                 except NoOptionError:
-                    print(
-                        "\nERROR: The following must be defined in the "
+                    logger.error(
+                        "The following must be defined in the "
                         "configuration file: 'server-endpoint', "
-                        "'publish-endpoint', 'case-file'\n"
+                        "'publish-endpoint', 'case-file'"
                     )
                     sys.exit(-1)
 
@@ -319,8 +320,8 @@ class ServerDaemon(Daemon):
                         "power-solver-service", "simulation-file"
                     ).strip()
                 except NoOptionError:
-                    print(
-                        "\nERROR: The following must be defined in the configuration file: 'server-endpoint', 'publish-endpoint', and 'simulation-file'\n"
+                    logger.error(
+                        "The following must be defined in the configuration file: 'server-endpoint', 'publish-endpoint', and 'simulation-file'"
                     )
                     sys.exit(-1)
 
@@ -381,10 +382,10 @@ class ServerDaemon(Daemon):
                         "power-solver-service", "config-file"
                     ).strip()
                 except NoOptionError:
-                    print(
-                        "\nERROR: The following must be defined in the "
+                    logger.error(
+                        "The following must be defined in the "
                         "configuration file: 'server-endpoint', "
-                        "'publish-endpoint', 'config-file'\n"
+                        "'publish-endpoint', 'config-file'"
                     )
                     sys.exit(-1)
 
@@ -412,10 +413,10 @@ class ServerDaemon(Daemon):
                         "power-solver-service", "config-file"
                     ).strip()
                 except NoOptionError:
-                    print(
-                        "\nERROR: The following must be defined in the "
+                    logger.error(
+                        "The following must be defined in the "
                         "configuration file: 'server-endpoint', "
-                        "'publish-endpoint', 'config-file'\n"
+                        "'publish-endpoint', 'config-file'"
                     )
                     sys.exit(-1)
 
@@ -439,10 +440,10 @@ class ServerDaemon(Daemon):
                         config.get("power-solver-service", "publish-endpoint").strip(),
                     )
                 except NoOptionError:
-                    print(
-                        "\nERROR: The following must be defined in the "
+                    logger.error(
+                        "The following must be defined in the "
                         "configuration file: 'server-endpoint', 'publish-"
-                        "endpoint'\n"
+                        "endpoint'"
                     )
                     sys.exit(-1)
 
@@ -455,13 +456,14 @@ class ServerDaemon(Daemon):
                 )
 
         self.running = True
+        logger.info("Starting {} (debug={})", type(self.solver).__name__, debug)
         self._solver_run()
 
         while self.running:
             time.sleep(1)
 
     def handle_exit(self, signum, stack) -> None:
-        print("\nStopping power solver service...\n")
+        logger.info("Stopping power solver service...")
         self.running = False
         sys.exit()
 
@@ -511,9 +513,10 @@ def server():
     )
 
     args = parser.parse_args()
-    logging.basicConfig(
-        level=logging.DEBUG if args.debug else logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    setup_logging(
+        "pybennu-power-solver",
+        debug=args.debug,
+        file_by_default=args.operation in ("start", "restart"),
     )
 
     handle = ServerDaemon(args)

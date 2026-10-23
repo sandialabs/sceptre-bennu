@@ -1,13 +1,15 @@
 """Electric Power test pybennu provider."""
 
 import argparse
-import logging
 import sys
 import threading
 import time
 
+from loguru import logger
+
 import pybennu.distributed.swig._Endpoint as E
 from pybennu.distributed.provider import Provider
+from pybennu.log import setup_logging
 
 
 class ElectricPowerService(Provider):
@@ -66,7 +68,7 @@ class ElectricPowerService(Provider):
     # Must return "ACK=tag1,tag2,..." or "ERR=<error message>"
     def query(self):
         if self.__debug:
-            print("ElectricPowerService::query ---- received query request")
+            logger.debug("ElectricPowerService::query ---- received query request")
         result = "ACK="
         for k in self.mPS:
             result += k + ","
@@ -75,7 +77,9 @@ class ElectricPowerService(Provider):
     # Must return "ACK=<value>" or "ERR=<error message>
     def read(self, tag):
         if self.__debug:
-            print("ElectricPowerService::read ---- received read for tag %s" % tag)
+            logger.debug(
+                "ElectricPowerService::read ---- received read for tag {}", tag
+            )
         result = ""
         with self.__lock:
             if tag in self.mPS:
@@ -89,9 +93,10 @@ class ElectricPowerService(Provider):
     def write(self, tag_dict):
         tag, value = next(iter(tag_dict.items()))
         if self.__debug:
-            print(
-                "ElectricPowerService::write ---- received write for tag %s -- %s"
-                % (tag, value)
+            logger.debug(
+                "ElectricPowerService::write ---- received write for tag {} -- {}",
+                tag,
+                value,
             )
         result = ""
         with self.__lock:
@@ -136,14 +141,16 @@ def main():
     )
 
     args = parser.parse_args()
-    logging.basicConfig(
-        level=logging.DEBUG if args.debug else logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
-    )
+    setup_logging("pybennu-test-ep-server", debug=args.debug, file_by_default=False)
     server_endpoint = E.new_Endpoint()
     publish_endpoint = E.new_Endpoint()
     E.Endpoint_str_set(server_endpoint, args.server_endpoint)
     E.Endpoint_str_set(publish_endpoint, args.publish_endpoint)
+    logger.info(
+        "Starting test EP server on {} publishing to {}",
+        args.server_endpoint,
+        args.publish_endpoint,
+    )
     ep = ElectricPowerService(server_endpoint, publish_endpoint, args.debug)
     ep.run()
 

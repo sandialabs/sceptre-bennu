@@ -9,7 +9,6 @@ JSON format
 
 import argparse
 import json
-import logging
 import math
 import signal
 import sys
@@ -19,11 +18,13 @@ import time
 # Adding a timeout helper to cause client objects not to freeze program
 from contextlib import contextmanager
 
+from loguru import logger
 from py_expression_eval import Parser
 
 import pybennu.distributed.swig._Endpoint as E
 from pybennu.distributed.client import Client
 from pybennu.distributed.subscriber import Subscriber
+from pybennu.log import setup_logging
 
 
 @contextmanager
@@ -45,13 +46,6 @@ def timeout(time):
 
 def raise_timeout(signum, frame):
     raise TimeoutError
-
-
-logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger("alicanto")
-# logger.addHandler(logging.StreamHandler())
 
 
 class alicantoSubscriber(Subscriber):
@@ -106,12 +100,6 @@ class alicantoClient(Client):
 
 class alicanto:
     def __init__(self, config, debug=False, exit_handler=None):
-
-        if debug:
-            logger.setLevel(logging.DEBUG)
-        else:
-            logger.setLevel(logging.INFO)
-
         exit = exit_handler if exit_handler else self.ctrl_exit_handler
         signal.signal(signal.SIGINT, exit)  # ctlr + c
 
@@ -458,6 +446,7 @@ def main():
     parser.add_argument("-d", "--debug", dest="debug", default=True, help="")
 
     args = parser.parse_args()
+    setup_logging("pybennu-alicanto", debug=bool(args.debug))
 
     solver = alicanto(args.config_file, debug=args.debug)
     solver.run()

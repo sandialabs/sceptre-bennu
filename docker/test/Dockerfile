@@ -21,7 +21,7 @@ ARG GO_VERSION=1.21.13
 RUN wget -qO /tmp/go.tgz https://go.dev/dl/go${GO_VERSION}.linux-$(dpkg --print-architecture).tar.gz \
     && tar -C /usr/local -xzf /tmp/go.tgz && rm /tmp/go.tgz
 
-RUN pip3 install --no-cache-dir pytest pyzmq pytest-cov ruff "codespell>=2.2.4" vulture \
+RUN pip3 install --no-cache-dir pytest pyzmq "loguru>=0.7,<1" pytest-cov ruff "codespell>=2.2.4" vulture \
     && update-alternatives --install /usr/local/bin/clang-format clang-format /usr/bin/clang-format-15 100 \
     && update-alternatives --install /usr/local/bin/clang-tidy clang-tidy /usr/bin/clang-tidy-15 100
 

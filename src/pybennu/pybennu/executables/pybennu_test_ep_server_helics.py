@@ -1,16 +1,11 @@
 """Electric Power test pybennu HELICS provider."""
 
 import argparse
-import logging
 import sys
 import threading
 
+from pybennu.log import setup_logging
 from pybennu.providers.utils.helics_helper import HelicsFederate
-
-logger = logging.getLogger("helics")
-logger.addHandler(logging.StreamHandler())
-logger.propagate = False  # own handler; avoid duplicate lines via root
-logger.setLevel(logging.INFO)
 
 
 class ElectricPowerService(HelicsFederate):
@@ -18,8 +13,6 @@ class ElectricPowerService(HelicsFederate):
 
     def __init__(self, config, debug=False):
         self.__lock = threading.Lock()
-        if debug:
-            logger.setLevel(logging.DEBUG)
         self.state = {}
 
         # Initialize HelicsFederate
@@ -99,9 +92,8 @@ def main():
     )
 
     args = parser.parse_args()
-    logging.basicConfig(
-        level=logging.DEBUG if args.debug else logging.INFO,
-        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+    setup_logging(
+        "pybennu-test-ep-server-helics", debug=args.debug, file_by_default=False
     )
     ep = ElectricPowerService(args.config, args.debug)
     ep.run()

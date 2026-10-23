@@ -5,19 +5,19 @@ Documentation: https://sandialabs.github.io/sceptre-docs/13-providers.html
 """
 
 import json
-import logging
-import sys
 from datetime import datetime, timezone
-from logging.handlers import QueueHandler, QueueListener
 from pathlib import Path
 from queue import Queue
 from threading import Lock, Thread
 from time import sleep
 from typing import Any
 
+from loguru import logger
+
 from pybennu.distributed.provider import Provider
 from pybennu.elastic import ElasticPusher
 from pybennu.gtnet_skt import GtnetSkt
+from pybennu.log import enable_debug
 from pybennu.pmu_wrapper import PMU
 from pybennu.settings import PybennuSettings
 from pybennu.utils import RotatingCSVWriter, utc_now, utc_now_formatted
@@ -60,36 +60,9 @@ class RTDS(Provider):
         self.__time_map_lock: Lock = Lock()
         self.time_map: dict[int, datetime] = {}
 
-        # asynchronous logging. Log messages are placed into a queue,
-        # which is serviced by a thread that runs each handler with
-        # messages from the queue. This isn't needed as much for stdout,
-        # but if we enable logging to file or elastic then it will be.
-        self.log_queue: Queue = Queue()
-        queue_handler = QueueHandler(self.log_queue)
-
-        formatter = logging.Formatter(
-            fmt="%(asctime)s.%(msecs)03d [%(levelname)s] (%(name)s) %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S",
-        )
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setFormatter(formatter)
-        console_handler.setLevel(logging.DEBUG if self.conf.debug else logging.INFO)
-        queue_listener = QueueListener(
-            self.log_queue, console_handler, respect_handler_level=True
-        )
-        queue_listener.start()
-
-        # Configure logging to stdout (includes debug messages from pypmu)
-        logging.basicConfig(
-            level=logging.DEBUG if self.conf.debug else logging.INFO,
-            handlers=[queue_handler],
-            # format="%(asctime)s.%(msecs)03d [%(levelname)s] (%(name)s) %(message)s",
-            # datefmt="%Y-%m-%d %H:%M:%S",
-            # stream=sys.stdout
-        )
-
-        self.log: logging.Logger = logging.getLogger(self.__class__.__name__)
-        self.log.setLevel(logging.DEBUG if self.conf.debug else logging.INFO)
+        self.log = logger
+        if self.conf.debug:
+            enable_debug()
 
         # Elasticsearch setup
         self.es: ElasticPusher | None = None
