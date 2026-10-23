@@ -4,6 +4,8 @@ import re
 import time
 from typing import Any, Literal
 
+from loguru import logger
+
 from pybennu.pypmu.synchrophasor.frame import CommonFrame, DataFrame, HeaderFrame
 from pybennu.pypmu.synchrophasor.pdc import Pdc
 from pybennu.utils import RotatingCSVWriter
@@ -63,8 +65,9 @@ class PMU:
         self.started: bool = False  # if start command has been issued
 
         # Configure logging
-        self.log: logging.Logger = logging.getLogger(f"PMU [{self!s}]")
-        self.log.setLevel(logging.DEBUG)
+        self.log = logger.bind(ctx=f"PMU {self!s}")
+        # pypmu uses stdlib %-style logging and setLevel, so it keeps a stdlib
+        # logger; the intercept in pybennu.log routes it to loguru.
         self.pdc.logger = logging.getLogger(f"Pdc [{self!s}]")
         # NOTE: pypmu logs a LOT of stuff at DEBUG, leave at INFO
         # unless you're doing deep debugging of the pypmu code.

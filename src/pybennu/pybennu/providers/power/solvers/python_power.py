@@ -12,6 +12,7 @@ import sys
 import threading
 import time
 
+from loguru import logger
 from pypower.api import loadcase, ppoption, runpf
 
 from pybennu.distributed.provider import Provider
@@ -263,7 +264,7 @@ class PyPower(Provider):
         of the system under test will be collected and returned."""
 
         if self.debug:
-            print("Processing query")
+            logger.debug("Processing query")
         tags = ""
         with self.__lock:
             for dev_type in self.elements:
@@ -279,7 +280,7 @@ class PyPower(Provider):
         the system under test will be collected and returned."""
 
         if self.debug:
-            print("Processing read request")
+            logger.debug("Processing read request")
         try:
             element, field = tag.strip("\x00").split(".")
             devtype, _id = element.split("-", 1)
@@ -300,19 +301,17 @@ class PyPower(Provider):
         be updated and published after the solve completes."""
 
         if self.debug:
-            print("Processing write command")
+            logger.debug("Processing write command")
 
         try:
             updates = []
             for tag, value in tags.items():
                 if self.debug:
-                    print(
+                    logger.debug(
                         "PyPower.write ---- received write command for: "
                         + tag
                         + " with value "
                         + value
-                        + " -> ",
-                        end="",
                     )
 
                 element, field = tag.strip("\x00").split(".")
@@ -341,9 +340,8 @@ class PyPower(Provider):
 
             msg = "ACK=Success processing PyPower write command"
         except Exception as err:
-            print(
-                "ERROR: Provider failed to process write message with exception: %s"
-                % str(err)
+            logger.exception(
+                "Provider failed to process write message with exception: {}", err
             )
             msg = f"ERR=Provider failed to process write message with exception: {err} on line {sys.exc_info()[-1].tb_lineno}"
 
@@ -357,7 +355,7 @@ class PyPower(Provider):
             try:
                 self.publish(msg)
             except Exception as e:
-                print(f"provider periodic_publish error: {e}")
+                logger.error("provider periodic_publish error: {}", e)
             time.sleep(1)
 
     def _add_noise(self, value):
@@ -412,14 +410,15 @@ class PyPower(Provider):
 
     def __solve(self, **kwargs):
         options = ppoption(**kwargs)
-        options["OUT_ALL"] = 1
+        # the full pypower report is ~900 lines per solve; print it only when debugging
+        options["OUT_ALL"] = 1 if self.debug else 0
         # options['PF_MAX_IT'] = 20
         # enforce q lims seems to cause index error for 300 bus case
         # options['ENFORCE_Q_LIMS'] = 1
         try:
             results, success = runpf(self.system, options)
             if not success:
-                print("Failed to solve for new power system")
+                logger.error("Failed to solve for new power system")
                 self.elements["bus"]["bus-alert"]["active"] = True
                 return
             # sys.stdout.flush()
@@ -428,7 +427,6 @@ class PyPower(Provider):
                 self._pcf_to_dict()
                 self.elements["bus"]["bus-alert"]["active"] = False
         except Exception as err:
-            print("Failed to solve for new power system")
-            print("Error: " + str(err))
+            logger.exception("Failed to solve for new power system: {}", err)
             self.elements["bus"]["bus-alert"]["active"] = True
         return

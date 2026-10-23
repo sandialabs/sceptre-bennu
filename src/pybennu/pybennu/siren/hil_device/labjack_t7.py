@@ -26,7 +26,7 @@ class LabJackT7(HIL_Device):
             id = "Any"
             if self.device_id is not None:
                 id = self.device_id
-            print("Opening labjack connection")
+            self.logger.info("Opening labjack connection")
             self.handle = ljm.openS("T7", "ANY", id)
         except ljm.ljm.LJMError as e:
             self.logger.error(e)

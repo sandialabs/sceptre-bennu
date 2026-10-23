@@ -51,11 +51,12 @@ solution isn't perfect, it's good enough to meet the HARMONIE project objectives
 in the short-term.
 """
 
-import logging
 import socket
 import struct
 from threading import Lock, Thread
 from time import sleep
+
+from loguru import logger
 
 from pybennu.settings import GtnetSktTag, PybennuSettings
 
@@ -65,8 +66,7 @@ class GtnetSkt:
         self.conf: PybennuSettings = conf
 
         # Configure logging
-        self.log: logging.Logger = logging.getLogger("GTNET-SKT")
-        self.log.setLevel(logging.DEBUG)
+        self.log = logger.bind(ctx="GTNET-SKT")
 
         # Socket to be used for writes
         # This can be TCP (SOCK_STREAM) or UDP (SOCK_DGRAM)

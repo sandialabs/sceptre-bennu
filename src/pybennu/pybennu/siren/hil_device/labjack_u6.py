@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import json
 
+from loguru import logger
 from u6 import U6, BitStateWrite
 
 from pybennu.siren.hil_device import HIL_Device, virtualsensor
@@ -75,19 +76,19 @@ class LabJackU6(HIL_Device):
         # If the mapping leads to another mapping, then don't use the defaults. Use the substructure.
         if type(self.label_mapping[label]) is dicttype:
             mindata = self.label_mapping[label]["min_data"]
-            print("min_data", mindata)
+            logger.debug("min_data {}", mindata)
             maxdata = self.label_mapping[label]["max_data"]
-            print("max_data", maxdata)
+            logger.debug("max_data {}", maxdata)
             minvolt = self.label_mapping[label]["min_voltage"]
-            print("min_voltage", minvolt)
+            logger.debug("min_voltage {}", minvolt)
             maxvolt = self.label_mapping[label]["max_voltage"]
-            print("max_voltage", maxvolt)
+            logger.debug("max_voltage {}", maxvolt)
             label = self.label_mapping[label]["label"]
             label = label.encode("ascii")
-            print("label", label)
+            logger.debug("label {}", label)
 
         voltage = virtualsensor(value, mindata, maxdata, minvolt, maxvolt)
-        print("voltage", voltage)
+        logger.debug("voltage {}", voltage)
         self.device.writeRegister(o_points_a[label], voltage)
 
         # self.device.writeRegister(o_points_a[self.label_mapping[label]], value)

@@ -184,6 +184,7 @@ import time
 
 import pythoncom
 import win32com.client
+from loguru import logger
 from win32com.client import VARIANT
 
 from pybennu.distributed.provider import Provider
@@ -374,14 +375,16 @@ class PowerWorld(Provider):
         try:
             self.pw.OpenCase(case_filename)
         except OSError:
-            print("Failed to open the Power World case file: " + case_filename + ".")
+            logger.error(
+                "Failed to open the Power World case file: " + case_filename + "."
+            )
 
         # open PowerWorld oneline file
         if oneline_filename:
             try:
                 self.pw.RunScriptCommand(f"OpenOneline({oneline_filename}, , YES)")
             except OSError:
-                print(
+                logger.error(
                     "Failed to open the Power World oneline file: "
                     + oneline_filename
                     + "."
@@ -409,7 +412,7 @@ class PowerWorld(Provider):
         element in the self.need points list."""
 
         if self.debug:
-            print("Creating system under test")
+            logger.debug("Creating system under test")
         for i in self.need:  # ex: i = ('branch-1_1001-1002', 'branch', '1_1001-1002')
             data = self._get_single_element(i[1], i[2])
             self.elements[i[0]] = data
@@ -421,7 +424,7 @@ class PowerWorld(Provider):
         of the system under test will be collected and returned."""
 
         if self.debug:
-            print("Processing query")
+            logger.debug("Processing query")
         # TODO: this returns too much data right now. Instead, we'll just return
         # the subset of tags in self.need
         #        for i in self.case_object_fields:
@@ -439,7 +442,7 @@ class PowerWorld(Provider):
         the system under test will be collected and returned."""
 
         if self.debug:
-            print("Processing read request")
+            logger.debug("Processing read request")
         try:
             element, field = tag.strip("\x00").split(".")
             devtype, id_ = element.split("-", 1)
@@ -458,20 +461,17 @@ class PowerWorld(Provider):
         be updated and published after the solve completes."""
 
         if self.debug:
-            print("Processing write command")
+            logger.debug("Processing write command")
 
         if self.__has_failed:
             return "ERR=Solution in failed state."
         try:
             for tag, value in tags.items():
                 if self.debug:
-                    print(
-                        "PowerWorld.write ---- received write command for: "
-                        + tag
-                        + " with value "
-                        + value
-                        + " -> ",
-                        end="",
+                    logger.debug(
+                        "PowerWorld.write ---- received write command for: {} with value {}",
+                        tag,
+                        value,
                     )
 
                 element, field = tag.strip("\x00").split(".")
@@ -496,7 +496,7 @@ class PowerWorld(Provider):
             # try to solve power flow after update, handle failure
             status = self.pw.RunScriptCommand("SolvePowerFlow(RECTNEWT)")
             if any(errMsg in status[0].lower() for errMsg in ["error", "err"]):
-                print(f"{status[0]}")
+                logger.error(status[0])
                 self.__has_failed = True
                 msg = "ERR=Failed to find solution. Check PowerWorld log for details."
             else:
@@ -504,9 +504,8 @@ class PowerWorld(Provider):
                 msg = "ACK=Success processing PowerWorld write command"
 
         except Exception as err:
-            print(
-                "ERROR: Provider failed to process write message with exception: %s"
-                % str(err)
+            logger.exception(
+                "Provider failed to process write message with exception: {}", err
             )
             msg = f"ERR=Provider failed to process write message with exception: {err}"
 
@@ -521,7 +520,7 @@ class PowerWorld(Provider):
             try:
                 self.publish(msg)
             except Exception as e:
-                print(f"provider periodic_publish error: {e}")
+                logger.error("provider periodic_publish error: {}", e)
             time.sleep(1)
 
     def _value_type(self, value):
@@ -537,7 +536,7 @@ class PowerWorld(Provider):
         deep copy of the current self.elements is created and noise is added"""
 
         if self.debug:
-            print("Collecting latest system state")
+            logger.debug("Collecting latest system state")
 
         # reset state for failed solution
         if self.__has_failed:
@@ -575,7 +574,7 @@ class PowerWorld(Provider):
         """Preps data with the correct formatting for publish messages."""
 
         if self.debug:
-            print("Packing data")
+            logger.debug("Packing data")
         with self.__lock:
             str_data = ""
             # eg. {'bus-101': {...}, 'branch-1_1001-2002': {...}, ...}
@@ -589,7 +588,7 @@ class PowerWorld(Provider):
         representation of the system under test."""
 
         if self.debug:
-            print("Updating system under test")
+            logger.debug("Updating system under test")
 
         # if this solver is self publishing, the periodic publish will run in a
         # separate thread, so we need a mutex around reading and writing data

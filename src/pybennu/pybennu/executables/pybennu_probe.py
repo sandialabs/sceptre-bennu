@@ -4,11 +4,11 @@ Used for querying/reading/writing values to/from a bennu FEP or provider.
 """
 
 import argparse
-import logging
 import sys
 
 import pybennu.distributed.client as client
 import pybennu.distributed.swig._Endpoint as E
+from pybennu.log import setup_logging
 
 
 def handler(reply: str) -> None:
@@ -22,9 +22,6 @@ def handler(reply: str) -> None:
 
 
 def main() -> None:
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
-    )
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-e",
@@ -61,6 +58,7 @@ def main() -> None:
     )
 
     args = parser.parse_args()
+    setup_logging("pybennu-probe", file_by_default=False)
 
     endpoint = E.new_Endpoint()
     E.Endpoint_str_set(endpoint, args.endpoint)

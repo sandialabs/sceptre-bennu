@@ -4,13 +4,10 @@ This module defines the Subscriber base class. It implements an interface to
 subscribe to data published by a Provider.
 """
 
-import logging
-
 import zmq
+from loguru import logger
 
 import pybennu.distributed.swig._Endpoint as E
-
-logger = logging.getLogger(__name__)
 
 
 class Subscriber:
@@ -36,7 +33,7 @@ class Subscriber:
         self.__socket.join(E.Endpoint_hash(self.__endpoint))
 
     def __defaultHandler(self, message):
-        logger.info("Received subscription update: %s", message)
+        logger.info("Received subscription update: {}", message)
 
     def run(self):
         """Listen for messages from a Publisher."""

@@ -7,6 +7,8 @@ import signal
 import sys
 import time
 
+from loguru import logger
+
 
 class Daemon:
     """
@@ -54,6 +56,9 @@ class Daemon:
         os.dup2(si.fileno(), sys.stdin.fileno())
         os.dup2(so.fileno(), sys.stdout.fileno())
         os.dup2(se.fileno(), sys.stderr.fileno())
+
+        # Proves the log sinks survived the forks and redirects.
+        logger.info("Daemonized as PID {}", os.getpid())
 
     def dettach_env(self):
         os.chdir("/")
