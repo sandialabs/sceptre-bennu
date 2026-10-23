@@ -27,11 +27,11 @@
         {
             "key": "helics-simulink-provider/Pump1.active",
             "type": "double"
-        },
+        }
     ],
     "endpoints": [
         {
-            "name": "bus-1.volatge",
+            "name": "bus-1.voltage",
             "destination": "helics-test-ep-server/bus-1.voltage"
         },
 
@@ -53,6 +53,6 @@
         {
             "name": "Pump1.active",
             "destination": "helics-simulink-provider/Pump1.active"
-        },
+        }
     ]
 }

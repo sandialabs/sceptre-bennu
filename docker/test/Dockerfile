@@ -18,7 +18,7 @@ RUN wget -qO /tmp/zmq.tgz https://github.com/zeromq/libzmq/releases/download/v${
 
 # go.mod says 1.14; use a newer toolchain that still builds it.
 ARG GO_VERSION=1.21.13
-RUN wget -qO /tmp/go.tgz https://go.dev/dl/go${GO_VERSION}.linux-$(dpkg --print-architecture).tar.gz \
+RUN wget -qO /tmp/go.tgz https://go.dev/dl/go${GO_VERSION}.linux-"$(dpkg --print-architecture)".tar.gz \
     && tar -C /usr/local -xzf /tmp/go.tgz && rm /tmp/go.tgz
 
 RUN pip3 install --no-cache-dir pytest pyzmq "loguru>=0.7,<1" pytest-cov ruff "codespell>=2.2.4" vulture \
@@ -27,6 +27,7 @@ RUN pip3 install --no-cache-dir pytest pyzmq "loguru>=0.7,<1" pytest-cov ruff "c
 
 # lint (keep in sync with src/gobennu/Makefile install-dev and the lint workflow)
 ARG GOLANGCI_LINT_VERSION=v2.11.3
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/HEAD/install.sh \
     | sh -s -- -b /usr/local/bin ${GOLANGCI_LINT_VERSION}
 

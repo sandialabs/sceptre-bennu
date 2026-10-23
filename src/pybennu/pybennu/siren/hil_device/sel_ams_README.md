@@ -1,13 +1,14 @@
 ## Config
+
 * In the siren configuration file for the AMS:
-    * The `to_endpoint` block should only contain `active` tags.  No other digital tags are supported.
-    * The value of the `to_endpoint` dictionary entries need to be formatted `digital<whatever you choose>`.  Siren needs the `digital` keyword in there to know it is a digital or boolean value
-    * The `to_harware` block
-    * The value of the `to_hardware` dictionary entries need to be the name of the tag, rather than a generic name.  This is so that the SEL AMS specific code knows whether or not the data to write to the AMS is a `bus` or `branch`
+  * The `to_endpoint` block should only contain `active` tags. No other digital tags are supported.
+  * The value of the `to_endpoint` dictionary entries need to be formatted `digital<whatever you choose>`. Siren needs the `digital` keyword in there to know it is a digital or boolean value
+  * The `to_harware` block
+  * The value of the `to_hardware` dictionary entries need to be the name of the tag, rather than a generic name. This is so that the SEL AMS specific code knows whether or not the data to write to the AMS is a `bus` or `branch`
 
 ## Notes
 
-### SEL Adaptive Multichannel Source (AMS).
+### SEL Adaptive Multichannel Source (AMS)
 
 There are 12 output channels on the AMS that send data to the SEL
 device over a ribbon cable to the top board. By plugging into the top board
@@ -15,6 +16,7 @@ of the device, you can bypass the relay input transformers of the bottom board
 so that you don't need large amplifiers.
 
 Analog channels for SEL-351S (only uses 8 of the 12 channels):
+
 * CH1 IA
 * CH2 IB
 * CH3 IC
@@ -31,18 +33,18 @@ The following is an example serial message (in ASCII) to the AMS: AS117C7BE31096
 
 Broken up into its parts: AS / 1 / 17C7BE31/ 0 / 960 / 3C
 
-* AS --> Preamble (AI means you're ramping the magnitude) 
-* 1 --> Channel number 
+* AS --> Preamble (AI means you're ramping the magnitude)
+* 1 --> Channel number
 * 17C7BE310 --> Magnitude
 * 0960 --> Angle
-* 3C --> Number of samples, "04" ("EOT" character) for disabled channel 
-    
+* 3C --> Number of samples, "04" ("EOT" character) for disabled channel
+
 The time for the test is specified in the "TT" string as hex. The number is given in 1/10,000 of a second:
 
 TT / FFFFFFFF
+
 * TT --> Test time
 * FFFFFFFF --> Time in hex, maximum time is 119.304647083333 hours (119 hrs, 18 min, 16 secs)
-
 
 |SEL|Channel||Magnitude||
 |---|-------|---|-------|---|
@@ -55,13 +57,11 @@ TT / FFFFFFFF
 |451|VBY||||
 |451|VCY||||
 
-
-
 NOTE:Before sending voltage or current magnitudes to the AMS, be aware that the AMS down samples data. For example, the current inputs are down sampled in this way:
-        
+
 The smallest current value you can send to the AMS is 0.0000001; however,
 for every two bytes of data sent to the AMS (or 16 values), you can only
-represent 0.000002 worth of data. The data sent to the AMS for values 
+represent 0.000002 worth of data. The data sent to the AMS for values
 0.0000001 through 0.000004 looks like this. Notice how some values sent
 are actually identical in hex.
 
@@ -113,7 +113,7 @@ to multiply all scaled current values by `8098421` before converting to hex.
 
 For voltage, the data is down sampled even more, where you multiply all
 scaled voltage values by `4049210`. Essentially, the maximum allowed voltage
-value is double the max allowed current value. 
+value is double the max allowed current value.
 
 The voltage and current angles are different. For those, you need to multiply all
 phase angles by `10`.

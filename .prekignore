@@ -1,0 +1,2 @@
+# Vendored code ships its own pre-commit configs; keep prek from running them.
+src/bennu/executables/bennu-simulink-provider-helics/helics/
