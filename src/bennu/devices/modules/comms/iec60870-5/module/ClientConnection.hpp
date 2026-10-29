@@ -97,9 +97,9 @@ public:
 
 private:
     // Send the EXECUTE phase (selectCommand=false) for a pending command at the
-    // given IOA, if one exists and matches expectedType. Called when a SELECT's
-    // positive ACT_CON arrives.
-    void sendExecute(std::uint16_t address, PendingCommandType expectedType);
+    // given IOA, if one exists and matches expectedType/echoed parameters. Called
+    // when a SELECT's positive ACT_CON arrives.
+    void sendExecute(std::uint16_t address, PendingCommandType expectedType, int echoedIntValue, float echoedFloatValue, int echoedQualifier);
 
     bool mRunning;
     bool mSboEnabled;                           // Select-before-operate mode enabled

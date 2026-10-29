@@ -436,6 +436,12 @@ bool Server::interrogationHandlerDoublePoint(void *parameter, IMasterConnection 
 
 bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_ASDU asdu)
 {
+    Server* self = parameter ? static_cast<Server*>(parameter) : gServer.get();
+    if (!self)
+    {
+        return false;
+    }
+
     IEC60870_5_TypeID typeId = CS101_ASDU_getTypeID(asdu);
 
     if (typeId == C_SC_NA_1)
@@ -445,20 +451,23 @@ bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_AS
         CS101_CauseOfTransmission cot = CS101_ASDU_getCOT(asdu);
         if (cot == CS101_COT_DEACTIVATION)
         {
-            // Cancel any outstanding selection for this point.
+            // Cancel an outstanding selection for this point if owned by this connection.
             InformationObject cancelIo = CS101_ASDU_getElement(asdu, 0);
+            bool ok = false;
             if (cancelIo)
             {
-                gServer->clearSelect(InformationObject_getObjectAddress(cancelIo));
+                ok = self->cancelSelect(InformationObject_getObjectAddress(cancelIo), connection, C_SC_NA_1);
                 InformationObject_destroy(cancelIo);
             }
             CS101_ASDU_setCOT(asdu, CS101_COT_DEACTIVATION_CON);
+            CS101_ASDU_setNegative(asdu, !ok);
             IMasterConnection_sendASDU(connection, asdu);
             return true;
         }
         if (cot != CS101_COT_ACTIVATION)
         {
             CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_COT);
+            CS101_ASDU_setNegative(asdu, true);
             IMasterConnection_sendASDU(connection, asdu);
             return true;
         }
@@ -476,17 +485,30 @@ bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_AS
         int qu = SingleCommand_getQU(sc);
         bool isSelect = SingleCommand_isSelect(sc);
 
-        if (gServer->isSboEnabled() && isSelect)
+        if (isSelect)
         {
-            // SELECT: reserve the point; do NOT change the process value.
-            bool ok = gServer->select(addr, connection, C_SC_NA_1, state ? 1 : 0, 0.0f, qu);
-            printf("SELECT single command IOA: %i (%s)\n", addr, ok ? "accepted" : "rejected");
-            IMasterConnection_sendACT_CON(connection, asdu, !ok);
+            if (!self->isSboEnabled())
+            {
+                printf("SELECT single command IOA: %i rejected (SBO disabled)\n", addr);
+                IMasterConnection_sendACT_CON(connection, asdu, true);
+            }
+            else
+            {
+                // SELECT: reserve the point; do NOT change the process value.
+                bool ok = self->select(addr, connection, C_SC_NA_1, state ? 1 : 0, 0.0f, qu);
+                printf("SELECT single command IOA: %i (%s)\n", addr, ok ? "accepted" : "rejected");
+                IMasterConnection_sendACT_CON(connection, asdu, !ok);
+            }
         }
         else
         {
             // EXECUTE (or direct-operate when SBO disabled).
-            if (gServer->isSboEnabled() && !gServer->checkAndConsumeSelect(addr, connection, C_SC_NA_1, state ? 1 : 0, 0.0f, qu))
+            if (!self->isValidOutputPoint(addr, C_SC_NA_1))
+            {
+                printf("EXECUTE single command IOA: %i rejected (invalid output point)\n", addr);
+                IMasterConnection_sendACT_CON(connection, asdu, true);
+            }
+            else if (self->isSboEnabled() && !self->checkAndConsumeSelect(addr, connection, C_SC_NA_1, state ? 1 : 0, 0.0f, qu))
             {
                 printf("EXECUTE single command IOA: %i rejected (no valid select)\n", addr);
                 IMasterConnection_sendACT_CON(connection, asdu, true);
@@ -494,7 +516,7 @@ bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_AS
             else
             {
                 printf("IOA: %i switch to %i\n", addr, state);
-                gServer->writeBinary(addr, state);
+                self->writeBinary(addr, state);
                 IMasterConnection_sendACT_CON(connection, asdu, false);
             }
         }
@@ -509,20 +531,23 @@ bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_AS
         CS101_CauseOfTransmission cot = CS101_ASDU_getCOT(asdu);
         if (cot == CS101_COT_DEACTIVATION)
         {
-            // Cancel any outstanding selection for this point.
+            // Cancel an outstanding selection for this point if owned by this connection.
             InformationObject cancelIo = CS101_ASDU_getElement(asdu, 0);
+            bool ok = false;
             if (cancelIo)
             {
-                gServer->clearSelect(InformationObject_getObjectAddress(cancelIo));
+                ok = self->cancelSelect(InformationObject_getObjectAddress(cancelIo), connection, C_DC_NA_1);
                 InformationObject_destroy(cancelIo);
             }
             CS101_ASDU_setCOT(asdu, CS101_COT_DEACTIVATION_CON);
+            CS101_ASDU_setNegative(asdu, !ok);
             IMasterConnection_sendASDU(connection, asdu);
             return true;
         }
         if (cot != CS101_COT_ACTIVATION)
         {
             CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_COT);
+            CS101_ASDU_setNegative(asdu, true);
             IMasterConnection_sendASDU(connection, asdu);
             return true;
         }
@@ -540,17 +565,37 @@ bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_AS
         int qu = DoubleCommand_getQU(dc);
         bool isSelect = DoubleCommand_isSelect(dc);
 
-        if (gServer->isSboEnabled() && isSelect)
+        // IEC 60870-5-101 7.2.6.16: only OFF (1) and ON (2) are permitted DCS values.
+        bool validState = (state == IEC60870_DOUBLE_POINT_OFF || state == IEC60870_DOUBLE_POINT_ON);
+
+        if (isSelect)
         {
-            // SELECT: reserve the point; do NOT change the process value.
-            bool ok = gServer->select(addr, connection, C_DC_NA_1, state, 0.0f, qu);
-            printf("SELECT double command IOA: %i (%s)\n", addr, ok ? "accepted" : "rejected");
-            IMasterConnection_sendACT_CON(connection, asdu, !ok);
+            if (!self->isSboEnabled() || !validState)
+            {
+                printf("SELECT double command IOA: %i rejected\n", addr);
+                IMasterConnection_sendACT_CON(connection, asdu, true);
+            }
+            else
+            {
+                // SELECT: reserve the point; do NOT change the process value.
+                bool ok = self->select(addr, connection, C_DC_NA_1, state, 0.0f, qu);
+                printf("SELECT double command IOA: %i (%s)\n", addr, ok ? "accepted" : "rejected");
+                IMasterConnection_sendACT_CON(connection, asdu, !ok);
+            }
         }
         else
         {
             // EXECUTE (or direct-operate when SBO disabled).
-            if (gServer->isSboEnabled() && !gServer->checkAndConsumeSelect(addr, connection, C_DC_NA_1, state, 0.0f, qu))
+            if (!validState || !self->isValidOutputPoint(addr, C_DC_NA_1))
+            {
+                if (self->isSboEnabled())
+                {
+                    self->clearSelect(addr);
+                }
+                printf("EXECUTE double command IOA: %i rejected (invalid point or state)\n", addr);
+                IMasterConnection_sendACT_CON(connection, asdu, true);
+            }
+            else if (self->isSboEnabled() && !self->checkAndConsumeSelect(addr, connection, C_DC_NA_1, state, 0.0f, qu))
             {
                 printf("EXECUTE double command IOA: %i rejected (no valid select)\n", addr);
                 IMasterConnection_sendACT_CON(connection, asdu, true);
@@ -560,7 +605,7 @@ bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_AS
                 // Send activation confirmation (application layer ACK)
                 IMasterConnection_sendACT_CON(connection, asdu, false);
                 printf("IOA: %i switch to %i\n", addr, state);
-                gServer->writeBinary(addr, state);
+                self->writeBinary(addr, state);
                 // Send activation termination
                 IMasterConnection_sendACT_TERM(connection, asdu);
             }
@@ -576,20 +621,23 @@ bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_AS
         CS101_CauseOfTransmission cot = CS101_ASDU_getCOT(asdu);
         if (cot == CS101_COT_DEACTIVATION)
         {
-            // Cancel any outstanding selection for this point.
+            // Cancel an outstanding selection for this point if owned by this connection.
             InformationObject cancelIo = CS101_ASDU_getElement(asdu, 0);
+            bool ok = false;
             if (cancelIo)
             {
-                gServer->clearSelect(InformationObject_getObjectAddress(cancelIo));
+                ok = self->cancelSelect(InformationObject_getObjectAddress(cancelIo), connection, C_SE_NC_1);
                 InformationObject_destroy(cancelIo);
             }
             CS101_ASDU_setCOT(asdu, CS101_COT_DEACTIVATION_CON);
+            CS101_ASDU_setNegative(asdu, !ok);
             IMasterConnection_sendASDU(connection, asdu);
             return true;
         }
         if (cot != CS101_COT_ACTIVATION)
         {
             CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_COT);
+            CS101_ASDU_setNegative(asdu, true);
             IMasterConnection_sendASDU(connection, asdu);
             return true;
         }
@@ -607,17 +655,30 @@ bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_AS
         int ql = SetpointCommandShort_getQL(sc);
         bool isSelect = SetpointCommandShort_isSelect(sc);
 
-        if (gServer->isSboEnabled() && isSelect)
+        if (isSelect)
         {
-            // SELECT: reserve the point; do NOT change the process value.
-            bool ok = gServer->select(addr, connection, C_SE_NC_1, 0, value, ql);
-            printf("SELECT setpoint command IOA: %i (%s)\n", addr, ok ? "accepted" : "rejected");
-            IMasterConnection_sendACT_CON(connection, asdu, !ok);
+            if (!self->isSboEnabled())
+            {
+                printf("SELECT setpoint command IOA: %i rejected (SBO disabled)\n", addr);
+                IMasterConnection_sendACT_CON(connection, asdu, true);
+            }
+            else
+            {
+                // SELECT: reserve the point; do NOT change the process value.
+                bool ok = self->select(addr, connection, C_SE_NC_1, 0, value, ql);
+                printf("SELECT setpoint command IOA: %i (%s)\n", addr, ok ? "accepted" : "rejected");
+                IMasterConnection_sendACT_CON(connection, asdu, !ok);
+            }
         }
         else
         {
             // EXECUTE (or direct-operate when SBO disabled).
-            if (gServer->isSboEnabled() && !gServer->checkAndConsumeSelect(addr, connection, C_SE_NC_1, 0, value, ql))
+            if (!self->isValidOutputPoint(addr, C_SE_NC_1))
+            {
+                printf("EXECUTE setpoint command IOA: %i rejected (invalid output point)\n", addr);
+                IMasterConnection_sendACT_CON(connection, asdu, true);
+            }
+            else if (self->isSboEnabled() && !self->checkAndConsumeSelect(addr, connection, C_SE_NC_1, 0, value, ql))
             {
                 printf("EXECUTE setpoint command IOA: %i rejected (no valid select)\n", addr);
                 IMasterConnection_sendACT_CON(connection, asdu, true);
@@ -625,7 +686,7 @@ bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_AS
             else
             {
                 printf("IOA: %i switch to %f\n", addr, value);
-                gServer->writeAnalog(addr, value);
+                self->writeAnalog(addr, value);
                 IMasterConnection_sendACT_CON(connection, asdu, false);
             }
         }
@@ -786,11 +847,32 @@ bool Server::select(uint16_t ioa, IMasterConnection connection, IEC60870_5_TypeI
         logEvent("iec60870-5-104 select", "error", log_stream.str());
         return false;
     }
+    if (typeId == C_DC_NA_1 && intValue != IEC60870_DOUBLE_POINT_OFF && intValue != IEC60870_DOUBLE_POINT_ON)
+    {
+        std::ostringstream log_stream;
+        log_stream << "Rejected select for IOA " << ioa << ": invalid double command state " << intValue;
+        logEvent("iec60870-5-104 select", "error", log_stream.str());
+        return false;
+    }
 
     std::lock_guard<std::mutex> lock(mSelectionMutex);
+    int64_t nowMs = static_cast<int64_t>(Hal_getTimeInMs());
+    auto existing = mSelections.find(ioa);
+    if (existing != mSelections.end())
+    {
+        bool expired = (nowMs - existing->second.selectedAtMs) > mSboTimeoutMs;
+        if (!expired && existing->second.connection != connection)
+        {
+            std::ostringstream log_stream;
+            log_stream << "Rejected select for IOA " << ioa << ": already selected by another connection.";
+            logEvent("iec60870-5-104 select", "error", log_stream.str());
+            return false;
+        }
+    }
+
     mSelections[ioa] = SelectionState{
         connection,
-        static_cast<int64_t>(Hal_getTimeInMs()),
+        nowMs,
         typeId,
         intValue,
         floatValue,
@@ -848,6 +930,27 @@ void Server::clearSelect(uint16_t ioa)
 {
     std::lock_guard<std::mutex> lock(mSelectionMutex);
     mSelections.erase(ioa);
+}
+
+bool Server::cancelSelect(uint16_t ioa, IMasterConnection connection, IEC60870_5_TypeID typeId)
+{
+    if (!isValidOutputPoint(ioa, typeId))
+    {
+        return false;
+    }
+
+    std::lock_guard<std::mutex> lock(mSelectionMutex);
+    auto iter = mSelections.find(ioa);
+    if (iter == mSelections.end())
+    {
+        return false;
+    }
+    if (iter->second.connection != connection)
+    {
+        return false;
+    }
+    mSelections.erase(iter);
+    return true;
 }
 
 void Server::clearSelectionsForConnection(IMasterConnection connection)

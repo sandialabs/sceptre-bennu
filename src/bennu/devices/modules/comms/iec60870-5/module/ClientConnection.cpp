@@ -199,7 +199,7 @@ StatusMessage ClientConnection::writeAnalog(const std::string& tag, double value
  * Send the EXECUTE phase for a pending select-before-operate command at the given
  * IOA. Called from asduReceivedHandler when a SELECT's positive ACT_CON arrives.
  */
-void ClientConnection::sendExecute(std::uint16_t address, PendingCommandType expectedType)
+void ClientConnection::sendExecute(std::uint16_t address, PendingCommandType expectedType, int echoedIntValue, float echoedFloatValue, int echoedQualifier)
 {
     PendingCommand pending;
     {
@@ -211,6 +211,15 @@ void ClientConnection::sendExecute(std::uint16_t address, PendingCommandType exp
         }
         pending = iter->second;
         mPendingCommands.erase(iter);
+
+        bool valueMatches = (expectedType == ePendingDouble)
+                                ? (pending.value == echoedIntValue)
+                                : (pending.fValue == echoedFloatValue);
+        if (echoedQualifier != 0 || !valueMatches)
+        {
+            printf("  SELECT ACT_CON for IOA %i did not match pending command; aborting execute\n", address);
+            return;
+        }
     }
 
     if (pending.type == ePendingDouble)
@@ -318,6 +327,11 @@ bool ClientConnection::asduReceivedHandler(void* parameter, int address, CS101_A
                 bool isSelect = (typeId == C_DC_NA_1)
                                     ? DoubleCommand_isSelect((DoubleCommand)io)
                                     : SetpointCommandShort_isSelect((SetpointCommandShort)io);
+                int echoedInt = (typeId == C_DC_NA_1) ? DoubleCommand_getState((DoubleCommand)io) : 0;
+                float echoedFloat = (typeId == C_SE_NC_1) ? SetpointCommandShort_getValue((SetpointCommandShort)io) : 0.0f;
+                int echoedQualifier = (typeId == C_DC_NA_1)
+                                          ? DoubleCommand_getQU((DoubleCommand)io)
+                                          : SetpointCommandShort_getQL((SetpointCommandShort)io);
                 PendingCommandType expectedType = (typeId == C_DC_NA_1) ? ePendingDouble : ePendingSetpoint;
 
                 if (isSelect)
@@ -337,9 +351,10 @@ bool ClientConnection::asduReceivedHandler(void* parameter, int address, CS101_A
                     }
                     else
                     {
-                        // Positive confirmation for SELECT -- follow up with the EXECUTE.
+                        // Positive confirmation for SELECT -- follow up with the EXECUTE
+                        // if the echoed parameters match the pending command.
                         printf("  SELECT command IOA %i confirmed (positive ACT_CON)\n", addr);
-                        self->sendExecute(addr, expectedType);
+                        self->sendExecute(addr, expectedType, echoedInt, echoedFloat, echoedQualifier);
                     }
                 }
                 else

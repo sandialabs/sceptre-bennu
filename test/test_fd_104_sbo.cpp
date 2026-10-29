@@ -26,6 +26,59 @@ bool holdSelectAsduHandler(void* /*parameter*/, IMasterConnection /*connection*/
     return true;
 }
 
+struct MockMasterConnectionState
+{
+    int actConCalls = 0;
+    bool lastActConNegative = false;
+    int actTermCalls = 0;
+    int sendAsduCalls = 0;
+    CS101_CauseOfTransmission lastSentCot = CS101_COT_UNKNOWN_COT;
+    bool lastSentNegative = false;
+};
+
+bool mockSendASDU(IMasterConnection self, CS101_ASDU asdu)
+{
+    auto* state = static_cast<MockMasterConnectionState*>(self->object);
+    if (state)
+    {
+        ++state->sendAsduCalls;
+        state->lastSentCot = CS101_ASDU_getCOT(asdu);
+        state->lastSentNegative = CS101_ASDU_isNegative(asdu);
+    }
+    return true;
+}
+
+bool mockSendACT_CON(IMasterConnection self, CS101_ASDU /*asdu*/, bool negative)
+{
+    auto* state = static_cast<MockMasterConnectionState*>(self->object);
+    if (state)
+    {
+        ++state->actConCalls;
+        state->lastActConNegative = negative;
+    }
+    return true;
+}
+
+bool mockSendACT_TERM(IMasterConnection self, CS101_ASDU /*asdu*/)
+{
+    auto* state = static_cast<MockMasterConnectionState*>(self->object);
+    if (state)
+    {
+        ++state->actTermCalls;
+    }
+    return true;
+}
+
+sIMasterConnection makeMockMasterConnection(MockMasterConnectionState* state)
+{
+    sIMasterConnection conn{};
+    conn.sendASDU = mockSendASDU;
+    conn.sendACT_CON = mockSendACT_CON;
+    conn.sendACT_TERM = mockSendACT_TERM;
+    conn.object = state;
+    return conn;
+}
+
 } // namespace
 
 // Launches an IEC 60870-5-104 outstation configured with select-before-operate
@@ -68,6 +121,24 @@ TEST_CASE("server SBO validates output point family, command match, and connecti
     CHECK_FALSE(server->select(2, conn1, C_DC_NA_1, IEC60870_DOUBLE_POINT_ON, 0.0f, 0));
     CHECK_FALSE(server->select(1, conn1, C_SE_NC_1, 0, 42.0f, 0));
 
+    // Prohibited C_DC_NA_1 states (0 = intermediate, 3 = indeterminate) must be rejected
+    CHECK_FALSE(server->select(1, conn1, C_DC_NA_1, IEC60870_DOUBLE_POINT_INTERMEDIATE, 0.0f, 0));
+    CHECK_FALSE(server->select(1, conn1, C_DC_NA_1, IEC60870_DOUBLE_POINT_INDETERMINATE, 0.0f, 0));
+
+    // Competing SELECT from a different connection while unexpired must be rejected
+    // and must not overwrite the original connection's selection
+    REQUIRE(server->select(1, conn1, C_DC_NA_1, IEC60870_DOUBLE_POINT_ON, 0.0f, 0));
+    CHECK_FALSE(server->select(1, conn2, C_DC_NA_1, IEC60870_DOUBLE_POINT_OFF, 0.0f, 0));
+    CHECK(server->checkAndConsumeSelect(1, conn1, C_DC_NA_1, IEC60870_DOUBLE_POINT_ON, 0.0f, 0));
+
+    // Cancellation (COT_DEACTIVATION) only succeeds for the owning connection and valid output point
+    REQUIRE(server->select(1, conn1, C_DC_NA_1, IEC60870_DOUBLE_POINT_ON, 0.0f, 0));
+    CHECK_FALSE(server->cancelSelect(100, conn1, C_DC_NA_1));
+    CHECK_FALSE(server->cancelSelect(1, conn2, C_DC_NA_1));
+    CHECK(server->cancelSelect(1, conn1, C_DC_NA_1));
+    CHECK_FALSE(server->cancelSelect(1, conn1, C_DC_NA_1));
+    CHECK_FALSE(server->checkAndConsumeSelect(1, conn1, C_DC_NA_1, IEC60870_DOUBLE_POINT_ON, 0.0f, 0));
+
     // Value mismatch on EXECUTE must fail and consume the selection
     REQUIRE(server->select(1, conn1, C_DC_NA_1, IEC60870_DOUBLE_POINT_OFF, 0.0f, 0));
     CHECK_FALSE(server->checkAndConsumeSelect(1, conn1, C_DC_NA_1, IEC60870_DOUBLE_POINT_ON, 0.0f, 0));
@@ -102,6 +173,92 @@ TEST_CASE("server SBO validates output point family, command match, and connecti
     Server::connectionEventHandler(server.get(), conn1, CS104_CON_EVENT_DEACTIVATED);
     CHECK_FALSE(server->checkAndConsumeSelect(1, conn1, C_DC_NA_1, IEC60870_DOUBLE_POINT_ON, 0.0f, 0));
     CHECK(server->checkAndConsumeSelect(2, conn2, C_SE_NC_1, 0, 5.0f, 0));
+}
+
+TEST_CASE("server asduHandler enforces direct-operate, prohibited states, and deactivation ownership")
+{
+    auto dm = std::make_shared<DataManager>();
+    dm->addExternalData<bool>("bin-in", "bin-in");
+    dm->addTagToPointMapping("bin-in", "bin-in");
+    dm->addExternalData<bool>("bin-out", "bin-out");
+    dm->addTagToPointMapping("bin-out", "bin-out");
+
+    auto server = std::make_shared<Server>(dm);
+    REQUIRE(server->addBinaryInput(100, "bin-in"));
+    REQUIRE(server->addBinaryOutput(1, "bin-out"));
+
+    CS104_Slave slave = CS104_Slave_create(10, 10);
+    CS101_AppLayerParameters alParams = CS104_Slave_getAppLayerParameters(slave);
+
+    MockMasterConnectionState state1;
+    MockMasterConnectionState state2;
+    sIMasterConnection mock1 = makeMockMasterConnection(&state1);
+    sIMasterConnection mock2 = makeMockMasterConnection(&state2);
+
+    // 1. When SBO is disabled (default), a SELECT (isSelect=true) must be rejected
+    // with negative ACT_CON and must NOT write to the point.
+    CS101_ASDU selAsdu = CS101_ASDU_create(alParams, false, CS101_COT_ACTIVATION, 0, 1, false, false);
+    InformationObject selIo = (InformationObject)DoubleCommand_create(
+        nullptr, 1, IEC60870_DOUBLE_POINT_ON, true, 0);
+    CS101_ASDU_addInformationObject(selAsdu, selIo);
+    InformationObject_destroy(selIo);
+    CHECK(Server::asduHandler(server.get(), &mock1, selAsdu));
+    CS101_ASDU_destroy(selAsdu);
+    CHECK(state1.actConCalls == 1);
+    CHECK(state1.lastActConNegative == true);
+    CHECK(state1.actTermCalls == 0);
+    CHECK(dm->getDataByTag<bool>("bin-out") == false);
+
+    // 2. Direct-operate EXECUTE on an input point (IOA 100) must be rejected with negative ACT_CON.
+    CS101_ASDU inExecAsdu = CS101_ASDU_create(alParams, false, CS101_COT_ACTIVATION, 0, 1, false, false);
+    InformationObject inExecIo = (InformationObject)DoubleCommand_create(
+        nullptr, 100, IEC60870_DOUBLE_POINT_ON, false, 0);
+    CS101_ASDU_addInformationObject(inExecAsdu, inExecIo);
+    InformationObject_destroy(inExecIo);
+    CHECK(Server::asduHandler(server.get(), &mock1, inExecAsdu));
+    CS101_ASDU_destroy(inExecAsdu);
+    CHECK(state1.actConCalls == 2);
+    CHECK(state1.lastActConNegative == true);
+    CHECK(state1.actTermCalls == 0);
+
+    // 3. Direct-operate EXECUTE with prohibited DCS state 0 (intermediate) must be rejected.
+    CS101_ASDU badStateAsdu = CS101_ASDU_create(alParams, false, CS101_COT_ACTIVATION, 0, 1, false, false);
+    InformationObject badStateIo = (InformationObject)DoubleCommand_create(
+        nullptr, 1, IEC60870_DOUBLE_POINT_INTERMEDIATE, false, 0);
+    CS101_ASDU_addInformationObject(badStateAsdu, badStateIo);
+    InformationObject_destroy(badStateIo);
+    CHECK(Server::asduHandler(server.get(), &mock1, badStateAsdu));
+    CS101_ASDU_destroy(badStateAsdu);
+    CHECK(state1.actConCalls == 3);
+    CHECK(state1.lastActConNegative == true);
+    CHECK(state1.actTermCalls == 0);
+
+    // 4. COT_DEACTIVATION on a selection owned by mock1 is rejected when sent by mock2
+    // (negative DEACTIVATION_CON), then succeeds when sent by mock1 (positive DEACTIVATION_CON).
+    REQUIRE(server->select(1, &mock1, C_DC_NA_1, IEC60870_DOUBLE_POINT_ON, 0.0f, 0));
+    CS101_ASDU deactAsdu2 = CS101_ASDU_create(alParams, false, CS101_COT_DEACTIVATION, 0, 1, false, false);
+    InformationObject deactIo2 = (InformationObject)DoubleCommand_create(
+        nullptr, 1, IEC60870_DOUBLE_POINT_ON, true, 0);
+    CS101_ASDU_addInformationObject(deactAsdu2, deactIo2);
+    InformationObject_destroy(deactIo2);
+    CHECK(Server::asduHandler(server.get(), &mock2, deactAsdu2));
+    CS101_ASDU_destroy(deactAsdu2);
+    CHECK(state2.sendAsduCalls == 1);
+    CHECK(state2.lastSentCot == CS101_COT_DEACTIVATION_CON);
+    CHECK(state2.lastSentNegative == true);
+
+    CS101_ASDU deactAsdu1 = CS101_ASDU_create(alParams, false, CS101_COT_DEACTIVATION, 0, 1, false, false);
+    InformationObject deactIo1 = (InformationObject)DoubleCommand_create(
+        nullptr, 1, IEC60870_DOUBLE_POINT_ON, true, 0);
+    CS101_ASDU_addInformationObject(deactAsdu1, deactIo1);
+    InformationObject_destroy(deactIo1);
+    CHECK(Server::asduHandler(server.get(), &mock1, deactAsdu1));
+    CS101_ASDU_destroy(deactAsdu1);
+    CHECK(state1.sendAsduCalls == 1);
+    CHECK(state1.lastSentCot == CS101_COT_DEACTIVATION_CON);
+    CHECK(state1.lastSentNegative == false);
+
+    CS104_Slave_destroy(slave);
 }
 
 TEST_CASE("client SBO callback routing, pending write protection, and select-bit checking")
@@ -177,6 +334,20 @@ TEST_CASE("client SBO callback routing, pending write protection, and select-bit
     CHECK(out2.mStatus == false);
 
     // Now that the pending SELECT was consumed by EXECUTE, a new write on IOA 10 is accepted
+    CHECK(conn1->writeBinary("bin-out", false).status == STATUS_SUCCESS);
+
+    // 4. A positive SELECT ACT_CON that echoes a mismatched command state (ON instead of OFF)
+    // must abort EXECUTE (leaving out1.mStatus unchanged at true) and clear the pending entry.
+    CS101_ASDU selMismatchAsdu = CS101_ASDU_create(alParams, false, CS101_COT_ACTIVATION_CON, 0, 1, false, false);
+    InformationObject selMismatchDc = (InformationObject)DoubleCommand_create(
+        nullptr, 10, IEC60870_DOUBLE_POINT_ON, true, 0);
+    CS101_ASDU_addInformationObject(selMismatchAsdu, selMismatchDc);
+    InformationObject_destroy(selMismatchDc);
+    ClientConnection::asduReceivedHandler(conn1.get(), 0, selMismatchAsdu);
+    CS101_ASDU_destroy(selMismatchAsdu);
+
+    REQUIRE(conn1->getRegisterDescriptorByTag("bin-out", out1));
+    CHECK(out1.mStatus == true);
     CHECK(conn1->writeBinary("bin-out", false).status == STATUS_SUCCESS);
 
     CS104_Slave_stop(slave);
