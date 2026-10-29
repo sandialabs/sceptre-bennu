@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- IEC 60870-5-104 outstation with select-before-operate enabled. Used by
-     test/test_fd_104_sbo.cpp. Mirrors iec60870-5-104-server.xml but with SBO on. -->
 <SCEPTRE>
+    <!-- IEC 60870-5-104 outstation with select-before-operate enabled. Used by
+         test/test_fd_104_sbo.cpp. Mirrors iec60870-5-104-server.xml but with SBO on. -->
     <field-device>
         <name>rtu-1</name>
         <cycle-time>500</cycle-time>
@@ -23,6 +23,7 @@
                 <rpoll-rate>1</rpoll-rate>
                 <endpoint>tcp://127.0.0.1:2404</endpoint>
                 <event-logging>rtu-1-104-outstation-sbo.log</event-logging>
+                <subtype>double</subtype>
                 <sbo-enabled>true</sbo-enabled>
                 <sbo-timeout-secs>30</sbo-timeout-secs>
                 <binary-input>

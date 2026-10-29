@@ -54,18 +54,18 @@ void Server::start(const std::string& endpoint, std::shared_ptr<Server> server, 
         // Set the callback handler for the interrogation command
         if (subtype.find("double") != std::string::npos)
         {
-            CS104_Slave_setInterrogationHandler(slave, interrogationHandlerDoublePoint, NULL);
+            CS104_Slave_setInterrogationHandler(slave, interrogationHandlerDoublePoint, this);
         }
         else
         {
-            CS104_Slave_setInterrogationHandler(slave, interrogationHandlerSinglePoint, NULL);
+            CS104_Slave_setInterrogationHandler(slave, interrogationHandlerSinglePoint, this);
         }
         // Set handler for other message types
-        CS104_Slave_setASDUHandler(slave, asduHandler, NULL);
+        CS104_Slave_setASDUHandler(slave, asduHandler, this);
         // Set handler to handle connection requests (optional)
-        CS104_Slave_setConnectionRequestHandler(slave, connectionRequestHandler, NULL);
+        CS104_Slave_setConnectionRequestHandler(slave, connectionRequestHandler, this);
         // Set handler to track connection events (optional)
-        CS104_Slave_setConnectionEventHandler(slave, connectionEventHandler, NULL);
+        CS104_Slave_setConnectionEventHandler(slave, connectionEventHandler, this);
         // Uncomment to log messages
         //CS104_Slave_setRawMessageHandler(slave, rawMessageHandler, NULL);
 
@@ -473,19 +473,20 @@ bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_AS
         SingleCommand sc = (SingleCommand)io;
         uint16_t addr = InformationObject_getObjectAddress(io);
         bool state = SingleCommand_getState(sc);
+        int qu = SingleCommand_getQU(sc);
         bool isSelect = SingleCommand_isSelect(sc);
 
         if (gServer->isSboEnabled() && isSelect)
         {
             // SELECT: reserve the point; do NOT change the process value.
-            bool ok = gServer->select(addr, connection);
+            bool ok = gServer->select(addr, connection, C_SC_NA_1, state ? 1 : 0, 0.0f, qu);
             printf("SELECT single command IOA: %i (%s)\n", addr, ok ? "accepted" : "rejected");
             IMasterConnection_sendACT_CON(connection, asdu, !ok);
         }
         else
         {
             // EXECUTE (or direct-operate when SBO disabled).
-            if (gServer->isSboEnabled() && !gServer->checkAndConsumeSelect(addr, connection))
+            if (gServer->isSboEnabled() && !gServer->checkAndConsumeSelect(addr, connection, C_SC_NA_1, state ? 1 : 0, 0.0f, qu))
             {
                 printf("EXECUTE single command IOA: %i rejected (no valid select)\n", addr);
                 IMasterConnection_sendACT_CON(connection, asdu, true);
@@ -536,19 +537,20 @@ bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_AS
         DoubleCommand dc = (DoubleCommand)io;
         uint16_t addr = InformationObject_getObjectAddress(io);
         int state = DoubleCommand_getState(dc);
+        int qu = DoubleCommand_getQU(dc);
         bool isSelect = DoubleCommand_isSelect(dc);
 
         if (gServer->isSboEnabled() && isSelect)
         {
             // SELECT: reserve the point; do NOT change the process value.
-            bool ok = gServer->select(addr, connection);
+            bool ok = gServer->select(addr, connection, C_DC_NA_1, state, 0.0f, qu);
             printf("SELECT double command IOA: %i (%s)\n", addr, ok ? "accepted" : "rejected");
             IMasterConnection_sendACT_CON(connection, asdu, !ok);
         }
         else
         {
             // EXECUTE (or direct-operate when SBO disabled).
-            if (gServer->isSboEnabled() && !gServer->checkAndConsumeSelect(addr, connection))
+            if (gServer->isSboEnabled() && !gServer->checkAndConsumeSelect(addr, connection, C_DC_NA_1, state, 0.0f, qu))
             {
                 printf("EXECUTE double command IOA: %i rejected (no valid select)\n", addr);
                 IMasterConnection_sendACT_CON(connection, asdu, true);
@@ -602,19 +604,20 @@ bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_AS
         SetpointCommandShort sc = (SetpointCommandShort)io;
         uint16_t addr = InformationObject_getObjectAddress(io);
         float value = SetpointCommandShort_getValue(sc);
+        int ql = SetpointCommandShort_getQL(sc);
         bool isSelect = SetpointCommandShort_isSelect(sc);
 
         if (gServer->isSboEnabled() && isSelect)
         {
             // SELECT: reserve the point; do NOT change the process value.
-            bool ok = gServer->select(addr, connection);
+            bool ok = gServer->select(addr, connection, C_SE_NC_1, 0, value, ql);
             printf("SELECT setpoint command IOA: %i (%s)\n", addr, ok ? "accepted" : "rejected");
             IMasterConnection_sendACT_CON(connection, asdu, !ok);
         }
         else
         {
             // EXECUTE (or direct-operate when SBO disabled).
-            if (gServer->isSboEnabled() && !gServer->checkAndConsumeSelect(addr, connection))
+            if (gServer->isSboEnabled() && !gServer->checkAndConsumeSelect(addr, connection, C_SE_NC_1, 0, value, ql))
             {
                 printf("EXECUTE setpoint command IOA: %i rejected (no valid select)\n", addr);
                 IMasterConnection_sendACT_CON(connection, asdu, true);
@@ -642,16 +645,25 @@ bool Server::connectionRequestHandler(void *parameter, const char *ipAddress)
 
 void Server::connectionEventHandler(void *parameter, IMasterConnection con, CS104_PeerConnectionEvent event)
 {
+    Server* self = parameter ? static_cast<Server*>(parameter) : gServer.get();
     if (event == CS104_CON_EVENT_CONNECTION_OPENED)
     {
         printf("Connection opened (%p)\n", con);
-        gServer->mConnection = con;
-        gServer->mConnected = true;
+        if (self)
+        {
+            self->clearSelectionsForConnection(con);
+            self->mConnection = con;
+            self->mConnected = true;
+        }
     }
     else if (event == CS104_CON_EVENT_CONNECTION_CLOSED)
     {
         printf("Connection closed (%p)\n", con);
-        gServer->mConnected = false;
+        if (self)
+        {
+            self->mConnected = false;
+            self->clearSelectionsForConnection(con);
+        }
     }
     else if (event == CS104_CON_EVENT_ACTIVATED)
     {
@@ -660,6 +672,10 @@ void Server::connectionEventHandler(void *parameter, IMasterConnection con, CS10
     else if (event == CS104_CON_EVENT_DEACTIVATED)
     {
         printf("Connection deactivated (%p)\n", con);
+        if (self)
+        {
+            self->clearSelectionsForConnection(con);
+        }
     }
 }
 
@@ -746,31 +762,46 @@ void Server::writeAnalog(std::uint16_t address, float value)
     logEvent("write analog", "info", log_stream.str());
 }
 
-bool Server::isKnownPoint(uint16_t ioa) const
+bool Server::isValidOutputPoint(uint16_t ioa, IEC60870_5_TypeID typeId) const
 {
-    return (mBinaryPoints.find(ioa) != mBinaryPoints.end()) ||
-           (mAnalogPoints.find(ioa) != mAnalogPoints.end());
+    if (typeId == C_SC_NA_1 || typeId == C_DC_NA_1)
+    {
+        auto iter = mBinaryPoints.find(ioa);
+        return (iter != mBinaryPoints.end() && iter->second.second == PointType::eOutput);
+    }
+    else if (typeId == C_SE_NC_1)
+    {
+        auto iter = mAnalogPoints.find(ioa);
+        return (iter != mAnalogPoints.end() && iter->second.second == PointType::eOutput);
+    }
+    return false;
 }
 
-bool Server::select(uint16_t ioa, IMasterConnection connection)
+bool Server::select(uint16_t ioa, IMasterConnection connection, IEC60870_5_TypeID typeId, int intValue, float floatValue, int qualifier)
 {
-    if (!isKnownPoint(ioa))
+    if (!isValidOutputPoint(ioa, typeId))
     {
         std::ostringstream log_stream;
-        log_stream << "Rejected select for unknown IOA: " << ioa;
+        log_stream << "Rejected select for invalid or non-output IOA: " << ioa;
         logEvent("iec60870-5-104 select", "error", log_stream.str());
         return false;
     }
 
     std::lock_guard<std::mutex> lock(mSelectionMutex);
-    mSelections[ioa] = SelectionState{connection, static_cast<int64_t>(Hal_getTimeInMs())};
+    mSelections[ioa] = SelectionState{
+        connection,
+        static_cast<int64_t>(Hal_getTimeInMs()),
+        typeId,
+        intValue,
+        floatValue,
+        qualifier};
     std::ostringstream log_stream;
     log_stream << "Point at IOA " << ioa << " selected.";
     logEvent("iec60870-5-104 select", "info", log_stream.str());
     return true;
 }
 
-bool Server::checkAndConsumeSelect(uint16_t ioa, IMasterConnection connection)
+bool Server::checkAndConsumeSelect(uint16_t ioa, IMasterConnection connection, IEC60870_5_TypeID typeId, int intValue, float floatValue, int qualifier)
 {
     std::lock_guard<std::mutex> lock(mSelectionMutex);
     auto iter = mSelections.find(ioa);
@@ -779,9 +810,11 @@ bool Server::checkAndConsumeSelect(uint16_t ioa, IMasterConnection connection)
         return false;
     }
 
-    const SelectionState& sel = iter->second;
+    const SelectionState sel = iter->second;
     bool sameConnection = (sel.connection == connection);
     bool expired = (static_cast<int64_t>(Hal_getTimeInMs()) - sel.selectedAtMs) > mSboTimeoutMs;
+    bool commandMatches = (sel.typeId == typeId) && (sel.qualifier == qualifier) &&
+                          ((typeId == C_SE_NC_1) ? (sel.floatValue == floatValue) : (sel.intValue == intValue));
 
     // Consume the selection regardless of validity; a failed execute must
     // require a fresh select.
@@ -801,6 +834,13 @@ bool Server::checkAndConsumeSelect(uint16_t ioa, IMasterConnection connection)
         logEvent("iec60870-5-104 execute", "error", log_stream.str());
         return false;
     }
+    if (!commandMatches)
+    {
+        std::ostringstream log_stream;
+        log_stream << "Execute for IOA " << ioa << " rejected: command does not match selection.";
+        logEvent("iec60870-5-104 execute", "error", log_stream.str());
+        return false;
+    }
     return true;
 }
 
@@ -808,6 +848,22 @@ void Server::clearSelect(uint16_t ioa)
 {
     std::lock_guard<std::mutex> lock(mSelectionMutex);
     mSelections.erase(ioa);
+}
+
+void Server::clearSelectionsForConnection(IMasterConnection connection)
+{
+    std::lock_guard<std::mutex> lock(mSelectionMutex);
+    for (auto iter = mSelections.begin(); iter != mSelections.end();)
+    {
+        if (iter->second.connection == connection)
+        {
+            iter = mSelections.erase(iter);
+        }
+        else
+        {
+            ++iter;
+        }
+    }
 }
 
 bool Server::addBinaryInput(const std::uint16_t address, const std::string &tag)

@@ -60,6 +60,7 @@
                 <rpoll-rate>1</rpoll-rate>
                 <endpoint>tcp://127.0.0.1:2404</endpoint>
                 <event-logging>rtu-1-104-outstation.log</event-logging>
+                <subtype>double</subtype>
                 <!-- Select-before-operate (SBO) for control commands. Optional;
                      defaults to false (direct-operate). The connecting master must
                      use the same mode. sbo-timeout-secs is how long a SELECT stays

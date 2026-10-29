@@ -26,3 +26,13 @@ target_sources(test_unit_outputmodule PRIVATE
 
 # perf guards exercise the real Client over inproc zmq
 target_sources(test_unit_perf PRIVATE ${CMAKE_SOURCE_DIR}/src/bennu/distributed/Client.cpp)
+
+target_include_directories(test_fd_104_sbo PRIVATE
+  ${bennu_INCLUDES}
+  ${CMAKE_SOURCE_DIR}/src/bennu/devices/modules/comms/iec60870-5/protocol/config
+  ${CMAKE_SOURCE_DIR}/src/bennu/devices/modules/comms/iec60870-5/protocol/src/inc/api
+  ${CMAKE_SOURCE_DIR}/src/bennu/devices/modules/comms/iec60870-5/protocol/src/inc/internal
+  ${CMAKE_SOURCE_DIR}/src/bennu/devices/modules/comms/iec60870-5/protocol/src/common/inc
+  ${CMAKE_SOURCE_DIR}/src/bennu/devices/modules/comms/iec60870-5/protocol/src/hal/inc
+)
+target_link_libraries(test_fd_104_sbo -Wl,--no-as-needed bennu-field-device-base bennu-comms bennu-utility bennu-iec60870-5-module lib60870-shared)
