@@ -54,6 +54,10 @@ void DataHandler::parseServerTree(std::shared_ptr<Server> server, const ptree& t
         std::string log = tree.get<std::string>("event-logging", "iec60870-5-104-server.log");
         server->configureEventLogging(log);
         std::string subtype = tree.get<std::string>("subtype");
+        // Select-before-operate is opt-in (default off) to preserve direct-operate
+        // behavior for existing configs.
+        bool sboEnabled = tree.get<bool>("sbo-enabled", false);
+        std::uint32_t sboTimeoutSecs = tree.get<std::uint32_t>("sbo-timeout-secs", DEFAULT_SBO_TIMEOUT_SECS);
         auto binaryInputs = tree.equal_range("binary-input");
         for (auto iter = binaryInputs.first; iter != binaryInputs.second; ++iter)
         {
@@ -89,7 +93,7 @@ void DataHandler::parseServerTree(std::shared_ptr<Server> server, const ptree& t
         // Initialize and start 104 server
         //   - Pass server pointer to Server::start() so Server::gServer can be set statically
         //     and used inside static 104 handlers
-        server->start(endpoint, server, rPollRate, subtype);
+        server->start(endpoint, server, rPollRate, subtype, sboEnabled, sboTimeoutSecs);
     }
     catch (ptree_bad_path& e)
     {
@@ -109,7 +113,9 @@ void DataHandler::parseClientTree(std::shared_ptr<Client> client, const ptree &t
         for (auto itr = connections.first; itr != connections.second; ++itr)
         {
             std::string serverEndpoint = itr->second.get<std::string>("endpoint");
-            std::shared_ptr<ClientConnection> connection(new ClientConnection(serverEndpoint));
+            // Select-before-operate is opt-in (default off); must match the outstation's mode.
+            bool sboEnabled = itr->second.get<bool>("sbo-enabled", false);
+            std::shared_ptr<ClientConnection> connection(new ClientConnection(serverEndpoint, sboEnabled));
 
             auto binaryInputs = itr->second.equal_range("binary-input");
             for (auto iter = binaryInputs.first; iter != binaryInputs.second; ++iter)
