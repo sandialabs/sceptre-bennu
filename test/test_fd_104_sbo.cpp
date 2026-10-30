@@ -258,6 +258,19 @@ TEST_CASE("server asduHandler enforces direct-operate, prohibited states, and de
     CHECK(state1.lastSentCot == CS101_COT_DEACTIVATION_CON);
     CHECK(state1.lastSentNegative == false);
 
+    // 5. Direct-operate EXECUTE on output point with C_SC_NA_1 sends both ACT_CON and ACT_TERM.
+    CS101_ASDU singleExecAsdu = CS101_ASDU_create(alParams, false, CS101_COT_ACTIVATION, 0, 1, false, false);
+    InformationObject singleExecIo = (InformationObject)SingleCommand_create(
+        nullptr, 1, true, false, 0);
+    CS101_ASDU_addInformationObject(singleExecAsdu, singleExecIo);
+    InformationObject_destroy(singleExecIo);
+    CHECK(Server::asduHandler(server.get(), &mock1, singleExecAsdu));
+    CS101_ASDU_destroy(singleExecAsdu);
+    CHECK(state1.actConCalls == 4);
+    CHECK(state1.lastActConNegative == false);
+    CHECK(state1.actTermCalls == 1);
+    CHECK(dm->snapshotUpdatedBinaryTags().at("bin-out") == true);
+
     CS104_Slave_destroy(slave);
 }
 

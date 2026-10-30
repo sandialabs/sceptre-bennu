@@ -515,9 +515,12 @@ bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_AS
             }
             else
             {
+                // Send activation confirmation (application layer ACK)
+                IMasterConnection_sendACT_CON(connection, asdu, false);
                 printf("IOA: %i switch to %i\n", addr, state);
                 self->writeBinary(addr, state);
-                IMasterConnection_sendACT_CON(connection, asdu, false);
+                // Send activation termination
+                IMasterConnection_sendACT_TERM(connection, asdu);
             }
         }
 
@@ -685,9 +688,12 @@ bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_AS
             }
             else
             {
+                // Send activation confirmation (application layer ACK)
+                IMasterConnection_sendACT_CON(connection, asdu, false);
                 printf("IOA: %i switch to %f\n", addr, value);
                 self->writeAnalog(addr, value);
-                IMasterConnection_sendACT_CON(connection, asdu, false);
+                // Send activation termination
+                IMasterConnection_sendACT_TERM(connection, asdu);
             }
         }
 
