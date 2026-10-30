@@ -122,6 +122,7 @@ We welcome suggestions for improvements! Please open an issue to discuss your id
 
     - **Scope** is optional and can be used to indicate the area of the codebase affected by the change.
     - **Subject** should be a short description of the change.
+    - Pull requests are rebase-merged, and the changelog is generated from conventional commits. Do not edit `CHANGELOG.md` by hand.
 
    Example:
 
