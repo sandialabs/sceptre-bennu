@@ -61,4 +61,4 @@ the throughput generator and baseline comparisons (`git worktree add /tmp/before
 - `build-bennu`: build, install, smoke script (ep-server, two field devices, probe greps), `ctest`, deb.
 - `build-pybennu-dependencies`, `build-pybennu-wheel`: libzmq/helics debs and the wheel.
 - `build-pybennu-wheel` also runs `pytest src/pybennu/tests` (with `PYTHONPATH=src/pybennu`).
-- `test-gobennu`: builds libzmq 4.3.4 with drafts and runs `go test ./...` in `src/gobennu`. `release` needs it.
+- `test-gobennu`: builds libzmq 4.3.4 with drafts and runs `go test ./...` in `src/gobennu`.

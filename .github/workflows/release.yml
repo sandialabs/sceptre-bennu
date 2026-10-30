@@ -1,0 +1,190 @@
+name: Release
+
+# Releases with releasaurus (see releasaurus.toml).
+# Merging a release PR tags the release, attaches all build artifacts
+# (as a draft first for compatibility with immutable releases), publishes
+# the release notes, and marks the PR as tagged (releasaurus::tagged).
+# Each push to main also opens or updates the release PR with releasaurus.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Show what would be released without changing anything
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Check for merged release PR
+    # Forks don't release, but can preview with a dry run.
+    if: github.repository == 'sandialabs/sceptre-bennu' || inputs.dry-run
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      is_release: ${{ steps.detect.outputs.is_release }}
+      pr_number: ${{ steps.detect.outputs.pr_number }}
+      tag: ${{ steps.detect.outputs.tag }}
+      target_sha: ${{ steps.detect.outputs.target_sha }}
+      notes: ${{ steps.detect.outputs.notes }}
+    steps:
+      - name: Detect merged release PR
+        id: detect
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          # Find the oldest merged release PR (head branch releasaurus-release-main) that
+          # has not been labeled releasaurus::tagged yet. This is independent of the
+          # triggering commit, so a release merge whose run was replaced in the concurrency
+          # queue is still picked up by the next run. One release is processed per run.
+          PR_JSON=$(gh api "repos/${GITHUB_REPOSITORY}/pulls?state=closed&base=main&sort=updated&direction=desc&per_page=100" \
+            --jq '[.[] | select(.merged_at != null and .head.ref == "releasaurus-release-main" and (.labels | map(.name) | contains(["releasaurus::tagged"]) | not))] | sort_by(.merged_at) | .[0]')
+
+          if [ -z "$PR_JSON" ] || [ "$PR_JSON" = "null" ]; then
+            echo "No untagged merged release PR found."
+            echo "is_release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          PR_NUMBER=$(jq -r '.number' <<< "$PR_JSON")
+          PR_BODY=$(jq -r '.body' <<< "$PR_JSON")
+          TARGET_SHA=$(jq -r '.merge_commit_sha' <<< "$PR_JSON")
+
+          # releasaurus embeds the tag as data-tag="..." in the release PR body, with the
+          # notes inside <div id="bennu" data-tag=...>. This depends on its body format.
+          TAG=$(grep -o 'data-tag="[^"]*"' <<< "$PR_BODY" | head -n1 | cut -d'"' -f2)
+          if [ -z "$TAG" ]; then
+            echo "::error::Could not find data-tag in release PR #${PR_NUMBER} body"
+            exit 1
+          fi
+          NOTES=$(sed -n '/<div id="bennu" data-tag/,/<\/div>/p' <<< "$PR_BODY" | grep -v '<div id=' | grep -v '</div>' | grep -v '<!--.*-->' || true)
+          if [ -z "$NOTES" ]; then
+            NOTES="$PR_BODY"
+          fi
+
+          echo "Detected merged release PR #${PR_NUMBER} for tag ${TAG} at ${TARGET_SHA}"
+          {
+            echo "is_release=true"
+            echo "pr_number=${PR_NUMBER}"
+            echo "tag=${TAG}"
+            echo "target_sha=${TARGET_SHA}"
+            echo "notes<<RELEASE_NOTES_EOF"
+            echo "$NOTES"
+            echo "RELEASE_NOTES_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+  build:
+    name: Build and test release artifacts
+    needs: check
+    if: needs.check.outputs.is_release == 'true'
+    uses: ./.github/workflows/build.yml
+    with:
+      ref: ${{ needs.check.outputs.target_sha }}
+
+  publish:
+    name: Tag, attach artifacts, and publish release
+    needs:
+      - check
+      - build
+    if: needs.check.outputs.is_release == 'true'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Download all release packages
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          path: ./artifacts
+          merge-multiple: true
+      - name: Show artifacts
+        run: ls -lh ./artifacts
+      - name: Create draft release, attach assets, and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.check.outputs.tag }}
+          TARGET: ${{ needs.check.outputs.target_sha }}
+          NOTES: ${{ needs.check.outputs.notes }}
+          PR_NUMBER: ${{ needs.check.outputs.pr_number }}
+          REPO: ${{ github.repository }}
+          DRY_RUN: ${{ inputs.dry-run }}
+        run: |
+          if [ "$DRY_RUN" = "true" ]; then
+            echo "Dry run preview:"
+            echo "Would create draft release ${TAG} for commit ${TARGET} with artifacts in ./artifacts/*"
+            echo "Would publish release ${TAG} as latest and label PR #${PR_NUMBER} releasaurus::tagged (removing releasaurus::pending)"
+            exit 0
+          fi
+
+          # Idempotent so a failed run can be re-run.
+          # Published releases are immutable, so leave them untouched.
+          if STATE=$(gh release view "$TAG" --repo "$REPO" --json isDraft --jq .isDraft 2>/dev/null); then
+            echo "Release ${TAG} already exists (draft=${STATE})."
+          else
+            # Create as a draft first so all assets are attached before publication
+            # (required by GitHub for compatibility with immutable releases).
+            gh release create "$TAG" \
+              --repo "$REPO" \
+              --title "$TAG" \
+              --notes "$NOTES" \
+              --target "$TARGET" \
+              --draft
+            STATE=true
+          fi
+
+          if [ "$STATE" = "true" ]; then
+            # Upload every asset (also on retry, so a partial draft is completed
+            # before publishing), then publish and mark it latest.
+            gh release upload "$TAG" ./artifacts/* --repo "$REPO" --clobber
+            gh release edit "$TAG" \
+              --repo "$REPO" \
+              --draft=false \
+              --latest
+          fi
+
+          # Mark the merged release PR as tagged and clear the pending label, which
+          # releasaurus uses to block new release PRs. Safe to repeat.
+          gh label create "releasaurus::tagged" --repo "$REPO" \
+            --description "Release has been tagged and published" 2>/dev/null || true
+          gh pr edit "$PR_NUMBER" --repo "$REPO" --add-label "releasaurus::tagged"
+          if gh pr view "$PR_NUMBER" --repo "$REPO" --json labels --jq '.labels[].name' | grep -qx "releasaurus::pending"; then
+            gh pr edit "$PR_NUMBER" --repo "$REPO" --remove-label "releasaurus::pending"
+          fi
+
+  releasaurus:
+    name: Open or update release PR
+    needs: [check, publish]
+    if: |
+      always() &&
+      (github.repository == 'sandialabs/sceptre-bennu' || inputs.dry-run) &&
+      (needs.check.outputs.is_release == 'false' || needs.publish.result == 'success')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    env:
+      DRY_RUN: ${{ inputs.dry-run && '--dry-run' || '' }}
+    steps:
+      - name: Open or update the release PR
+        uses: robgonnella/releasaurus/action@9843e67bc1fdd96c0cf033c9b5b24a1e2fc91c77 # v1.3.0
+        with:
+          command: release-pr
+          command_args: >-
+            --forge github
+            --repo ${{ github.server_url }}/${{ github.repository }}
+            ${{ env.DRY_RUN }}
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
