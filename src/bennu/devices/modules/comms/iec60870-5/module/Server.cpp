@@ -12,15 +12,22 @@ namespace iec60870 {
 
 Server::Server(std::shared_ptr<field_device::DataManager> dm) :
     bennu::utility::DirectLoggable("iec60870-5-104-server"),
-    mConnected(false)
+    mConnected(false),
+    mReversePollRate(0),
+    mConnection(nullptr),
+    mSboEnabled(false),
+    mSboTimeoutMs(DEFAULT_SBO_TIMEOUT_SECS * 1000)
 {
     setDataManager(dm);
 }
 
-void Server::start(const std::string& endpoint, std::shared_ptr<Server> server, const uint32_t rPollRate, std::string subtype)
+void Server::start(const std::string& endpoint, std::shared_ptr<Server> server, const uint32_t rPollRate, std::string subtype, bool sboEnabled, uint32_t sboTimeoutSecs)
 {
     // Set server reverse-poll rate
     mReversePollRate = rPollRate;
+    // Set select-before-operate configuration
+    mSboEnabled = sboEnabled;
+    mSboTimeoutMs = static_cast<int64_t>(sboTimeoutSecs) * 1000;
     // Set static shared_ptr to server instance so it can be used inside static 104 callback handlers
     gServer = server;
     // If endpoint starts with tcp://, parse ip/port and use TCP
@@ -47,18 +54,18 @@ void Server::start(const std::string& endpoint, std::shared_ptr<Server> server, 
         // Set the callback handler for the interrogation command
         if (subtype.find("double") != std::string::npos)
         {
-            CS104_Slave_setInterrogationHandler(slave, interrogationHandlerDoublePoint, NULL);
+            CS104_Slave_setInterrogationHandler(slave, interrogationHandlerDoublePoint, this);
         }
         else
         {
-            CS104_Slave_setInterrogationHandler(slave, interrogationHandlerSinglePoint, NULL);
+            CS104_Slave_setInterrogationHandler(slave, interrogationHandlerSinglePoint, this);
         }
         // Set handler for other message types
-        CS104_Slave_setASDUHandler(slave, asduHandler, NULL);
+        CS104_Slave_setASDUHandler(slave, asduHandler, this);
         // Set handler to handle connection requests (optional)
-        CS104_Slave_setConnectionRequestHandler(slave, connectionRequestHandler, NULL);
+        CS104_Slave_setConnectionRequestHandler(slave, connectionRequestHandler, this);
         // Set handler to track connection events (optional)
-        CS104_Slave_setConnectionEventHandler(slave, connectionEventHandler, NULL);
+        CS104_Slave_setConnectionEventHandler(slave, connectionEventHandler, this);
         // Uncomment to log messages
         //CS104_Slave_setRawMessageHandler(slave, rawMessageHandler, NULL);
 
@@ -93,7 +100,8 @@ void Server::start(const std::string& endpoint, std::shared_ptr<Server> server, 
 
     // Log data size
     std::ostringstream log_stream;
-    log_stream << "Initialized IEC60870-5-104 server: " << endpoint;
+    log_stream << "Initialized IEC60870-5-104 server: " << endpoint
+               << " (select-before-operate " << (mSboEnabled ? "enabled" : "disabled") << ")";
     logEvent("iec60870-5-104 server start", "info", log_stream.str());
     std::cout << log_stream.str() << std::endl;
     fflush(stdout);
@@ -428,103 +436,268 @@ bool Server::interrogationHandlerDoublePoint(void *parameter, IMasterConnection 
 
 bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_ASDU asdu)
 {
-    if (CS101_ASDU_getTypeID(asdu) == C_SC_NA_1)
+    Server* self = parameter ? static_cast<Server*>(parameter) : gServer.get();
+    if (!self)
+    {
+        return false;
+    }
+
+    IEC60870_5_TypeID typeId = CS101_ASDU_getTypeID(asdu);
+
+    if (typeId == C_SC_NA_1)
     {
         std::cout << "received single command" << std::endl;
 
-        if (CS101_ASDU_getCOT(asdu) == CS101_COT_ACTIVATION)
+        CS101_CauseOfTransmission cot = CS101_ASDU_getCOT(asdu);
+        if (cot == CS101_COT_DEACTIVATION)
         {
-            InformationObject io = CS101_ASDU_getElement(asdu, 0);
-
-            if (io)
+            // Cancel an outstanding selection for this point if owned by this connection.
+            InformationObject cancelIo = CS101_ASDU_getElement(asdu, 0);
+            bool ok = false;
+            if (cancelIo)
             {
-                SingleCommand sc = (SingleCommand)io;
-                uint16_t addr = InformationObject_getObjectAddress(io);
-                bool state = SingleCommand_getState(sc);
-                printf("IOA: %i switch to %i\n", addr, state);
-                gServer->writeBinary(addr, state);
-                CS101_ASDU_setCOT(asdu, CS101_COT_ACTIVATION_CON);
-                InformationObject_destroy(io);
+                ok = self->cancelSelect(InformationObject_getObjectAddress(cancelIo), connection, C_SC_NA_1);
+                InformationObject_destroy(cancelIo);
+            }
+            CS101_ASDU_setCOT(asdu, CS101_COT_DEACTIVATION_CON);
+            CS101_ASDU_setNegative(asdu, !ok);
+            IMasterConnection_sendASDU(connection, asdu);
+            return true;
+        }
+        if (cot != CS101_COT_ACTIVATION)
+        {
+            CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_COT);
+            CS101_ASDU_setNegative(asdu, true);
+            IMasterConnection_sendASDU(connection, asdu);
+            return true;
+        }
+
+        InformationObject io = CS101_ASDU_getElement(asdu, 0);
+        if (!io)
+        {
+            std::cout << "ERROR: message has no valid information object" << std::endl;
+            return false;
+        }
+
+        SingleCommand sc = (SingleCommand)io;
+        uint16_t addr = InformationObject_getObjectAddress(io);
+        bool state = SingleCommand_getState(sc);
+        int qu = SingleCommand_getQU(sc);
+        bool isSelect = SingleCommand_isSelect(sc);
+
+        if (isSelect)
+        {
+            if (!self->isSboEnabled())
+            {
+                printf("SELECT single command IOA: %i rejected (SBO disabled)\n", addr);
+                IMasterConnection_sendACT_CON(connection, asdu, true);
             }
             else
             {
-                std::cout << "ERROR: message has no valid information object" << std::endl;
-                return false;
+                // SELECT: reserve the point; do NOT change the process value.
+                bool ok = self->select(addr, connection, C_SC_NA_1, state ? 1 : 0, 0.0f, qu);
+                printf("SELECT single command IOA: %i (%s)\n", addr, ok ? "accepted" : "rejected");
+                IMasterConnection_sendACT_CON(connection, asdu, !ok);
             }
         }
         else
-            CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_COT);
-
-        IMasterConnection_sendASDU(connection, asdu);
-
-        return true;
-    }
-    else if (CS101_ASDU_getTypeID(asdu) == C_DC_NA_1)
-    {
-        std::cout << "received double command" << std::endl;
-
-        if (CS101_ASDU_getCOT(asdu) == CS101_COT_ACTIVATION)
         {
-            InformationObject io = CS101_ASDU_getElement(asdu, 0);
-
-            if (io)
+            // EXECUTE (or direct-operate when SBO disabled).
+            if (!self->isValidOutputPoint(addr, C_SC_NA_1))
+            {
+                printf("EXECUTE single command IOA: %i rejected (invalid output point)\n", addr);
+                IMasterConnection_sendACT_CON(connection, asdu, true);
+            }
+            else if (self->isSboEnabled() && !self->checkAndConsumeSelect(addr, connection, C_SC_NA_1, state ? 1 : 0, 0.0f, qu))
+            {
+                printf("EXECUTE single command IOA: %i rejected (no valid select)\n", addr);
+                IMasterConnection_sendACT_CON(connection, asdu, true);
+            }
+            else
             {
                 // Send activation confirmation (application layer ACK)
                 IMasterConnection_sendACT_CON(connection, asdu, false);
-
-                DoubleCommand dc = (DoubleCommand)io;
-                uint16_t addr = InformationObject_getObjectAddress(io);
-                int state = DoubleCommand_getState(dc);
                 printf("IOA: %i switch to %i\n", addr, state);
-                gServer->writeBinary(addr, state);
+                self->writeBinary(addr, state);
                 // Send activation termination
-                CS101_ASDU_setCOT(asdu, CS101_COT_ACTIVATION_TERMINATION);
-                InformationObject_destroy(io);
+                IMasterConnection_sendACT_TERM(connection, asdu);
+            }
+        }
+
+        InformationObject_destroy(io);
+        return true;
+    }
+    else if (typeId == C_DC_NA_1)
+    {
+        std::cout << "received double command" << std::endl;
+
+        CS101_CauseOfTransmission cot = CS101_ASDU_getCOT(asdu);
+        if (cot == CS101_COT_DEACTIVATION)
+        {
+            // Cancel an outstanding selection for this point if owned by this connection.
+            InformationObject cancelIo = CS101_ASDU_getElement(asdu, 0);
+            bool ok = false;
+            if (cancelIo)
+            {
+                ok = self->cancelSelect(InformationObject_getObjectAddress(cancelIo), connection, C_DC_NA_1);
+                InformationObject_destroy(cancelIo);
+            }
+            CS101_ASDU_setCOT(asdu, CS101_COT_DEACTIVATION_CON);
+            CS101_ASDU_setNegative(asdu, !ok);
+            IMasterConnection_sendASDU(connection, asdu);
+            return true;
+        }
+        if (cot != CS101_COT_ACTIVATION)
+        {
+            CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_COT);
+            CS101_ASDU_setNegative(asdu, true);
+            IMasterConnection_sendASDU(connection, asdu);
+            return true;
+        }
+
+        InformationObject io = CS101_ASDU_getElement(asdu, 0);
+        if (!io)
+        {
+            std::cout << "ERROR: message has no valid information object" << std::endl;
+            return false;
+        }
+
+        DoubleCommand dc = (DoubleCommand)io;
+        uint16_t addr = InformationObject_getObjectAddress(io);
+        int state = DoubleCommand_getState(dc);
+        int qu = DoubleCommand_getQU(dc);
+        bool isSelect = DoubleCommand_isSelect(dc);
+
+        // IEC 60870-5-101 7.2.6.16: only OFF (1) and ON (2) are permitted DCS values.
+        bool validState = (state == IEC60870_DOUBLE_POINT_OFF || state == IEC60870_DOUBLE_POINT_ON);
+
+        if (isSelect)
+        {
+            if (!self->isSboEnabled() || !validState)
+            {
+                printf("SELECT double command IOA: %i rejected\n", addr);
+                IMasterConnection_sendACT_CON(connection, asdu, true);
             }
             else
             {
-                std::cout << "ERROR: message has no valid information object" << std::endl;
-                return false;
+                // SELECT: reserve the point; do NOT change the process value.
+                bool ok = self->select(addr, connection, C_DC_NA_1, state, 0.0f, qu);
+                printf("SELECT double command IOA: %i (%s)\n", addr, ok ? "accepted" : "rejected");
+                IMasterConnection_sendACT_CON(connection, asdu, !ok);
             }
         }
         else
         {
-            CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_COT);
+            // EXECUTE (or direct-operate when SBO disabled).
+            if (!validState || !self->isValidOutputPoint(addr, C_DC_NA_1))
+            {
+                if (self->isSboEnabled())
+                {
+                    self->clearSelect(addr);
+                }
+                printf("EXECUTE double command IOA: %i rejected (invalid point or state)\n", addr);
+                IMasterConnection_sendACT_CON(connection, asdu, true);
+            }
+            else if (self->isSboEnabled() && !self->checkAndConsumeSelect(addr, connection, C_DC_NA_1, state, 0.0f, qu))
+            {
+                printf("EXECUTE double command IOA: %i rejected (no valid select)\n", addr);
+                IMasterConnection_sendACT_CON(connection, asdu, true);
+            }
+            else
+            {
+                // Send activation confirmation (application layer ACK)
+                IMasterConnection_sendACT_CON(connection, asdu, false);
+                printf("IOA: %i switch to %i\n", addr, state);
+                self->writeBinary(addr, state);
+                // Send activation termination
+                IMasterConnection_sendACT_TERM(connection, asdu);
+            }
         }
 
-        IMasterConnection_sendASDU(connection, asdu);
-
+        InformationObject_destroy(io);
         return true;
     }
-    else if (CS101_ASDU_getTypeID(asdu) == C_SE_NC_1)
+    else if (typeId == C_SE_NC_1)
     {
         printf("received setpoint command (float)\n");
 
-        if (CS101_ASDU_getCOT(asdu) == CS101_COT_ACTIVATION)
+        CS101_CauseOfTransmission cot = CS101_ASDU_getCOT(asdu);
+        if (cot == CS101_COT_DEACTIVATION)
         {
-            InformationObject io = CS101_ASDU_getElement(asdu, 0);
-
-            if (io)
+            // Cancel an outstanding selection for this point if owned by this connection.
+            InformationObject cancelIo = CS101_ASDU_getElement(asdu, 0);
+            bool ok = false;
+            if (cancelIo)
             {
-                SetpointCommandShort sc = (SetpointCommandShort)io;
-                uint16_t addr = InformationObject_getObjectAddress(io);
-                float value = SetpointCommandShort_getValue(sc);
-                printf("IOA: %i switch to %f\n", addr, value);
-                gServer->writeAnalog(addr, value);
-                CS101_ASDU_setCOT(asdu, CS101_COT_ACTIVATION_CON);
-                InformationObject_destroy(io);
+                ok = self->cancelSelect(InformationObject_getObjectAddress(cancelIo), connection, C_SE_NC_1);
+                InformationObject_destroy(cancelIo);
+            }
+            CS101_ASDU_setCOT(asdu, CS101_COT_DEACTIVATION_CON);
+            CS101_ASDU_setNegative(asdu, !ok);
+            IMasterConnection_sendASDU(connection, asdu);
+            return true;
+        }
+        if (cot != CS101_COT_ACTIVATION)
+        {
+            CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_COT);
+            CS101_ASDU_setNegative(asdu, true);
+            IMasterConnection_sendASDU(connection, asdu);
+            return true;
+        }
+
+        InformationObject io = CS101_ASDU_getElement(asdu, 0);
+        if (!io)
+        {
+            printf("ERROR: message has no valid information object\n");
+            return false;
+        }
+
+        SetpointCommandShort sc = (SetpointCommandShort)io;
+        uint16_t addr = InformationObject_getObjectAddress(io);
+        float value = SetpointCommandShort_getValue(sc);
+        int ql = SetpointCommandShort_getQL(sc);
+        bool isSelect = SetpointCommandShort_isSelect(sc);
+
+        if (isSelect)
+        {
+            if (!self->isSboEnabled())
+            {
+                printf("SELECT setpoint command IOA: %i rejected (SBO disabled)\n", addr);
+                IMasterConnection_sendACT_CON(connection, asdu, true);
             }
             else
             {
-                printf("ERROR: message has no valid information object\n");
-                return true;
+                // SELECT: reserve the point; do NOT change the process value.
+                bool ok = self->select(addr, connection, C_SE_NC_1, 0, value, ql);
+                printf("SELECT setpoint command IOA: %i (%s)\n", addr, ok ? "accepted" : "rejected");
+                IMasterConnection_sendACT_CON(connection, asdu, !ok);
             }
         }
         else
-            CS101_ASDU_setCOT(asdu, CS101_COT_UNKNOWN_COT);
+        {
+            // EXECUTE (or direct-operate when SBO disabled).
+            if (!self->isValidOutputPoint(addr, C_SE_NC_1))
+            {
+                printf("EXECUTE setpoint command IOA: %i rejected (invalid output point)\n", addr);
+                IMasterConnection_sendACT_CON(connection, asdu, true);
+            }
+            else if (self->isSboEnabled() && !self->checkAndConsumeSelect(addr, connection, C_SE_NC_1, 0, value, ql))
+            {
+                printf("EXECUTE setpoint command IOA: %i rejected (no valid select)\n", addr);
+                IMasterConnection_sendACT_CON(connection, asdu, true);
+            }
+            else
+            {
+                // Send activation confirmation (application layer ACK)
+                IMasterConnection_sendACT_CON(connection, asdu, false);
+                printf("IOA: %i switch to %f\n", addr, value);
+                self->writeAnalog(addr, value);
+                // Send activation termination
+                IMasterConnection_sendACT_TERM(connection, asdu);
+            }
+        }
 
-        IMasterConnection_sendASDU(connection, asdu);
-
+        InformationObject_destroy(io);
         return true;
     }
 
@@ -539,16 +712,25 @@ bool Server::connectionRequestHandler(void *parameter, const char *ipAddress)
 
 void Server::connectionEventHandler(void *parameter, IMasterConnection con, CS104_PeerConnectionEvent event)
 {
+    Server* self = parameter ? static_cast<Server*>(parameter) : gServer.get();
     if (event == CS104_CON_EVENT_CONNECTION_OPENED)
     {
         printf("Connection opened (%p)\n", con);
-        gServer->mConnection = con;
-        gServer->mConnected = true;
+        if (self)
+        {
+            self->clearSelectionsForConnection(con);
+            self->mConnection = con;
+            self->mConnected = true;
+        }
     }
     else if (event == CS104_CON_EVENT_CONNECTION_CLOSED)
     {
         printf("Connection closed (%p)\n", con);
-        gServer->mConnected = false;
+        if (self)
+        {
+            self->mConnected = false;
+            self->clearSelectionsForConnection(con);
+        }
     }
     else if (event == CS104_CON_EVENT_ACTIVATED)
     {
@@ -557,6 +739,10 @@ void Server::connectionEventHandler(void *parameter, IMasterConnection con, CS10
     else if (event == CS104_CON_EVENT_DEACTIVATED)
     {
         printf("Connection deactivated (%p)\n", con);
+        if (self)
+        {
+            self->clearSelectionsForConnection(con);
+        }
     }
 }
 
@@ -641,6 +827,152 @@ void Server::writeAnalog(std::uint16_t address, float value)
     log_stream.str("");
     log_stream << "Data successfully written.";
     logEvent("write analog", "info", log_stream.str());
+}
+
+bool Server::isValidOutputPoint(uint16_t ioa, IEC60870_5_TypeID typeId) const
+{
+    if (typeId == C_SC_NA_1 || typeId == C_DC_NA_1)
+    {
+        auto iter = mBinaryPoints.find(ioa);
+        return (iter != mBinaryPoints.end() && iter->second.second == PointType::eOutput);
+    }
+    else if (typeId == C_SE_NC_1)
+    {
+        auto iter = mAnalogPoints.find(ioa);
+        return (iter != mAnalogPoints.end() && iter->second.second == PointType::eOutput);
+    }
+    return false;
+}
+
+bool Server::select(uint16_t ioa, IMasterConnection connection, IEC60870_5_TypeID typeId, int intValue, float floatValue, int qualifier)
+{
+    if (!isValidOutputPoint(ioa, typeId))
+    {
+        std::ostringstream log_stream;
+        log_stream << "Rejected select for invalid or non-output IOA: " << ioa;
+        logEvent("iec60870-5-104 select", "error", log_stream.str());
+        return false;
+    }
+    if (typeId == C_DC_NA_1 && intValue != IEC60870_DOUBLE_POINT_OFF && intValue != IEC60870_DOUBLE_POINT_ON)
+    {
+        std::ostringstream log_stream;
+        log_stream << "Rejected select for IOA " << ioa << ": invalid double command state " << intValue;
+        logEvent("iec60870-5-104 select", "error", log_stream.str());
+        return false;
+    }
+
+    std::lock_guard<std::mutex> lock(mSelectionMutex);
+    int64_t nowMs = static_cast<int64_t>(Hal_getTimeInMs());
+    auto existing = mSelections.find(ioa);
+    if (existing != mSelections.end())
+    {
+        bool expired = (nowMs - existing->second.selectedAtMs) > mSboTimeoutMs;
+        if (!expired && existing->second.connection != connection)
+        {
+            std::ostringstream log_stream;
+            log_stream << "Rejected select for IOA " << ioa << ": already selected by another connection.";
+            logEvent("iec60870-5-104 select", "error", log_stream.str());
+            return false;
+        }
+    }
+
+    mSelections[ioa] = SelectionState{
+        connection,
+        nowMs,
+        typeId,
+        intValue,
+        floatValue,
+        qualifier};
+    std::ostringstream log_stream;
+    log_stream << "Point at IOA " << ioa << " selected.";
+    logEvent("iec60870-5-104 select", "info", log_stream.str());
+    return true;
+}
+
+bool Server::checkAndConsumeSelect(uint16_t ioa, IMasterConnection connection, IEC60870_5_TypeID typeId, int intValue, float floatValue, int qualifier)
+{
+    std::lock_guard<std::mutex> lock(mSelectionMutex);
+    auto iter = mSelections.find(ioa);
+    if (iter == mSelections.end())
+    {
+        return false;
+    }
+
+    const SelectionState sel = iter->second;
+    bool sameConnection = (sel.connection == connection);
+    bool expired = (static_cast<int64_t>(Hal_getTimeInMs()) - sel.selectedAtMs) > mSboTimeoutMs;
+    bool commandMatches = (sel.typeId == typeId) && (sel.qualifier == qualifier) &&
+                          ((typeId == C_SE_NC_1) ? (sel.floatValue == floatValue) : (sel.intValue == intValue));
+
+    // Consume the selection regardless of validity; a failed execute must
+    // require a fresh select.
+    mSelections.erase(iter);
+
+    if (!sameConnection)
+    {
+        std::ostringstream log_stream;
+        log_stream << "Execute for IOA " << ioa << " rejected: selected by a different connection.";
+        logEvent("iec60870-5-104 execute", "error", log_stream.str());
+        return false;
+    }
+    if (expired)
+    {
+        std::ostringstream log_stream;
+        log_stream << "Execute for IOA " << ioa << " rejected: selection expired.";
+        logEvent("iec60870-5-104 execute", "error", log_stream.str());
+        return false;
+    }
+    if (!commandMatches)
+    {
+        std::ostringstream log_stream;
+        log_stream << "Execute for IOA " << ioa << " rejected: command does not match selection.";
+        logEvent("iec60870-5-104 execute", "error", log_stream.str());
+        return false;
+    }
+    return true;
+}
+
+void Server::clearSelect(uint16_t ioa)
+{
+    std::lock_guard<std::mutex> lock(mSelectionMutex);
+    mSelections.erase(ioa);
+}
+
+bool Server::cancelSelect(uint16_t ioa, IMasterConnection connection, IEC60870_5_TypeID typeId)
+{
+    if (!isValidOutputPoint(ioa, typeId))
+    {
+        return false;
+    }
+
+    std::lock_guard<std::mutex> lock(mSelectionMutex);
+    auto iter = mSelections.find(ioa);
+    if (iter == mSelections.end())
+    {
+        return false;
+    }
+    if (iter->second.connection != connection)
+    {
+        return false;
+    }
+    mSelections.erase(iter);
+    return true;
+}
+
+void Server::clearSelectionsForConnection(IMasterConnection connection)
+{
+    std::lock_guard<std::mutex> lock(mSelectionMutex);
+    for (auto iter = mSelections.begin(); iter != mSelections.end();)
+    {
+        if (iter->second.connection == connection)
+        {
+            iter = mSelections.erase(iter);
+        }
+        else
+        {
+            ++iter;
+        }
+    }
 }
 
 bool Server::addBinaryInput(const std::uint16_t address, const std::string &tag)
