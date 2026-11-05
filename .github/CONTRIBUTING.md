@@ -57,7 +57,7 @@ Thank you for your interest in contributing to SCEPTRE Bennu! We welcome contrib
     prek run --all-files   # run every hook by hand
     ```
 
-   clang-format (`make cpp-check`) and golangci-lint (`make go-check`) are not prek hooks; they run as their own CI jobs.
+   clang-format (`make cpp-check`) is not a prek hook; it runs as its own CI job.
 
 ## How to Contribute
 

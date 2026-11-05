@@ -38,18 +38,12 @@ numbers in `performance.md`.
 the provider message handler (QUERY/READ/WRITE parsing via a stub subclass). They avoid the swig/helics
 imports.
 
-## gobennu
-
-    cd src/gobennu && go test ./...
-
-Needs libzmq with drafts (`pebbe/zmq4/draft`) and network access for modules on first run.
-
 ## Docker harness (`docker/test`)
 
-The macOS host cannot build the C++/Go parts. `docker/test/run.sh` builds `ubuntu:22.04` with the
-`build.yml` deps, pytest, Go and a drafts libzmq, then runs in a container:
+The macOS host cannot build the C++ parts. `docker/test/run.sh` builds `ubuntu:22.04` with the
+`build.yml` deps and pytest, then runs in a container:
 
-    docker/test/run.sh build smoke ctest pytest gotest   # or: all
+    docker/test/run.sh build smoke ctest pytest   # or: all
     docker/test/run.sh throughput
 
 Source is mounted read-only and rsynced into a named volume that also holds the build dir and ccache.
@@ -61,4 +55,3 @@ the throughput generator and baseline comparisons (`git worktree add /tmp/before
 - `build-bennu`: build, install, smoke script (ep-server, two field devices, probe greps), `ctest`, deb.
 - `build-pybennu-dependencies`, `build-pybennu-wheel`: libzmq/helics debs and the wheel.
 - `build-pybennu-wheel` also runs `pytest src/pybennu/tests` (with `PYTHONPATH=src/pybennu`).
-- `test-gobennu`: builds libzmq 4.3.4 with drafts and runs `go test ./...` in `src/gobennu`.

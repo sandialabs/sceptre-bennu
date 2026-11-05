@@ -10,6 +10,5 @@ path = "."
 release_type = "generic"
 # TODO: Add version files to additional_manifest_files once version bumping is enabled
 # additional_manifest_files = [
-#     { path = "src/gobennu/version/version.go", version_regex = "var Number = \"(?<version>[^\"]+)\"" },
 #     { path = "src/pybennu/pyproject.toml", version_regex = "version = \"(?<version>[^\"]+)\"" },
 # ]

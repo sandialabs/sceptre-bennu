@@ -6,11 +6,10 @@
 #
 # Modeled on sceptre-phenix's prek.toml.
 #
-# Not run here (their own CI jobs in .github/workflows/lint.yml):
+# Not run here (its own CI job in .github/workflows/lint.yml):
 #   - clang-format: legacy C++ is not formatted, so only changed lines are
 #     checked (`make cpp-check`, via git-clang-format). A prek hook would
 #     format whole files and reformat the tree under --all-files.
-#   - golangci-lint: gobennu needs libzmq built with the draft API.
 
 update.cooldown_days = 30
 minimum_prek_version = "0.4.11"
@@ -142,7 +141,7 @@ id = "hadolint"
 # DL3008/DL3015 - pinning every apt/apt-get package version is impractical for base images rebuilt regularly
 # DL3013 - same for pip packages
 # DL3003 - `cd` inside a RUN chain is how the source builds are written; WORKDIR would split them
-# DL4001 - the test image uses wget for downloads and curl for the golangci-lint installer
+# DL4001 - ignore download tool check
 args = [
   "--ignore", "DL3059",
   "--ignore", "DL3008",
@@ -202,7 +201,6 @@ id = "trailing-whitespace"
 args = ["--markdown-linebreak-ext=md"]
 types_or = [
   "python",
-  "go",
   "markdown",
   "yaml",
   "json",
@@ -228,7 +226,6 @@ priority = "format"
 id = "end-of-file-fixer"
 types_or = [
   "python",
-  "go",
   "markdown",
   "yaml",
   "toml",

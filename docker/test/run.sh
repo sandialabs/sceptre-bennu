@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Docker verification harness for bennu. See README.md.
-# host:  run.sh [-s SRC_DIR] [-v CACHE_VOLUME] <build|smoke|ctest|pytest|gotest|lint|throughput|all>
+# host:  run.sh [-s SRC_DIR] [-v CACHE_VOLUME] <build|smoke|ctest|pytest|lint|throughput|all>
 set -eo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -19,8 +19,8 @@ fi
 # ---- inside the container ----
 shift
 W=/cache/src; B=/cache/build
-# ccache/go caches are shared across volumes (both are safe for concurrent use) so per-agent volumes stay warm
-export CCACHE_DIR=/ccache/ccache GOPATH=/ccache/go GOCACHE=/ccache/gocache
+# ccache is shared across volumes so per-agent volumes stay warm
+export CCACHE_DIR=/ccache/ccache
 
 sync_src() {  # copy (not mount) so parallel runs and the build tree never touch the host checkout
     mkdir -p $W $B
@@ -74,17 +74,11 @@ pytest_() {
     [ -d $W/src/pybennu/tests ] || { echo "no src/pybennu/tests, skipping"; return 0; }
     cd $W/src/pybennu && PYTHONPATH=$W/src/pybennu python3 -m pytest tests -q
 }
-gotest() {
-    sync_src
-    cd $W/src/gobennu
-    PKG_CONFIG_PATH=/opt/zmq-draft/lib/pkgconfig LD_LIBRARY_PATH=/opt/zmq-draft/lib go test ./...
-}
-lint() {  # python/go/codespell on the synced copy; cpp-check needs git so it runs against /src (read-only)
+lint() {  # python/codespell on the synced copy; cpp-check needs git so it runs against /src (read-only)
     sync_src
     local rc=0
     cd $W
-    PKG_CONFIG_PATH=/opt/zmq-draft/lib/pkgconfig LD_LIBRARY_PATH=/opt/zmq-draft/lib \
-        make -k python-check go-check codespell || rc=1
+    make -k python-check codespell || rc=1
     # git clang-format writes a temp index into the git dir, and /src is read-only: use a copy of .git
     rm -rf /tmp/srcgit && cp -a /src/.git /tmp/srcgit
     git config --global --add safe.directory /src
@@ -109,12 +103,12 @@ throughput() {  # ~N output-mapped tags change every cycle; count WRITEs arrivin
 }
 
 for m in "$@"; do
-    [ "$m" = all ] && set -- build smoke ctest pytest gotest throughput
+    [ "$m" = all ] && set -- build smoke ctest pytest throughput
 done
 for m in "$@"; do
     echo "=== $m ==="
     case $m in
         build) build;; smoke) smoke;; ctest) ctest_;; pytest) pytest_;;
-        gotest) gotest;; lint) lint;; throughput) throughput;; *) echo "unknown mode $m"; exit 2;;
+        lint) lint;; throughput) throughput;; *) echo "unknown mode $m"; exit 2;;
     esac
 done

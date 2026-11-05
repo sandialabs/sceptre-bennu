@@ -84,21 +84,6 @@ set(bennu_INCLUDES
 
 add_subdirectory(src/bennu)
 
-OPTION(BUILD_GOBENNU "Build Golang executable?" OFF)
-
-if(BUILD_GOBENNU)
-  add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/gobennu/bin/gobennu
-    COMMAND make bin/gobennu
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/src/gobennu
-  )
-
-  add_custom_target(gobennu ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/gobennu/bin/gobennu)
-
-  install(PROGRAMS ${CMAKE_CURRENT_SOURCE_DIR}/src/gobennu/bin/gobennu
-    DESTINATION bin
-  )
-endif()
-
 # Uninstall target
 add_custom_target(uninstall
     "${CMAKE_COMMAND}" -P "${CMAKE_MODULE_PATH}/Uninstall.cmake"

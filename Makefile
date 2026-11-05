@@ -1,6 +1,5 @@
 .PHONY: all check clean codespell coverage format help install install-dev lint test
 .PHONY: cpp-check cpp-format cpp-tidy
-.PHONY: go-check go-clean go-coverage go-format go-install go-install-dev go-lint go-test
 .PHONY: python-check python-clean python-coverage python-format python-install python-install-dev python-lint python-test
 .DEFAULT_GOAL := help
 
@@ -33,10 +32,10 @@ help:
 	@echo "  all         - Run all tools (format, lint, test)"
 	@echo "  check       - Run linters without fixing (for CI)"
 	@echo "  codespell   - Check spelling repo-wide (no fixes)"
-	@echo "  coverage    - Run unit tests with coverage (python, go)"
-	@echo "  format      - Format code (ruff, golangci-lint, clang-format on changed files)"
-	@echo "  lint        - Lint code and fix issues (ruff, golangci-lint, codespell)"
-	@echo "  test        - Run unit tests (python, go; C++ tests: docker/test/run.sh ctest)"
+	@echo "  coverage    - Run unit tests with coverage (python)"
+	@echo "  format      - Format code (ruff, clang-format on changed files)"
+	@echo "  lint        - Lint code and fix issues (ruff, codespell)"
+	@echo "  test        - Run unit tests (python; C++ tests: docker/test/run.sh ctest)"
 	@echo ""
 	@echo "C++ (changed files vs BASE=$(BASE)):"
 	@echo "  cpp-format  - clang-format changed lines (tracked) and new files, in place"
@@ -44,8 +43,8 @@ help:
 	@echo "  cpp-tidy    - Run clang-tidy on non-vendored sources (needs $(BUILD_DIR)/compile_commands.json)"
 	@echo ""
 	@echo "Installation:"
-	@echo "  install     - Install runtime dependencies (go modules)"
-	@echo "  install-dev - Install development tools (ruff, codespell, vulture, golangci-lint)"
+	@echo "  install     - Install runtime dependencies"
+	@echo "  install-dev - Install development tools (ruff, codespell, vulture)"
 	@echo ""
 	@echo "Cleanup:"
 	@echo "  clean       - Clean lint/test artifacts"
@@ -55,14 +54,14 @@ help:
 
 all: format lint test
 
-check: python-check go-check codespell cpp-check
-test: python-test go-test
-lint: python-lint go-lint
-format: python-format go-format cpp-format
-install: python-install go-install
-install-dev: python-install-dev go-install-dev
-clean: python-clean go-clean
-coverage: python-coverage go-coverage
+check: python-check codespell cpp-check
+test: python-test
+lint: python-lint
+format: python-format cpp-format
+install: python-install
+install-dev: python-install-dev
+clean: python-clean
+coverage: python-coverage
 
 ## ---------------------------------- Python ----------------------------------
 
@@ -89,32 +88,6 @@ python-clean:
 
 python-coverage:
 	@$(MAKE) -C src/pybennu coverage
-
-## ---------------------------------- Go ----------------------------------
-
-go-check:
-	@$(MAKE) -C src/gobennu check
-
-go-install:
-	@$(MAKE) -C src/gobennu install
-
-go-install-dev:
-	@$(MAKE) -C src/gobennu install-dev
-
-go-format:
-	@$(MAKE) -C src/gobennu format
-
-go-lint:
-	@$(MAKE) -C src/gobennu lint
-
-go-test:
-	@$(MAKE) -C src/gobennu test
-
-go-clean:
-	@$(MAKE) -C src/gobennu clean
-
-go-coverage:
-	@$(MAKE) -C src/gobennu coverage
 
 ## ---------------------------------- Spelling ----------------------------------
 

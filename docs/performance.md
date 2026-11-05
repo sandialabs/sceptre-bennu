@@ -17,7 +17,7 @@ After:
   REQ/REP round trip plus provider-side handling of the batch.
 - Erase is compare-and-erase and only after ACK. If the provider doesn't reply, the batch is retried next cycle. An `ERR=` reply falls back to sending each point
   on its own; rejected points are dropped.
-- gobennu already batched through `zmqBatchUpdater`.
+- Batched updates were originally demonstrated in the former Go implementation through `zmqBatchUpdater`.
 
 ## Input path (provider -> field device)
 
@@ -38,8 +38,8 @@ compare. Use `BENNU_LOG_LEVEL=debug` only when diagnosing; it restores the old v
 ## Why the language is not the lever
 
 Parsing or formatting 800 tags is sub-millisecond in C++, Go or Rust. The measured costs were a fixed
-sleep and a request per tag, which are protocol and loop-structure problems. gobennu, which had the
-batching, never had them. A rewrite would not have removed either.
+sleep and a request per tag, which are protocol and loop-structure problems. The former Go implementation
+already had batching and never had these bottlenecks. A rewrite would not have removed either.
 
 Follow-ups since done: `LogicModule` prepares its tag lists once at load instead of every cycle,
 `isBinary` / `isAnalog` use hash sets, and the Python `Client` has `write_points` (one batched request,

@@ -31,8 +31,8 @@ The pybennu provider splits on the first `=` only, and a WRITE pair with no `:` 
 
 One WRITE can carry many pairs, and the provider applies them as one call to `write(tags)`.
 
-- gobennu already did this (`zmqBatchUpdater.Commit` joins all queued updates with `,`).
-- The C++ field device now does too. `OutputModule::scanOutputs` snapshots the changed tags once per cycle
+- The protocol joins all queued updates with commas in a single request (the former Go implementation structured updates as `zmqBatchUpdater.Commit`).
+- The C++ field device snapshots the changed tags once per cycle in `OutputModule::scanOutputs`
   and sends one `WRITE=` (`Client::buildWritePayload` / `Client::writePoints`). Before, it sent one request
   per tag and `Client::send` slept 500 ms after each.
 - `Client::send` returns true only when an ACK arrives. On ACK the sent tags are removed from the updated
@@ -60,9 +60,9 @@ null-terminated body, sent to a RADIO group.
 
 - Group: `Endpoint::hash()`, which is `std::hash<std::string>` of the endpoint string in hex with the last
   character dropped (groups are limited to 15 chars). If the URL has an interface specifier
-  (`udp://iface;239.0.0.1:40000`), the interface part is removed before hashing. gobennu gets the same value
-  through the SWIG `Endpoint` wrapper. The hash is implementation-defined, so the provider and subscriber
-  should come from the same libstdc++.
+  (`udp://iface;239.0.0.1:40000`), the interface part is removed before hashing. The hash is
+  implementation-defined, so the provider and subscriber should come from the same libstdc++ (the former
+  Go implementation obtained this value through the SWIG `Endpoint` wrapper).
 - Chunking: a message longer than the MTU is split on commas into chunks, each made of whole `tag:value,`
   parts. A part is never cut. Empty parts are skipped. A single part larger than the MTU goes out alone.
   Chunk size is held strictly under the limit (`chunk + next part >= limit` starts a new chunk).
