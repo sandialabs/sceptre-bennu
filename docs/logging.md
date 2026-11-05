@@ -58,8 +58,3 @@ Every module logs with [loguru](https://github.com/Delgan/loguru): `from loguru 
 - An application that imports pybennu gets no pybennu output until it calls `setup_logging()` or
   `logger.enable("pybennu")`.
 - CLI output stays on stdout: probe replies, daemon `status`, test-subscriber updates.
-
-## gobennu
-
-`--log-verbosity` or env `GOBENNU_LOG_VERBOSITY`: `0` (default) to `2` for more detail (per-update lines
-are at level 2), `-1` disables logging.
