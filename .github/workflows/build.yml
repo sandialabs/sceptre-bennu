@@ -171,7 +171,7 @@ jobs:
           make dist
       - name: run pybennu unit tests
         run: |
-          python3 -m pip install --break-system-packages pytest pyzmq "loguru>=0.7,<1"
+          python3 -m pip install --break-system-packages pytest pyzmq "loguru>=0.7,<1" "pydantic>2.0.0,<3.0.0" pydantic-settings "pymodbus>=3.8.0,<=3.9.2" py-expression-eval==0.3.14
           PYTHONPATH=src/pybennu python3 -m pytest src/pybennu/tests
       - name: upload wheel
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

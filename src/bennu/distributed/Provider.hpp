@@ -44,9 +44,9 @@ protected:
     /* Method to periodically publish data. Inheriting providers must implement */
     [[ noreturn ]] virtual void periodicPublish() = 0;
 
-private:
     zmq::message_t messageHandler(const zmq::message_t& request);
 
+private:
     std::shared_ptr<Server> mServer;
     std::shared_ptr<Publisher> mPublisher;
     std::shared_ptr<std::thread> mPublishThread;

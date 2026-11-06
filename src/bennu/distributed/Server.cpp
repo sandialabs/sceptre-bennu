@@ -29,11 +29,12 @@ Server::~Server()
 zmq::message_t Server::defaultHandler(const zmq::message_t& request)
 {
     // TODO: add default handler
+    return zmq::message_t();
 }
 
 void Server::run()
 {
-    while (mSocket.connected())
+    while (mRunning && mSocket.connected())
     {
         zmq::message_t request;
         try
@@ -58,7 +59,16 @@ void Server::run()
             break;
         }
         BENNU_LOG_DEBUG("Server ---- Sent reply\n");
+        if (!mRunning)
+        {
+            break;
+        }
     }
+}
+
+void Server::stop()
+{
+    mRunning = false;
 }
 
 } // namespace distributed

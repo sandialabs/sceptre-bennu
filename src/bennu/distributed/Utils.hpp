@@ -74,6 +74,11 @@ struct Endpoint
 inline std::vector<std::string> split(const std::string& phrase, const std::string& delimiter)
 {
     std::vector<std::string> list;
+    if (delimiter.empty())
+    {
+        list.push_back(phrase);
+        return list;
+    }
     size_t start = 0, pos;
     while ((pos = phrase.find(delimiter, start)) != std::string::npos)
     {
