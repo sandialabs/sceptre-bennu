@@ -27,6 +27,45 @@ target_sources(test_unit_outputmodule PRIVATE
 # perf guards exercise the real Client over inproc zmq
 target_sources(test_unit_perf PRIVATE ${CMAKE_SOURCE_DIR}/src/bennu/distributed/Client.cpp)
 
+target_link_libraries(test_unit_distributed bennu-distributed bennu-utility ${Boost_LIBRARIES})
+target_link_libraries(test_unit_distributed_udp bennu-distributed bennu-utility ${Boost_LIBRARIES})
+target_link_libraries(test_unit_parsers bennu-parsers bennu-utility ${Boost_LIBRARIES})
+target_link_libraries(test_unit_config_conformance bennu-parsers bennu-utility ${Boost_LIBRARIES})
+# these tests read data/configs from the source tree
+target_compile_definitions(test_unit_config_conformance PRIVATE BENNU_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_compile_definitions(test_unit_helics_federate PRIVATE BENNU_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_link_libraries(test_unit_datastore ${Boost_LIBRARIES})
+target_link_libraries(test_unit_utility bennu-loaders bennu-utility ${Boost_LIBRARIES})
+target_link_libraries(test_unit_loader bennu-loaders bennu-utility dl ${Boost_LIBRARIES})
+
+target_include_directories(test_unit_modbus PRIVATE
+  ${bennu_INCLUDES}
+  ${CMAKE_SOURCE_DIR}/src/bennu/devices/modules/comms/modbus/module
+  ${CMAKE_SOURCE_DIR}/src/bennu/devices/modules/comms/modbus/protocol
+)
+target_link_libraries(test_unit_modbus -Wl,--no-as-needed bennu-modbus-tcp bennu-modbus-protocol bennu-field-device-base bennu-comms bennu-utility ${Boost_LIBRARIES})
+
+target_include_directories(test_unit_helics_federate PRIVATE
+  ${CMAKE_SOURCE_DIR}/src/bennu/executables/bennu-simulink-provider-helics
+)
+target_link_libraries(test_unit_helics_federate HELICS::helics-shared bennu-utility ${Boost_LIBRARIES})
+
+target_include_directories(test_integration_probe_provider PRIVATE ${bennu_INCLUDES})
+target_link_libraries(test_integration_probe_provider bennu-distributed bennu-field-device-base bennu-utility ${ZMQ_LIB} pthread ${Boost_LIBRARIES})
+
+target_include_directories(test_unit_helics_logic PRIVATE
+  ${CMAKE_SOURCE_DIR}/src/bennu/executables/bennu-simulink-provider-helics
+)
+target_sources(test_unit_helics_logic PRIVATE $<TARGET_OBJECTS:helics-cparse-obj>)
+target_link_libraries(test_unit_helics_logic ${Boost_LIBRARIES})
+
+target_include_directories(test_unit_dnp3_points PRIVATE
+  ${bennu_INCLUDES}
+  ${CMAKE_SOURCE_DIR}/src/bennu/devices/modules/comms/dnp3/protocol/cpp/lib/include
+  ${CMAKE_SOURCE_DIR}/src/bennu/devices/modules/comms/dnp3/module
+)
+target_link_libraries(test_unit_dnp3_points -Wl,--no-as-needed bennu-field-device-base bennu-comms bennu-utility bennu-dnp3-module opendnp3 ${Boost_LIBRARIES})
+
 target_include_directories(test_fd_104_sbo PRIVATE
   ${bennu_INCLUDES}
   ${CMAKE_SOURCE_DIR}/src/bennu/devices/modules/comms/iec60870-5/protocol/config

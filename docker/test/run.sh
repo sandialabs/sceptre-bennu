@@ -68,7 +68,7 @@ smoke() {  # verbatim from .github/workflows/build.yml "test bennu"
     bennu-simulink-provider-helics --help
     echo SMOKE OK
 }
-ctest_() { install_; ln -sfn $W/data /cache/data; cd $B && ctest --output-on-failure; }
+ctest_() { sync_src; (cd $B && make -j"$(nproc)") && install_; ln -sfn $W/data /cache/data; cd $B && ctest --output-on-failure; }
 pytest_() {
     sync_src
     [ -d $W/src/pybennu/tests ] || { echo "no src/pybennu/tests, skipping"; return 0; }

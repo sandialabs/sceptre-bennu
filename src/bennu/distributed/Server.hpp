@@ -1,6 +1,7 @@
 #ifndef BENNU_DISTRIBUTED_SERVER_HPP
 #define BENNU_DISTRIBUTED_SERVER_HPP
 
+#include <atomic>
 #include <functional> // std::function
 #include <string>
 
@@ -29,10 +30,12 @@ public:
 
     void run();
 
+    void stop();
+
 private:
     zmq::socket_t mSocket;
     RequestHandler mHandler;
-
+    std::atomic<bool> mRunning{true};
 };
 
 } // namespace distributed

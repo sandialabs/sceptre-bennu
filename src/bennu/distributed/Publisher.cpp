@@ -11,6 +11,8 @@ Publisher::Publisher(const Endpoint& endpoint) :
     mGroup(endpoint.hash()),
     mMaxBody(publishBodyLimit(publishLinkMtu(), mGroup.size()))
 {
+    int linger = 0;
+    mSocket.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
     mSocket.connect(endpoint.str);
 }
 

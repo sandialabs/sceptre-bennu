@@ -54,7 +54,7 @@ in the short-term.
 import socket
 import struct
 from threading import Lock, Thread
-from time import sleep
+from time import monotonic, sleep
 
 from loguru import logger
 
@@ -103,6 +103,8 @@ class GtnetSkt:
                     f"invalid type {gtag.type} for GTNET-SKT tag {gtag.name}"
                 )
 
+        self.running: bool = True
+
         if self.conf.gtnet_skt.protocol == "udp":
             self.udp_write_thread: Thread = Thread(
                 target=self.continuous_write, daemon=True
@@ -127,10 +129,28 @@ class GtnetSkt:
         )
         # self.init_socket()   # this is called in start()
 
-        while True:
+        last_err_log = float("-inf")
+        while self.running:
             payload = self.build_payload()
-            self.socket.sendto(payload, target)
+            if self.socket:
+                try:
+                    self.socket.sendto(payload, target)
+                except Exception:
+                    if self.running:
+                        # Don't kill the writer thread on a transient error, but
+                        # don't hide it either (rate-limited to once per 10s).
+                        now = monotonic()
+                        if now - last_err_log >= 10.0:
+                            last_err_log = now
+                            self.log.exception("GTNET-SKT UDP send failed")
             sleep(sleep_for)
+
+    def stop(self) -> None:
+        """Stop background worker thread and close network sockets."""
+        self.running = False
+        self.close_socket()
+        if hasattr(self, "udp_write_thread") and self.udp_write_thread.is_alive():
+            self.udp_write_thread.join(timeout=1.0)
 
     def tcp_write_state(self):
         """
@@ -147,7 +167,7 @@ class GtnetSkt:
         sent = False
         while not sent:
             try:
-                self.socket.send(payload)
+                self.socket.sendall(payload)
                 sent = True
             except Exception:
                 self.log.exception("GTNET-SKT send failed, resetting connection...")
@@ -208,6 +228,9 @@ class GtnetSkt:
         typecasted = {}
 
         for tag, val in to_typecast.items():
+            if tag not in self.tags:
+                raise KeyError(f"Unknown tag '{tag}' for GTNET-SKT")
+
             expected_type = self.tags[tag].type  # "int" or "float"
 
             # Validate types match what's in config, if they don't, then warn and typecast
@@ -225,9 +248,30 @@ class GtnetSkt:
             elif val is True or (isinstance(val, str) and val.lower() == "true"):
                 val = "1"
 
-            if expected_type == "int":
-                typecasted[tag] = int(val)
-            else:
-                typecasted[tag] = float(val)
+            if expected_type not in ("int", "float"):
+                raise ValueError(
+                    f"invalid type {expected_type} for GTNET-SKT tag {tag}"
+                )
+
+            try:
+                if expected_type == "float":
+                    typecasted[tag] = float(val)
+                else:
+                    try:
+                        as_int = int(val)
+                    except ValueError:
+                        as_int = None
+                    if as_int is not None and not isinstance(val, float):
+                        typecasted[tag] = as_int
+                    else:
+                        # Accept "5.0" / 5.0, but never silently truncate 3.7
+                        as_float = float(val)
+                        if not as_float.is_integer():
+                            raise ValueError(f"non-integral value {val!r}")
+                        typecasted[tag] = int(as_float)
+            except (ValueError, TypeError, OverflowError) as exc:
+                raise ValueError(
+                    f"Cannot convert value '{val}' to {expected_type} for tag '{tag}'"
+                ) from exc
 
         return typecasted

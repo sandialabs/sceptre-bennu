@@ -112,7 +112,9 @@ class RotatingCSVWriter:
         self.log = logger.bind(ctx=f"{self.__class__.__name__} {self.name}")
 
         if not self.csv_dir.exists():
-            self.csv_dir.mkdir(parents=True, exist_ok=True, mode=0o666)  # rw-rw-rw-
+            # Directories need the execute bit to be usable (0o666 produced a dir nobody
+            # but root could create files in); the umask still applies.
+            self.csv_dir.mkdir(parents=True, exist_ok=True, mode=0o777)
 
         self.log.info(f"CSV output directory: {self.csv_dir}")
         self.log.info(f"CSV header: {self.header}")

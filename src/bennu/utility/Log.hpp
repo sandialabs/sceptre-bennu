@@ -17,35 +17,37 @@ enum LogLevel
     LOG_DEBUG = 3
 };
 
+inline int parseLogLevel(const char* env)
+{
+    if (!env)
+    {
+        return static_cast<int>(LOG_INFO);
+    }
+    std::string s(env);
+    for (auto& c : s)
+    {
+        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    }
+    if (s == "error" || s == "0")
+    {
+        return static_cast<int>(LOG_ERROR);
+    }
+    if (s == "warn" || s == "warning" || s == "1")
+    {
+        return static_cast<int>(LOG_WARN);
+    }
+    if (s == "debug" || s == "3")
+    {
+        return static_cast<int>(LOG_DEBUG);
+    }
+    return static_cast<int>(LOG_INFO);
+}
+
 // Level comes from env BENNU_LOG_LEVEL (error|warn|info|debug or 0-3), read once.
 // Unset or invalid -> INFO. Env is process-global so every shared lib agrees.
 inline int logLevel()
 {
-    static const int level = []() {
-        const char* env = std::getenv("BENNU_LOG_LEVEL");
-        if (!env)
-        {
-            return static_cast<int>(LOG_INFO);
-        }
-        std::string s(env);
-        for (auto& c : s)
-        {
-            c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-        }
-        if (s == "error" || s == "0")
-        {
-            return static_cast<int>(LOG_ERROR);
-        }
-        if (s == "warn" || s == "warning" || s == "1")
-        {
-            return static_cast<int>(LOG_WARN);
-        }
-        if (s == "debug" || s == "3")
-        {
-            return static_cast<int>(LOG_DEBUG);
-        }
-        return static_cast<int>(LOG_INFO);
-    }();
+    static const int level = parseLogLevel(std::getenv("BENNU_LOG_LEVEL"));
     return level;
 }
 
