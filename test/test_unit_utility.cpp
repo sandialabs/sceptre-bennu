@@ -86,42 +86,6 @@ TEST_CASE("Log: logLevel parsing of BENNU_LOG_LEVEL and logEnabled truth evaluat
     CHECK(parseLogLevel("3") == LOG_DEBUG);
     CHECK(parseLogLevel("debug") == LOG_DEBUG);
     CHECK(parseLogLevel("DEBUG") == LOG_DEBUG);
-
-    // Environment-driven logLevel(reload = true) tests
-    unsetenv("BENNU_LOG_LEVEL");
-    CHECK(logLevel(true) == LOG_INFO);
-
-    setenv("BENNU_LOG_LEVEL", "0", 1);
-    CHECK(logLevel(true) == LOG_ERROR);
-    CHECK(logEnabled(LOG_ERROR));
-    CHECK_FALSE(logEnabled(LOG_WARN));
-    CHECK_FALSE(logEnabled(LOG_INFO));
-    CHECK_FALSE(logEnabled(LOG_DEBUG));
-
-    setenv("BENNU_LOG_LEVEL", "WARN", 1);
-    CHECK(logLevel(true) == LOG_WARN);
-    CHECK(logEnabled(LOG_ERROR));
-    CHECK(logEnabled(LOG_WARN));
-    CHECK_FALSE(logEnabled(LOG_INFO));
-    CHECK_FALSE(logEnabled(LOG_DEBUG));
-
-    setenv("BENNU_LOG_LEVEL", "info", 1);
-    CHECK(logLevel(true) == LOG_INFO);
-    CHECK(logEnabled(LOG_ERROR));
-    CHECK(logEnabled(LOG_WARN));
-    CHECK(logEnabled(LOG_INFO));
-    CHECK_FALSE(logEnabled(LOG_DEBUG));
-
-    setenv("BENNU_LOG_LEVEL", "Debug", 1);
-    CHECK(logLevel(true) == LOG_DEBUG);
-    CHECK(logEnabled(LOG_ERROR));
-    CHECK(logEnabled(LOG_WARN));
-    CHECK(logEnabled(LOG_INFO));
-    CHECK(logEnabled(LOG_DEBUG));
-
-    // Reset back to ERROR or unset for quiet test runs
-    setenv("BENNU_LOG_LEVEL", "ERROR", 1);
-    logLevel(true);
 }
 
 TEST_CASE("PathFinder: extractDirectory")

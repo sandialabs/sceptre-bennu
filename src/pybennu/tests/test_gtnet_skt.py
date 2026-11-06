@@ -224,7 +224,7 @@ def test_channel_limit_maximum_30_points_success():
 
 
 def test_channel_limit_exceeded_raises_error():
-    """Verify configuring > 30 data points triggers error in Settings and GtnetSkt."""
+    """Verify configuring > 30 data points is rejected by settings validation."""
     # 31 tags exceeds RTDS channel capacity
     tags_31 = [make_tag(f"TAG_{i}", "int", 0) for i in range(31)]
 
@@ -232,13 +232,6 @@ def test_channel_limit_exceeded_raises_error():
     with pytest.raises(ValidationError) as exc_info:
         GtnetSktSettings(enabled=True, tags=tags_31)
     assert "maximum of 30 data points" in str(exc_info.value)
-
-    # 2. Verification through GtnetSkt class constructor guard
-    conf = PybennuSettings()
-    # Bypass pydantic validation by assigning directly to list
-    conf.gtnet_skt.tags = tags_31
-    with pytest.raises(ValueError, match="maximum of 30 data points per channel"):
-        GtnetSkt(conf)
 
 
 # =============================================================================

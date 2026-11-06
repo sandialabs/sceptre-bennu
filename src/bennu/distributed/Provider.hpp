@@ -23,19 +23,6 @@ public:
 
     void run();
 
-    void stop()
-    {
-        if (mServer)
-        {
-            mServer->stop();
-        }
-    }
-
-    std::shared_ptr<Server> getServer() const
-    {
-        return mServer;
-    }
-
     void publish(std::string& msg)
     {
         mPublisher->publish(msg);

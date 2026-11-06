@@ -1,7 +1,6 @@
 #ifndef BENNU_UTILITY_LOG_HPP
 #define BENNU_UTILITY_LOG_HPP
 
-#include <atomic>
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
@@ -46,14 +45,10 @@ inline int parseLogLevel(const char* env)
 
 // Level comes from env BENNU_LOG_LEVEL (error|warn|info|debug or 0-3), read once.
 // Unset or invalid -> INFO. Env is process-global so every shared lib agrees.
-inline int logLevel(bool reload = false)
+inline int logLevel()
 {
-    static std::atomic<int> level{parseLogLevel(std::getenv("BENNU_LOG_LEVEL"))};
-    if (reload)
-    {
-        level.store(parseLogLevel(std::getenv("BENNU_LOG_LEVEL")), std::memory_order_relaxed);
-    }
-    return level.load(std::memory_order_relaxed);
+    static const int level = parseLogLevel(std::getenv("BENNU_LOG_LEVEL"));
+    return level;
 }
 
 inline bool logEnabled(LogLevel l)

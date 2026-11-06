@@ -264,24 +264,3 @@ class ElasticPusher:
             self.log.exception("Unknown error during Elasticsearch bulk ingest")
 
         return False
-
-    def flush(self, es: Elasticsearch | None = None) -> int:
-        """
-        Flush remaining queued messages to Elasticsearch.
-        Returns the total number of flushed messages.
-        """
-        messages = []
-        while not self.data_queue.empty():
-            try:
-                items = self.data_queue.get_nowait()
-                messages.extend(items)
-                self.data_queue.task_done()
-            except queue.Empty:
-                break
-        if messages and es is not None:
-            self.send_messages(es, messages)
-        return len(messages)
-
-
-# Alias for backward compatibility and test conformance
-ElasticsearchQueueHandler = ElasticPusher

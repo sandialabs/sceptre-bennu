@@ -7,7 +7,6 @@ from elasticsearch import helpers
 from pybennu.elastic import (
     ES_BASE_TYPE_MAPPING,
     ElasticPusher,
-    ElasticsearchQueueHandler,
 )
 from pybennu.settings import ElasticSettings, PybennuSettings
 
@@ -135,13 +134,8 @@ def test_enqueue_documents_into_queue():
 
 
 # =============================================================================
-# ElasticsearchQueueHandler Bulk Indexing & Mocking Tests
+# ElasticPusher Bulk Indexing & Mocking Tests
 # =============================================================================
-
-
-def test_alias_equivalence():
-    """Verify ElasticsearchQueueHandler is an alias of ElasticPusher."""
-    assert ElasticsearchQueueHandler is ElasticPusher
 
 
 @patch("pybennu.elastic.helpers.bulk")
@@ -153,7 +147,7 @@ def test_send_messages_bulk_success(mock_bulk):
     mock_es.indices.exists.return_value = False
 
     conf = make_conf(index_basename="sceptre-pmu")
-    handler = ElasticsearchQueueHandler(conf)
+    handler = ElasticPusher(conf)
 
     ts = datetime(2026, 11, 6, 12, 0, 0, tzinfo=timezone.utc)
     messages = [
@@ -191,7 +185,7 @@ def test_send_messages_index_cache_skips_redundant_creation(mock_bulk):
     mock_es = MagicMock()
 
     conf = make_conf(index_basename="sceptre-fast")
-    handler = ElasticsearchQueueHandler(conf)
+    handler = ElasticPusher(conf)
 
     ts = datetime(2026, 11, 6, 12, 0, 0, tzinfo=timezone.utc)
     index_name = "sceptre-fast-2026.11.06"
@@ -216,7 +210,7 @@ def test_send_messages_bulk_index_error_raises_runtime_error(mock_bulk):
     mock_es.indices.exists.return_value = True
 
     conf = make_conf()
-    handler = ElasticsearchQueueHandler(conf)
+    handler = ElasticPusher(conf)
 
     ts = datetime(2026, 11, 6, 12, 0, 0, tzinfo=timezone.utc)
     messages = [{"@timestamp": ts, "data": "bad"}]
@@ -235,7 +229,7 @@ def test_send_messages_unexpected_exception_returns_false(mock_bulk):
     mock_es.indices.exists.return_value = True
 
     conf = make_conf()
-    handler = ElasticsearchQueueHandler(conf)
+    handler = ElasticPusher(conf)
 
     ts = datetime(2026, 11, 6, 12, 0, 0, tzinfo=timezone.utc)
     messages = [{"@timestamp": ts, "data": "val"}]
@@ -250,14 +244,14 @@ def test_send_messages_unexpected_exception_returns_false(mock_bulk):
 
 
 @patch("pybennu.elastic.helpers.bulk")
-def test_queue_flush_drains_all_messages(mock_bulk):
-    """Verify flush drains all queued batches and publishes them to ES."""
+def test_queue_drain_sends_all_messages(mock_bulk):
+    """Verify draining all queued batches and publishes them to ES."""
     mock_bulk.return_value = (3, [])
     mock_es = MagicMock()
     mock_es.indices.exists.return_value = True
 
     conf = make_conf()
-    handler = ElasticsearchQueueHandler(conf)
+    handler = ElasticPusher(conf)
 
     ts = datetime(2026, 11, 6, 12, 0, 0, tzinfo=timezone.utc)
     handler.enqueue([{"@timestamp": ts, "id": 1}, {"@timestamp": ts, "id": 2}])
@@ -265,7 +259,11 @@ def test_queue_flush_drains_all_messages(mock_bulk):
 
     assert handler.data_queue.qsize() == 2
 
-    flushed_count = handler.flush(es=mock_es)
-    assert flushed_count == 3
+    # Drain the queue the way a shutdown path would, then bulk-send it.
+    messages = []
+    while not handler.data_queue.empty():
+        messages.extend(handler.data_queue.get_nowait())
+    assert len(messages) == 3
+    assert handler.send_messages(mock_es, messages)
     assert handler.data_queue.empty()
     assert mock_bulk.call_count == 1

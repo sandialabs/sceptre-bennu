@@ -23,6 +23,8 @@ static std::atomic<int> sInprocCounter{0};
 class IntegrationTestProvider : public Provider
 {
 public:
+    using Provider::messageHandler;
+
     IntegrationTestProvider(const Endpoint& serverEndpoint,
                             const Endpoint& pubEndpoint,
                             std::shared_ptr<DataManager> dm) :
@@ -133,11 +135,15 @@ TEST_CASE("Probe <-> Provider in-process integration: QUERY, READ, WRITE in < 20
     dm->addAnalogTag("load-mw-setpoint");
     dm->addInternalData<double>("load-mw-setpoint", 100.0);
 
-    IntegrationTestProvider provider(serverEp, pubEp, dm);
+    // The provider binds its own (unused) endpoints; requests are served by a
+    // standalone Server whose handler is the provider's messageHandler.
+    Endpoint providerServerEp{"inproc://probe-integ-provider-" + std::to_string(id)};
+    IntegrationTestProvider provider(providerServerEp, pubEp, dm);
 
-    // Launch server run loop on background thread
+    Server server(serverEp);
+    server.setHandler(std::bind(&IntegrationTestProvider::messageHandler, &provider, std::placeholders::_1));
     std::thread serverThread([&]() {
-        provider.getServer()->run();
+        server.run();
     });
 
     ProbeClient probe(serverEp);
@@ -181,6 +187,6 @@ TEST_CASE("Probe <-> Provider in-process integration: QUERY, READ, WRITE in < 20
     CHECK(probe.lastReply.rfind("999.0", 0) == 0);
 
     // 6. Deterministic clean shutdown
-    provider.stop();
+    server.stop();
     serverThread.join();
 }
