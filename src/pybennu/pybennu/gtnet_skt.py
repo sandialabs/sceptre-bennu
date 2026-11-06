@@ -76,6 +76,11 @@ class GtnetSkt:
         self.lock: Lock = Lock()
 
         # Dict of tags, keyed by name
+        if len(self.conf.gtnet_skt.tags) > 30:
+            raise ValueError(
+                "GTNET-SKT supports a maximum of 30 data points per channel"
+            )
+
         self.tags: dict[str, GtnetSktTag] = {
             t.name: t for t in self.conf.gtnet_skt.tags
         }
@@ -147,7 +152,7 @@ class GtnetSkt:
         sent = False
         while not sent:
             try:
-                self.socket.send(payload)
+                self.socket.sendall(payload)
                 sent = True
             except Exception:
                 self.log.exception("GTNET-SKT send failed, resetting connection...")

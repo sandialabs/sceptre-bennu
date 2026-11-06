@@ -10,8 +10,25 @@ from struct import pack
 
 from loguru import logger
 from pymodbus.constants import Endian
-from pymodbus.interfaces import IPayloadBuilder
-from pymodbus.utilities import pack_bitstring
+
+try:
+    from pymodbus.interfaces import IPayloadBuilder
+except ImportError:
+
+    class IPayloadBuilder:
+        """Fallback interface for pymodbus 3.x."""
+
+        pass
+
+
+try:
+    from pymodbus.payload import pack_bitstring
+except ImportError:
+    from pymodbus.utilities import pack_bitstring
+
+if not hasattr(Endian, "Little") and hasattr(Endian, "LITTLE"):
+    Endian.Little = Endian.LITTLE
+    Endian.Big = Endian.BIG
 
 
 def convert_to_bcd(decimal):
@@ -111,6 +128,8 @@ class BcdPayloadEncoder(IPayloadBuilder):
         """Adds a string to the buffer
         :param value: The value to add to the buffer
         """
+        if isinstance(value, str):
+            value = value.encode("utf-8")
         self._payload.append(value)
 
 

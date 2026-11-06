@@ -11,54 +11,29 @@ from struct import pack
 from pymodbus.constants import Endian
 from pymodbus.exceptions import ParameterException
 from pymodbus.payload import BinaryPayloadDecoder
-from pymodbus.utilities import pack_bitstring, unpack_bitstring
 
-'''
-def convert_from_bcd(bcd):
-    """ Converts a bcd value to a decimal value
-    :param value: The value to unpack from bcd
-    :returns: The number in decimal form
-    """
-    zero = b'0'
-    four = b'4'
-    full = b'1111'
-    place, decimal = 1, 0
-    while bcd > zero:
-        nibble = bcd & full # 0xf
-        decimal += nibble * place
-        bcd >>= 4
-        place *= 10
-    return decimal
-'''
-'''
-def convert_from_bcd(bcd):
-    """ Converts a bcd value to a decimal value
+try:
+    from pymodbus.payload import pack_bitstring, unpack_bitstring
+except ImportError:
+    from pymodbus.utilities import pack_bitstring, unpack_bitstring
 
-    :param value: The value to unpack from bcd
-    :returns: The number in decimal form
-    """
-    zero = b'0'
-    full = b'15'
-    place, decimal = 1, 0
-    while bcd > zero:
-        nibble = bcd & full #0xf
-        decimal += nibble * place
-        bcd >>= 4
-        place *= 10
-    return decimal
-'''
+if not hasattr(Endian, "Little") and hasattr(Endian, "LITTLE"):
+    Endian.Little = Endian.LITTLE
+    Endian.Big = Endian.BIG
 
 
 def convert_from_bcd(payload):
-    place, decimal = 10000000, 0
-    for nibble in payload:
+    if not payload:
+        return 0
+    place = 10 ** (len(payload) * 2 - 1)
+    decimal = 0
+    for byte_val in payload:
         shift = 4
         for _x in range(2):
-            nibble_2 = (nibble >> shift) & 0xF
-            decimal += nibble_2 * place
-            # nibble >>= 4
+            nibble = (byte_val >> shift) & 0xF
+            decimal += nibble * place
             shift = 0
-            place /= 10
+            place //= 10
     return int(decimal)
 
 
