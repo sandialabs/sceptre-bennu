@@ -24,13 +24,15 @@ Server::Server(std::shared_ptr<field_device::DataManager> dm) :
 
 Server::~Server()
 {
+    if (mAcceptor && mAcceptor->is_open())
+    {
+        boost::system::error_code ec;
+        mAcceptor->close(ec);
+    }
+    mIOService.stop();
     if (mOutstationThread && mOutstationThread->joinable())
     {
         mOutstationThread->join();
-    }
-    if (mAcceptor && mAcceptor->is_open())
-    {
-        mAcceptor->close();
     }
 
     mOutstationThread.reset();

@@ -79,11 +79,14 @@ TEST_CASE("ZMQ RADIO/DISH UDP: Group filtering invariant")
 
     // Emit datagram with a DIFFERENT group via raw RADIO socket to the same UDP port
     zmq::socket_t foreignRadio(Context::the()->getContext(), ZMQ_RADIO);
+    int linger = 0;
+    foreignRadio.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
     foreignRadio.connect(epSub.str);
     std::string foreignPayload = "foreign_payload_to_ignore\0";
     zmq::message_t foreignMsg(foreignPayload.data(), foreignPayload.size());
     foreignMsg.set_group("otherGroup");
     foreignRadio.send(foreignMsg);
+    foreignRadio.close();
 
     // Give network stack brief time to deliver / drop
     std::this_thread::sleep_for(std::chrono::milliseconds(50));

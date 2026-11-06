@@ -10,6 +10,8 @@ Server::Server(const Endpoint& endpoint) :
     mSocket(zmq::socket_t(Context::the()->getContext(), ZMQ_REP)),
     mHandler(std::bind(&Server::defaultHandler, this, std::placeholders::_1))
 {
+    int linger = 0;
+    mSocket.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
     try
     {
         mSocket.bind(endpoint.str);

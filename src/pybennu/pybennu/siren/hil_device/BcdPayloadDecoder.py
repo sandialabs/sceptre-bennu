@@ -28,9 +28,15 @@ def convert_from_bcd(payload):
     place = 10 ** (len(payload) * 2 - 1)
     decimal = 0
     for byte_val in payload:
+        if not isinstance(byte_val, int) or byte_val < 0 or byte_val > 0xFF:
+            raise ValueError(f"Invalid byte value in BCD payload: {byte_val}")
         shift = 4
         for _x in range(2):
             nibble = (byte_val >> shift) & 0xF
+            if nibble > 9:
+                raise ValueError(
+                    f"Invalid BCD nibble 0x{nibble:X} (must be between 0 and 9)"
+                )
             decimal += nibble * place
             shift = 0
             place //= 10

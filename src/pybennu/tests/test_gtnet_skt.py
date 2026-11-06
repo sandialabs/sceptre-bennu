@@ -147,9 +147,65 @@ def test_typecast_values_variants():
 
     # String numeric values (as received from CLI pybennu-probe)
     assert gtnet.typecast_values({"BRK1.closed": "42"}) == {"BRK1.closed": 42}
+    assert gtnet.typecast_values({"BRK1.closed": "42.0"}) == {"BRK1.closed": 42}
     assert gtnet.typecast_values({"VOLT1.value": "123.45"}) == {
         "VOLT1.value": pytest.approx(123.45)
     }
+
+
+def test_typecast_values_malformed_input_raises_error():
+    """Verify malformed types, non-numeric values, and unknown tags raise appropriate exceptions."""
+    tags = [
+        make_tag("BRK1", "int", 0),
+        make_tag("VOLT1", "float", 0.0),
+    ]
+    conf = make_settings(tags)
+    gtnet = GtnetSkt(conf)
+
+    # Unknown tag name raises KeyError
+    with pytest.raises(KeyError, match=r"Unknown tag 'NONEXISTENT\.closed'"):
+        gtnet.typecast_values({"NONEXISTENT.closed": 1})
+
+    # Malformed integer value raises ValueError
+    with pytest.raises(ValueError, match="Cannot convert value 'not_a_number' to int"):
+        gtnet.typecast_values({"BRK1.closed": "not_a_number"})
+
+    # Malformed float value raises ValueError
+    with pytest.raises(ValueError, match="Cannot convert value 'bad_float' to float"):
+        gtnet.typecast_values({"VOLT1.value": "bad_float"})
+
+    # Non-scalar malformed value raises ValueError
+    with pytest.raises(ValueError, match="Cannot convert value"):
+        gtnet.typecast_values({"BRK1.closed": [1, 2, 3]})
+
+
+def test_gtnet_skt_malformed_tag_type_in_config():
+    """Verify invalid tag type in config raises ValueError during initialization."""
+    conf = PybennuSettings()
+    # Create tag bypassing pydantic validation with unsupported type
+    bad_tag = GtnetSktTag.model_construct(
+        name="BAD.closed", type="boolean", initial_value=1
+    )
+    conf.gtnet_skt.tags = [bad_tag]
+    with pytest.raises(
+        ValueError, match=r"invalid type boolean for GTNET-SKT tag BAD\.closed"
+    ):
+        GtnetSkt(conf)
+
+
+def test_gtnet_skt_stop_and_clean_shutdown():
+    """Verify stop() safely signals thread loop and closes socket without lingering."""
+    tags = [make_tag("BRK1", "int", 1)]
+    conf = make_settings(tags, protocol="udp")
+    gtnet = GtnetSkt(conf)
+    gtnet.start()
+    assert gtnet.running is True
+    assert gtnet.udp_write_thread.is_alive()
+
+    gtnet.stop()
+    assert gtnet.running is False
+    assert not gtnet.udp_write_thread.is_alive()
+    assert gtnet.socket is None
 
 
 # =============================================================================

@@ -22,6 +22,8 @@ Subscriber::Subscriber(const Endpoint& endpoint, SubscriptionHandler handler) :
         exit(1);
     }
     mSocket.join(endpoint.hash().data());
+    int linger = 0;
+    mSocket.setsockopt(ZMQ_LINGER, &linger, sizeof(linger));
     int timeout = 100;
     mSocket.setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
     mSubscriberThread.reset(new std::thread(std::bind(&Subscriber::run, this)));

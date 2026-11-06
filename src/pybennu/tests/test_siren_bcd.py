@@ -56,6 +56,44 @@ def test_convert_from_bcd_nibble_extraction():
     assert convert_from_bcd([0x07, 0x00]) == 700
 
 
+def test_convert_from_bcd_edge_cases():
+    """Verify handling of None, empty bytearrays, and edge case vectors."""
+    assert convert_from_bcd(None) == 0
+    assert convert_from_bcd(bytearray()) == 0
+    assert convert_from_bcd(()) == 0
+
+
+@pytest.mark.parametrize(
+    "invalid_payload",
+    [
+        [0x1A],  # low nibble 0xA > 9
+        [0xF0],  # high nibble 0xF > 9
+        [0x0B, 0x12],  # low nibble of first byte 0xB > 9
+        b"\x9f",  # raw bytes with invalid nibble
+        b"\x12\x3c",  # 0xC > 9
+        [0xFF, 0xFF],  # all nibbles invalid
+    ],
+)
+def test_convert_from_bcd_invalid_nibbles_raise_value_error(invalid_payload):
+    """Verify that invalid BCD nibbles (> 9) raise ValueError."""
+    with pytest.raises(ValueError, match="Invalid BCD nibble"):
+        convert_from_bcd(invalid_payload)
+
+
+@pytest.mark.parametrize(
+    "invalid_payload",
+    [
+        [-1],  # negative byte value
+        [256],  # out-of-range byte value
+        [0x12, "bad"],  # non-integer byte value
+    ],
+)
+def test_convert_from_bcd_invalid_byte_values_raise_value_error(invalid_payload):
+    """Verify that out-of-range or non-integer bytes raise ValueError."""
+    with pytest.raises(ValueError, match="Invalid byte value"):
+        convert_from_bcd(invalid_payload)
+
+
 # =============================================================================
 # BcdPayloadDecoder.fromRegisters Tests
 # =============================================================================

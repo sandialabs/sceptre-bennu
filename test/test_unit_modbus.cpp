@@ -1,7 +1,9 @@
 #include "doctest.h"
 
+#include <chrono>
 #include <cstdint>
 #include <memory>
+#include <thread>
 #include <vector>
 
 #include "bennu/devices/field-device/DataManager.hpp"
@@ -406,4 +408,16 @@ TEST_CASE("Modbus Server & DataManager integration: Linear scaling, reads, and w
         CHECK(server.readHoldingRegisters(999, 1, regs) == error_code_t::ILLEGAL_DATA_ADDRESS);
         CHECK(server.writeHoldingRegisters(999, 1, {1234}) == error_code_t::ILLEGAL_DATA_ADDRESS);
     }
+}
+
+TEST_CASE("Modbus Server: Clean lifecycle and thread shutdown with Server::start")
+{
+    auto dm = std::make_shared<DataManager>();
+    {
+        Server server(dm);
+        server.start("tcp://127.0.0.1:51502");
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+    // Destruction must complete cleanly with joined thread and closed acceptor
+    CHECK(true);
 }
