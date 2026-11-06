@@ -14,10 +14,7 @@ namespace {
 inline std::string findConfigFile(const std::string& relPath)
 {
     const std::vector<std::string> candidates = {
-        "../" + relPath,
-        relPath,
-        "/cache/" + relPath,
-        "/src/" + relPath};
+        std::string(BENNU_SOURCE_DIR) + "/" + relPath};
     for (const auto& path : candidates)
     {
         std::ifstream f(path);

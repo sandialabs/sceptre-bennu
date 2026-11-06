@@ -31,6 +31,9 @@ target_link_libraries(test_unit_distributed bennu-distributed bennu-utility ${Bo
 target_link_libraries(test_unit_distributed_udp bennu-distributed bennu-utility ${Boost_LIBRARIES})
 target_link_libraries(test_unit_parsers bennu-parsers bennu-utility ${Boost_LIBRARIES})
 target_link_libraries(test_unit_config_conformance bennu-parsers bennu-utility ${Boost_LIBRARIES})
+# these tests read data/configs from the source tree
+target_compile_definitions(test_unit_config_conformance PRIVATE BENNU_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_compile_definitions(test_unit_helics_federate PRIVATE BENNU_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 target_link_libraries(test_unit_datastore ${Boost_LIBRARIES})
 target_link_libraries(test_unit_utility bennu-loaders bennu-utility ${Boost_LIBRARIES})
 target_link_libraries(test_unit_loader bennu-loaders bennu-utility dl ${Boost_LIBRARIES})

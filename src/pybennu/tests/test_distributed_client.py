@@ -1,24 +1,20 @@
-import sys
-import types
 from unittest.mock import MagicMock, patch
 
 import pytest
 
-# Ensure pybennu.distributed.swig._Endpoint is stubbed before importing client
-if "pybennu.distributed.swig._Endpoint" not in sys.modules:
-    swig_mod = types.ModuleType("pybennu.distributed.swig._Endpoint")
-    swig_mod.Endpoint_str_get = lambda ep: str(ep)
-    sys.modules["pybennu.distributed.swig._Endpoint"] = swig_mod
-    parent = types.ModuleType("pybennu.distributed.swig")
-    parent._Endpoint = swig_mod
-    sys.modules["pybennu.distributed.swig"] = parent
-
+# conftest.py stubs the swig module when the compiled extension can't be imported;
+# either way (real or stub), the fixture below patches client.E so these tests
+# don't depend on which one is loaded.
 from pybennu.distributed.client import Client
 
 
 @pytest.fixture
 def mock_client():
-    with patch("zmq.Context") as mock_ctx_cls:
+    with (
+        patch("zmq.Context") as mock_ctx_cls,
+        patch("pybennu.distributed.client.E") as mock_e,
+    ):
+        mock_e.Endpoint_str_get.side_effect = lambda ep: ep
         mock_ctx = MagicMock()
         mock_socket = MagicMock()
         mock_ctx.socket.return_value = mock_socket

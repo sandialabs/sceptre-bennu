@@ -20,10 +20,7 @@ namespace {
 inline std::string resolveConfigPath(const std::string& relPath)
 {
     const std::vector<std::string> searchRoots = {
-        "../data/configs/",
-        "data/configs/",
-        "/cache/data/configs/",
-        "/src/data/configs/"};
+        std::string(BENNU_SOURCE_DIR) + "/data/configs/"};
     for (const auto& root : searchRoots)
     {
         std::string candidate = root + relPath;
