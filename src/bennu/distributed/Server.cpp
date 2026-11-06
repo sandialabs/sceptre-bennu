@@ -34,15 +34,24 @@ zmq::message_t Server::defaultHandler(const zmq::message_t& request)
 
 void Server::run()
 {
+    int timeout = 100;
+    mSocket.setsockopt(ZMQ_RCVTIMEO, &timeout, sizeof(timeout));
     while (mRunning && mSocket.connected())
     {
         zmq::message_t request;
         try
         {
-            mSocket.recv(&request);
+            if (!mSocket.recv(&request))
+            {
+                continue;
+            }
         }
         catch (zmq::error_t& e)
         {
+            if (e.num() == ETERM || !mRunning)
+            {
+                break;
+            }
             printf("E: Server recv: %s", e.what());
             break;
         }

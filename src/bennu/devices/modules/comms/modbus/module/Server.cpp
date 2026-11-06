@@ -24,8 +24,14 @@ Server::Server(std::shared_ptr<field_device::DataManager> dm) :
 
 Server::~Server()
 {
-    mOutstationThread->join();
-    mAcceptor->close();
+    if (mOutstationThread && mOutstationThread->joinable())
+    {
+        mOutstationThread->join();
+    }
+    if (mAcceptor && mAcceptor->is_open())
+    {
+        mAcceptor->close();
+    }
 
     mOutstationThread.reset();
 
@@ -44,7 +50,7 @@ void Server::accept(const std::string& endpoint)
     // If "tcp://" is in endpoint string, create a TCP channel. Otherwisie, create a serial channel
     if (findResult == std::string::npos)
     {
-        mChannel = std::make_shared<SerialChannel>(SerialChannel(mIOService, endpoint)); 
+        mChannel = std::make_shared<SerialChannel>(SerialChannel(mIOService, endpoint));
         if (mChannel)
         {
             std::dynamic_pointer_cast<SerialChannel>(mChannel)->connect();
@@ -66,7 +72,7 @@ void Server::accept(const std::string& endpoint)
         catch (boost::system::system_error& error)
         {
             std::ostringstream os;
-            os << "Unable to bind to " << mAddress << ":" <<  mPort;
+            os << "Unable to bind to " << mAddress << ":" << mPort;
             logDebug("error", os.str());
             return;
         }
@@ -85,7 +91,7 @@ void Server::acceptConnectionHandler(const boost::system::error_code& error)
     if (!error)
     {
         setupConnection(error);
-        std::cerr << "A new incoming connection started." << std::endl;  
+        std::cerr << "A new incoming connection started." << std::endl;
     }
     else
     {
@@ -94,7 +100,6 @@ void Server::acceptConnectionHandler(const boost::system::error_code& error)
 
     accept(mEndpoint);
 }
-
 
 void Server::run(std::string endpoint)
 {
@@ -153,7 +158,6 @@ bool Server::addCoil(const uint16_t address, const std::string& tag)
     }
 
     return false;
-
 }
 
 bool Server::addDiscreteInput(const uint16_t address, const std::string& tag)
@@ -179,7 +183,6 @@ bool Server::addHoldingRegister(const uint16_t address, const std::string& tag, 
         mScaledValues[address] = sv;
         return true;
     }
-
 
     return false;
 }
@@ -272,7 +275,6 @@ error_code_t::type Server::writeCoils(uint16_t startAddress, uint16_t size, cons
         os.str("");
         os << "Data successfully written.";
         logEvent("write coils", "info", os.str());
-
     }
 
     return error_code_t::NO_ERROR;
@@ -305,7 +307,6 @@ error_code_t::type Server::readDiscreteInputs(uint16_t startAddress, uint16_t si
         {
             values.push_back(mDataManager->getDataByTag<bool>(iter->second));
         }
-
     }
 
     // We weren't able to find/return all the data asked for, so this is an error.
@@ -397,7 +398,6 @@ error_code_t::type Server::writeHoldingRegisters(uint16_t startAddress, uint16_t
             os << "Invalid write holding registers request address: " << i;
             logEvent("write holding registers", "error", os.str());
             return error_code_t::ILLEGAL_DATA_ADDRESS;
-
         }
 
         double newValue = value[i - startAddress];
@@ -411,7 +411,6 @@ error_code_t::type Server::writeHoldingRegisters(uint16_t startAddress, uint16_t
         os.str("");
         os << "Data successfully written.";
         logEvent("write holding registers", "info", os.str());
-
     }
 
     return error_code_t::NO_ERROR;
@@ -453,7 +452,6 @@ error_code_t::type Server::readInputRegisters(uint16_t startAddress, uint16_t si
                 values.push_back(value);
             }
         }
-
     }
 
     // We weren't able to find/return all the data asked for, so this is an error.
@@ -470,7 +468,7 @@ error_code_t::type Server::readInputRegisters(uint16_t startAddress, uint16_t si
     return error_code_t::NO_ERROR;
 }
 
-Server::Server(const Server& server) : 
+Server::Server(const Server& server) :
     bennu::utility::DirectLoggable("modbus-server"),
     mIOService()
 {

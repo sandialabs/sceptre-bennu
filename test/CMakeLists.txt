@@ -28,9 +28,27 @@ target_sources(test_unit_outputmodule PRIVATE
 target_sources(test_unit_perf PRIVATE ${CMAKE_SOURCE_DIR}/src/bennu/distributed/Client.cpp)
 
 target_link_libraries(test_unit_distributed bennu-distributed bennu-utility ${Boost_LIBRARIES})
+target_link_libraries(test_unit_distributed_udp bennu-distributed bennu-utility ${Boost_LIBRARIES})
 target_link_libraries(test_unit_parsers bennu-parsers bennu-utility ${Boost_LIBRARIES})
+target_link_libraries(test_unit_config_conformance bennu-parsers bennu-utility ${Boost_LIBRARIES})
 target_link_libraries(test_unit_datastore ${Boost_LIBRARIES})
 target_link_libraries(test_unit_utility bennu-loaders bennu-utility ${Boost_LIBRARIES})
+target_link_libraries(test_unit_loader bennu-loaders bennu-utility dl ${Boost_LIBRARIES})
+
+target_include_directories(test_unit_modbus PRIVATE
+  ${bennu_INCLUDES}
+  ${CMAKE_SOURCE_DIR}/src/bennu/devices/modules/comms/modbus/module
+  ${CMAKE_SOURCE_DIR}/src/bennu/devices/modules/comms/modbus/protocol
+)
+target_link_libraries(test_unit_modbus -Wl,--no-as-needed bennu-modbus-tcp bennu-modbus-protocol bennu-field-device-base bennu-comms bennu-utility ${Boost_LIBRARIES})
+
+target_include_directories(test_unit_helics_federate PRIVATE
+  ${CMAKE_SOURCE_DIR}/src/bennu/executables/bennu-simulink-provider-helics
+)
+target_link_libraries(test_unit_helics_federate HELICS::helics-shared bennu-utility ${Boost_LIBRARIES})
+
+target_include_directories(test_integration_probe_provider PRIVATE ${bennu_INCLUDES})
+target_link_libraries(test_integration_probe_provider bennu-distributed bennu-field-device-base bennu-utility ${ZMQ_LIB} pthread ${Boost_LIBRARIES})
 
 target_include_directories(test_unit_helics_logic PRIVATE
   ${CMAKE_SOURCE_DIR}/src/bennu/executables/bennu-simulink-provider-helics
