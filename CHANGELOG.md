@@ -1,3 +1,15 @@
+# [2026.11.06](https://github.com/sandialabs/sceptre-bennu/compare/v2026.11.03...v2026.11.06) - 2026-11-06
+
+### ❌ Breaking
+
+_(gobennu)_ [**breaking**]: remove deprecated gobennu [_(e6b8fe6)_](https://github.com/sandialabs/sceptre-bennu/commit/e6b8fe6081678cd5837518314d7d02e4cddc7b82) ([PR 74](https://github.com/sandialabs/sceptre-bennu/pull/74))
+
+> Removes the deprecated and unused Go implementation of bennu
+> (`src/gobennu`) along with all associated build targets, CI jobs,
+> test harnesses, developer tooling, and documentation references.
+
+> remove deprecated gobennu
+
 # [2026.11.03](https://github.com/sandialabs/sceptre-bennu/compare/v2026.09.30...v2026.11.03) - 2026-11-03
 
 ### 🚀 Features
