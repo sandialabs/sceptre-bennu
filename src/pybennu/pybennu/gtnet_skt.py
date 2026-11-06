@@ -54,7 +54,7 @@ in the short-term.
 import socket
 import struct
 from threading import Lock, Thread
-from time import sleep
+from time import monotonic, sleep
 
 from loguru import logger
 
@@ -134,13 +134,20 @@ class GtnetSkt:
         )
         # self.init_socket()   # this is called in start()
 
+        last_err_log = float("-inf")
         while self.running:
             payload = self.build_payload()
             if self.socket:
                 try:
                     self.socket.sendto(payload, target)
                 except Exception:
-                    pass
+                    if self.running:
+                        # Don't kill the writer thread on a transient error, but
+                        # don't hide it either (rate-limited to once per 10s).
+                        now = monotonic()
+                        if now - last_err_log >= 10.0:
+                            last_err_log = now
+                            self.log.exception("GTNET-SKT UDP send failed")
             sleep(sleep_for)
 
     def stop(self) -> None:
@@ -246,21 +253,28 @@ class GtnetSkt:
             elif val is True or (isinstance(val, str) and val.lower() == "true"):
                 val = "1"
 
+            if expected_type not in ("int", "float"):
+                raise ValueError(
+                    f"invalid type {expected_type} for GTNET-SKT tag {tag}"
+                )
+
             try:
-                if expected_type == "int":
-                    try:
-                        typecasted[tag] = int(val)
-                    except ValueError:
-                        typecasted[tag] = int(float(val))
-                elif expected_type == "float":
+                if expected_type == "float":
                     typecasted[tag] = float(val)
                 else:
-                    raise ValueError(
-                        f"invalid type {expected_type} for GTNET-SKT tag {tag}"
-                    )
-            except (ValueError, TypeError) as exc:
-                if isinstance(exc, ValueError) and "invalid type" in str(exc):
-                    raise
+                    try:
+                        as_int = int(val)
+                    except ValueError:
+                        as_int = None
+                    if as_int is not None and not isinstance(val, float):
+                        typecasted[tag] = as_int
+                    else:
+                        # Accept "5.0" / 5.0, but never silently truncate 3.7
+                        as_float = float(val)
+                        if not as_float.is_integer():
+                            raise ValueError(f"non-integral value {val!r}")
+                        typecasted[tag] = int(as_float)
+            except (ValueError, TypeError, OverflowError) as exc:
                 raise ValueError(
                     f"Cannot convert value '{val}' to {expected_type} for tag '{tag}'"
                 ) from exc

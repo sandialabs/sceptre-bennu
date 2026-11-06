@@ -24,15 +24,28 @@ Server::Server(std::shared_ptr<field_device::DataManager> dm) :
 
 Server::~Server()
 {
+    mStopping = true;
+
+    // The acceptor and io_service belong to the io thread while it is running, so
+    // close the acceptor and stop the loop from that thread, then join it.
+    if (mOutstationThread && mOutstationThread->joinable())
+    {
+        boost::asio::post(mIOService, [this]() {
+            if (mAcceptor && mAcceptor->is_open())
+            {
+                boost::system::error_code ec;
+                mAcceptor->close(ec);
+            }
+            mIOService.stop();
+        });
+        mOutstationThread->join();
+    }
+
+    // The io thread has exited (or never ran), so this is no longer racy.
     if (mAcceptor && mAcceptor->is_open())
     {
         boost::system::error_code ec;
         mAcceptor->close(ec);
-    }
-    mIOService.stop();
-    if (mOutstationThread && mOutstationThread->joinable())
-    {
-        mOutstationThread->join();
     }
 
     mOutstationThread.reset();
@@ -46,6 +59,10 @@ Server::~Server()
 
 void Server::accept(const std::string& endpoint)
 {
+    if (mStopping)
+    {
+        return;
+    }
     mEndpoint = endpoint;
     std::size_t findResult = endpoint.find("tcp://");
     boost::system::error_code error;
@@ -90,6 +107,12 @@ void Server::accept(const std::string& endpoint)
 
 void Server::acceptConnectionHandler(const boost::system::error_code& error)
 {
+    if (error == boost::asio::error::operation_aborted || mStopping)
+    {
+        // Acceptor was closed on shutdown; do not re-bind.
+        return;
+    }
+
     if (!error)
     {
         setupConnection(error);

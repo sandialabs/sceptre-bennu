@@ -10,6 +10,7 @@
 #include <vector>
 #include <mutex>
 #include <any>
+#include <atomic>
 
 #include <boost/asio.hpp>
 
@@ -71,6 +72,7 @@ private:
     boost::asio::io_service mIOService;
     std::shared_ptr<Channel> mChannel;
     std::shared_ptr<boost::asio::ip::tcp::acceptor> mAcceptor;
+    std::atomic<bool> mStopping{false};
     std::string mEndpoint;
     std::string mAddress;
     unsigned short mPort;
