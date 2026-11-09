@@ -266,6 +266,11 @@ void LogicModule::mReplaceAllRhs(std::string& line, const std::string& toSearch,
         if (pos != 0 && !std::isalnum(line[pos + toSearch.size()]))
         {
             line.replace(pos, toSearch.size(), replaceStr);
+            // Continue after the replacement, not after the original tag length: the
+            // replacement ("True", "False", a number) is usually shorter than the tag,
+            // and skipping the difference misses a nearby second occurrence.
+            pos = line.find(toSearch, pos + replaceStr.size());
+            continue;
         }
         // Get the next occurrence from the current position
         pos = line.find(toSearch, pos + toSearch.size());

@@ -73,3 +73,27 @@ TEST_CASE("longest tag wins and blank lines are ignored")
     r.cycle();
     CHECK(r.dm->getDataByTag<bool>("flag"));
 }
+
+TEST_CASE("every occurrence of a repeated tag is substituted")
+{
+    // "True" is shorter than the tag, so resuming the search at the old tag length
+    // skipped the second occurrence and the line failed to parse every cycle.
+    Rig r("out = !station_reset_active || station_reset_active");
+    r.dm->addInternalData<bool>("station_reset_active", true);
+    r.dm->addInternalData<bool>("out", false);
+    r.dm->addBinaryTag("station_reset_active");
+    r.dm->addBinaryTag("out");
+    r.cycle();
+    CHECK(r.dm->getDataByTag<bool>("out"));
+}
+
+TEST_CASE("three close occurrences of an analog tag are all substituted")
+{
+    Rig r("sum = level_setpoint + level_setpoint + level_setpoint");
+    r.dm->addInternalData<double>("level_setpoint", 2.0);
+    r.dm->addInternalData<double>("sum", 0.0);
+    r.dm->addAnalogTag("level_setpoint");
+    r.dm->addAnalogTag("sum");
+    r.cycle();
+    CHECK(r.dm->getDataByTag<double>("sum") == 6.0);
+}
