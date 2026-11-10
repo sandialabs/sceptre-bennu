@@ -23,7 +23,8 @@ dependencies = [
     'matplotlib>=1.5.3',
     'networkx>=1.11',
     'numpy>=1.11.2',
-    'opendssdirect.py~=0.6.1',
+    # dss-python (OpenDSS engine) ships no aarch64 wheels; only the OpenDSS power solver needs it
+    'opendssdirect.py~=0.6.1;platform_machine!="aarch64" and platform_machine!="arm64"',
     'py-expression-eval==0.3.14',
     'PYPOWER==5.1.19',
     'pyserial>=3.4',

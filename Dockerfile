@@ -82,7 +82,7 @@ RUN apt-get update \
 
 # copy over custom-built libraries
 COPY --from=pybuilder /usr/local /usr/local
-ENV LD_LIBRARY_PATH /usr/local/lib:/usr/local/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}
+ENV LD_LIBRARY_PATH /usr/local/lib:/usr/local/lib/x86_64-linux-gnu:/usr/local/lib/aarch64-linux-gnu:${LD_LIBRARY_PATH}
 
 # Gem install failures: https://github.com/jordansissel/fpm/issues/2048
 # For now, manually install dotenv 2.8.1
