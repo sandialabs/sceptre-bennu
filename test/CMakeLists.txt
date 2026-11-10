@@ -36,3 +36,6 @@ target_include_directories(test_fd_104_sbo PRIVATE
   ${CMAKE_SOURCE_DIR}/src/bennu/devices/modules/comms/iec60870-5/protocol/src/hal/inc
 )
 target_link_libraries(test_fd_104_sbo -Wl,--no-as-needed bennu-field-device-base bennu-comms bennu-utility bennu-iec60870-5-module lib60870-shared)
+
+# Modbus/TCP server must not leak a socket fd per closed client (needs installed bennu-field-device)
+add_test(NAME modbus_fd_leak COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/modbus_fd_leak.py)
