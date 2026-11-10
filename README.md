@@ -76,6 +76,13 @@ docker run -it sceptre-bennu:testing bennu-field-deviced --help
     sudo apt install ./bennu.deb
     ```
 
+  arm64 (aarch64) debs are not built or published by CI. The same build steps work
+  natively on an arm64 host and produce `bennu-<version>_arm64.deb`. The OpenDSS
+  power solver (`opendssdirect.py`) is not installed on aarch64 because it has no
+  wheels there. For arm64 phēnix images built with this deb, see the reference
+  recipes in [phenix-waterway-range](https://github.com/adamsrnmsu/phenix-waterway-range/tree/main/images/recipes)
+  (`bennu-arm64.env`).
+
 ## pybennu
 
 Pybennu is a Python library and set of applications for interacting with various simulation providers, hardware-in-the-loop (`pybennu-siren`) and bennu field devices.  

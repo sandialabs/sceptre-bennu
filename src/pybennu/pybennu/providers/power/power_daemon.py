@@ -281,7 +281,14 @@ class ServerDaemon(Daemon):
 
                 kwargs = {"debug": debug, "jitter": jitter, "clear_circuit": clear}
 
-                from pybennu.providers.power.solvers.opendss import OpenDSS
+                try:
+                    from pybennu.providers.power.solvers.opendss import OpenDSS
+                except ImportError as ex:
+                    raise SystemExit(
+                        f"OpenDSS solver unavailable ({ex}). opendssdirect.py has no "
+                        "wheels for some platforms (e.g. aarch64); use another solver "
+                        "or an x86_64 host"
+                    ) from ex
 
                 self.solver = OpenDSS(
                     server_endpoint, publish_endpoint, case_file, **kwargs

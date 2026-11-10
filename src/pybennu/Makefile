@@ -8,6 +8,7 @@ BUILD_DIR = $(CURDIR)/build
 DIST_DIR = $(CURDIR)/dist
 PACKAGE_MAINTAINER = Sandia National Laboratories <emulytics@sandia.gov>
 NPROCS := $(shell nproc)
+DEB_ARCH := $(shell dpkg --print-architecture)
 ZMQ_VERSION ?= 4.3.4
 ZMQ_PREFIX ?= /usr/local
 HELICS_VERSION ?= 3.6.1
@@ -121,8 +122,8 @@ build/zeromq-$(ZMQ_VERSION):
 	make -j$(NRPOCS)
 
 # Build the libzmq Debian package with draft support.
-libzmq-deb: build/libzmq_$(ZMQ_VERSION)-1_amd64.deb
-build/libzmq_$(ZMQ_VERSION)-1_amd64.deb: build/zeromq-$(ZMQ_VERSION)
+libzmq-deb: build/libzmq_$(ZMQ_VERSION)-1_$(DEB_ARCH).deb
+build/libzmq_$(ZMQ_VERSION)-1_$(DEB_ARCH).deb: build/zeromq-$(ZMQ_VERSION)
 	# Libzmq source at https://github.com/zeromq/libzmq
 	# Create the Debian package using checkinstall
 	cd build/zeromq-$(ZMQ_VERSION)
@@ -134,13 +135,13 @@ build/libzmq_$(ZMQ_VERSION)-1_amd64.deb: build/zeromq-$(ZMQ_VERSION)
 	  --pkglicense=MPL-2.0 \
 	  --maintainer="$(PACKAGE_MAINTAINER)" \
 	  --pkgsource=https://github.com/zeromq/libzmq
-	sudo mv libzmq_$(ZMQ_VERSION)-1_amd64.deb ..
-	sudo touch ../libzmq_$(ZMQ_VERSION)-1_amd64.deb
+	sudo mv libzmq_$(ZMQ_VERSION)-1_$(DEB_ARCH).deb ..
+	sudo touch ../libzmq_$(ZMQ_VERSION)-1_$(DEB_ARCH).deb
 
 # Install the libzmq deb
 libzmq-install: build/libzmq-install
-build/libzmq-install: build/libzmq_$(ZMQ_VERSION)-1_amd64.deb
-	sudo dpkg -i build/libzmq_$(ZMQ_VERSION)-1_amd64.deb
+build/libzmq-install: build/libzmq_$(ZMQ_VERSION)-1_$(DEB_ARCH).deb
+	sudo dpkg -i build/libzmq_$(ZMQ_VERSION)-1_$(DEB_ARCH).deb
 	# flag that install is completed for future make tasks
 	touch build/libzmq-install
 
@@ -158,8 +159,8 @@ build/helics/build: build/libzmq-install
 	make -j$(NRPOCS)
 
 # Build helics deb package
-helics-deb: build/helics_$(HELICS_VERSION)-1_amd64.deb
-build/helics_$(HELICS_VERSION)-1_amd64.deb: build/helics/build
+helics-deb: build/helics_$(HELICS_VERSION)-1_$(DEB_ARCH).deb
+build/helics_$(HELICS_VERSION)-1_$(DEB_ARCH).deb: build/helics/build
 	cd build/helics/build
 	echo "HELICS binaries and libraries - Source: https://github.com/GMLC-TDC/HELICS/" >> ./description-pak
 	sudo checkinstall --pkgname=helics --pkgversion=$(HELICS_VERSION) \
@@ -169,13 +170,13 @@ build/helics_$(HELICS_VERSION)-1_amd64.deb: build/helics/build
 	  --pkglicense=BSD-3-Clause \
 	  --maintainer="$(PACKAGE_MAINTAINER)" \
 	  --pkgsource=https://github.com/GMLC-TDC/HELICS/
-	sudo mv helics_$(HELICS_VERSION)-1_amd64.deb ../..
-	sudo touch ../../helics_$(HELICS_VERSION)-1_amd64.deb
+	sudo mv helics_$(HELICS_VERSION)-1_$(DEB_ARCH).deb ../..
+	sudo touch ../../helics_$(HELICS_VERSION)-1_$(DEB_ARCH).deb
 
 # Install helics deb package
 helics-install: build/helics-install
-build/helics-install: build/helics_$(HELICS_VERSION)-1_amd64.deb
-	sudo dpkg -i build/helics_$(HELICS_VERSION)-1_amd64.deb
+build/helics-install: build/helics_$(HELICS_VERSION)-1_$(DEB_ARCH).deb
+	sudo dpkg -i build/helics_$(HELICS_VERSION)-1_$(DEB_ARCH).deb
 	# flag that install is completed for future make tasks
 	touch build/helics-install
 
