@@ -130,7 +130,8 @@ void bennu_61850::IEC61850RTU::process( ccss_protocols::iec61850::goose::data_se
         {
             if ( mHandlingRisingEdge )
             {
-                std::cerr << "INFO: Already handling the rising edge of the TRIP." << std::endl;
+                // The publisher retransmits the dataset while the edge holds: the edge was
+                // logged when it began, so stay quiet for the repeats.
                 return;
             }
             else

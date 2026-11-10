@@ -1,13 +1,32 @@
 #include "CommsModuleCreator.hpp"
 
+#include <cstdlib>
+
+#include "CommsModule.hpp"
+
 #include "bennu/parsers/Parser.hpp"
 
 namespace bennu {
 namespace comms {
 
+void CommsModuleCreator::stopAll()
+{
+    for (auto& module : mCommsModules)
+    {
+        if (module)
+        {
+            module->stop();
+        }
+    }
+}
+
 void CommsModuleCreator::handleCommsTreeData(const boost::property_tree::ptree& tree,
     std::shared_ptr<field_device::DataManager> dm)
 {
+    // The creator is a leaked singleton, so no destructor ever stops the modules; do it at exit
+    static const bool registered = (std::atexit([] { CommsModuleCreator::the()->stopAll(); }), true);
+    (void)registered;
+
     for (auto handler : mCommsDataHandlers)
     {
         // there will be one handler, which maps to one CommsModule per tag. For example, there can only be one "modbus-server" per

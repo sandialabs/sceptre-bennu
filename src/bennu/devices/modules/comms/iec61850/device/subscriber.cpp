@@ -45,8 +45,8 @@ namespace ccss_devices {
         /* initialize the raw socket file handle */
         raw_socket_ = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL));
 
-        if (!raw_socket_)
-          throw ccss_protocols::Exception("Error: Unable to obtain a socket file handle");
+        if (raw_socket_ < 0)
+            throw ccss_protocols::Exception("Error: Unable to obtain a socket file handle");
 
         /* put the interface in promiscuous mode */
         detail::set_interface_promisc_(raw_socket_, iface_name);
@@ -174,48 +174,51 @@ namespace ccss_devices {
         static_vector<uint8_t, max_datagram_size> datagram;
 
         // read the entire datagram from the GOOSE socket
-        uint16_t datagram_read_len = recvfrom(raw_socket_, datagram.data(), max_datagram_size, 0, NULL, NULL);
+        ssize_t recv_ret = recvfrom(raw_socket_, datagram.data(), max_datagram_size, 0, NULL, NULL);
 
-        // verify that the packet is a GOOSE message
-        if ( datagram_read_len > ETHER_TYPE_OFFSET ) {
-          if ( GOOSE_ETHER_TYPE != ntohs(*reinterpret_cast<uint16_t*>(&datagram[ETHER_TYPE_OFFSET]))) {
-            // check if this is a GOOSE message passed over a VLAN
-            if ( VLAN_ETHER_TYPE == ntohs(*reinterpret_cast<uint16_t*>(&datagram[ETHER_TYPE_OFFSET])) ) {
-              if ( GOOSE_ETHER_TYPE != ntohs(*reinterpret_cast<uint16_t*>(&datagram[VLAN_ETHER_TYPE_OFFSET])))
-                return false;
-              else {
-                /********************Process GOOSE Message over VLAN************************/
-                // read the GOOSE message size
-                uint16_t goose_msg_size = ntohs(*(reinterpret_cast<uint16_t*>(&datagram[VLAN_GOOSE_OFFSET])));
+        // recvfrom() returns -1 on error: nothing to parse
+        if (recv_ret < 0)
+          return false;
+        const size_t datagram_read_len = recv_ret;
 
-                // resize the packet buffer appropriately
-                packet.resize(goose_msg_size);
+        // verify that the packet is a GOOSE message and locate its header
+        if (datagram_read_len < ETHER_TYPE_OFFSET + ether_type_size)
+          return false;
 
-                // copy the GOOSE message into the data buffer
-                std::copy((datagram.data()+ether_hdr_vlan_size),
-                          (datagram.data()+(ether_hdr_vlan_size+goose_msg_size)),
-                          &packet[0]);
-                /***************************************************************************/
-              }
-            }
-            else
-              return false;
-          }
-          else {
-            /********************Process GOOSE Message************************/
-            // read the GOOSE message size
-            uint16_t goose_msg_size = ntohs(*(reinterpret_cast<uint16_t*>(&datagram[ether_hdr_size+2])));
-
-            // resize the packet buffer appropriately
-            packet.resize(goose_msg_size);
-
-            // copy the GOOSE message into the data buffer
-            std::copy((datagram.data()+ether_hdr_size),
-                      (datagram.data()+(ether_hdr_size+goose_msg_size)),
-                      &packet[0]);
-            /******************************************************************/
-          }
+        size_t goose_hdr_offset;
+        if (GOOSE_ETHER_TYPE == ntohs(*reinterpret_cast<uint16_t*>(&datagram[ETHER_TYPE_OFFSET])))
+        {
+          goose_hdr_offset = ether_hdr_size;
         }
+        // check if this is a GOOSE message passed over a VLAN
+        else if (VLAN_ETHER_TYPE == ntohs(*reinterpret_cast<uint16_t*>(&datagram[ETHER_TYPE_OFFSET])))
+        {
+          if (datagram_read_len < VLAN_ETHER_TYPE_OFFSET + ether_type_size ||
+              GOOSE_ETHER_TYPE != ntohs(*reinterpret_cast<uint16_t*>(&datagram[VLAN_ETHER_TYPE_OFFSET])))
+            return false;
+          goose_hdr_offset = ether_hdr_vlan_size;
+        }
+        else
+          return false;
+
+        // the GOOSE header is APPID (2 bytes) followed by the message size (2 bytes)
+        if (datagram_read_len < goose_hdr_offset + 4)
+          return false;
+
+        // read the GOOSE message size
+        uint16_t goose_msg_size = ntohs(*(reinterpret_cast<uint16_t*>(&datagram[goose_hdr_offset + 2])));
+
+        // the message must fit in what was actually received
+        if (goose_msg_size == 0 || goose_hdr_offset + goose_msg_size > datagram_read_len)
+          return false;
+
+        // resize the packet buffer appropriately
+        packet.resize(goose_msg_size);
+
+        // copy the GOOSE message into the data buffer
+        std::copy((datagram.data() + goose_hdr_offset),
+                  (datagram.data() + (goose_hdr_offset + goose_msg_size)),
+                  &packet[0]);
 
         return true;
       }
@@ -223,10 +226,9 @@ namespace ccss_devices {
       void subscriber::send( uint8_t* tx_buffer, size_t size ) {}
 
       void subscriber::receive( uint8_t* rx_buffer, size_t size ) {
-        uint16_t len;
-        len = recvfrom(raw_socket_, rx_buffer, size, 0, NULL, NULL);
+        ssize_t len = recvfrom(raw_socket_, rx_buffer, size, 0, NULL, NULL);
 
-        if ( len != size )
+        if (len < 0 || static_cast<size_t>(len) != size)
           throw ccss_protocols::Exception("Invalid GOOSE Message");
       }
 

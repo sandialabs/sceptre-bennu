@@ -80,6 +80,7 @@ void Server::start(const std::string& endpoint, std::shared_ptr<Server> server, 
         }
         else
         {
+            mSlave = slave;
             // Start server reverse-polling thread
             if (subtype.find("double") != std::string::npos)
             {
@@ -117,18 +118,18 @@ DoublePointValue Server::convertBoolToDPValue(bool status)
 
 DoublePointValue Server::convertIntToDPValue(int value)
 {
-    switch (value) 
+    switch (value)
     {
-        case 0:
-            return IEC60870_DOUBLE_POINT_INTERMEDIATE;
-        case 1:
-            return IEC60870_DOUBLE_POINT_OFF;
-        case 2:
-            return IEC60870_DOUBLE_POINT_ON;
-        case 3:
-            return IEC60870_DOUBLE_POINT_INDETERMINATE;
-        default:
-            return IEC60870_DOUBLE_POINT_INTERMEDIATE;
+    case 0:
+        return IEC60870_DOUBLE_POINT_INTERMEDIATE;
+    case 1:
+        return IEC60870_DOUBLE_POINT_OFF;
+    case 2:
+        return IEC60870_DOUBLE_POINT_ON;
+    case 3:
+        return IEC60870_DOUBLE_POINT_INDETERMINATE;
+    default:
+        return IEC60870_DOUBLE_POINT_INTERMEDIATE;
     }
 }
 
@@ -148,73 +149,129 @@ void Server::sendSpontaneousUpdate(IMasterConnection connection, int ioa, Double
     CS101_ASDU_destroy(newAsdu);
 }
 
+// Block until a client is active, then copy its handle out so the lock is not held across sends.
+// The handle can still be closed by the library while the poll thread sends on it; that window
+// (a send racing a close) is inside lib60870 and not closed here.
+// Returns false once stop() was requested.
+bool Server::waitForPollConnection(IMasterConnection& con)
+{
+    std::unique_lock<std::mutex> lock(mConnectionMutex);
+    while (!mStop)
+    {
+        if (mConnected)
+        {
+            con = mConnection;
+            return true;
+        }
+        mPollCv.wait(lock);
+    }
+    return false;
+}
+
+// Sleep for d, waking early on stop(). Returns false if stopping.
+bool Server::pollSleep(std::chrono::seconds d)
+{
+    std::unique_lock<std::mutex> lock(mConnectionMutex);
+    const auto deadline = std::chrono::steady_clock::now() + d;
+    while (!mStop)
+    {
+        if (mPollCv.wait_until(lock, deadline) == std::cv_status::timeout)
+        {
+            break;
+        }
+    }
+    return !mStop;
+}
+
+// Stop and join the reverse-poll thread, then stop the 104 slave. Safe to call more than once.
+// The poll thread goes first so it is not sending on a connection the slave is tearing down.
+void Server::stop()
+{
+    {
+        std::lock_guard<std::mutex> lock(mConnectionMutex);
+        mStop = true;
+    }
+    mPollCv.notify_all();
+    if (pServerPollThread && pServerPollThread->joinable())
+    {
+        pServerPollThread->join();
+    }
+    if (mSlave)
+    {
+        CS104_Slave_stop(mSlave);
+        CS104_Slave_destroy(mSlave);
+        mSlave = nullptr;
+    }
+}
+
+Server::~Server()
+{
+    stop();
+}
+
 /*
  * Reverse poll loop that sends local bennu datastore data to
  * connected clients. Sends indications as single point values
  */
 void Server::reversePollSinglePoint()
 {
-    while (1)
+    IMasterConnection con;
+    while (waitForPollConnection(con))
     {
-        if (mConnected)
+        CS101_AppLayerParameters alParams = IMasterConnection_getApplicationLayerParameters(con);
+
+        // Send binary values
+        CS101_ASDU newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_PERIODIC, 0, 1, false, false);
+        // kv = {<address>: {<tag>, eInput}}
+        for (const auto& kv : gServer->mBinaryPoints)
         {
-            CS101_AppLayerParameters alParams = IMasterConnection_getApplicationLayerParameters(mConnection);
-
-            // Send binary values
-            CS101_ASDU newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_PERIODIC, 0, 1, false, false);
-            // kv = {<address>: {<tag>, eInput}}
-            for (const auto &kv : gServer->mBinaryPoints)
+            const std::string tag = kv.second.first;
+            if (CS101_ASDU_getPayloadSize(newAsdu) >= MAX_ASDU_PAYLOAD_SIZE)
             {
-                const std::string tag = kv.second.first;
-                if (CS101_ASDU_getPayloadSize(newAsdu) >= MAX_ASDU_PAYLOAD_SIZE)
-                {
-                    // Send current ASDU and create a new one for the remaining values
-                    IMasterConnection_sendASDU(mConnection, newAsdu);
-                    CS101_ASDU_destroy(newAsdu);
-                    newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_PERIODIC, 0, 1, false, false);
-                }
-
-                if (gServer->mDataManager->hasTag(tag))
-                {
-                    auto status = gServer->mDataManager->getDataByTag<bool>(tag);
-                    InformationObject io = (InformationObject)SinglePointInformation_create(NULL, kv.first, status, IEC60870_QUALITY_GOOD);
-                    CS101_ASDU_addInformationObject(newAsdu, io);
-                    InformationObject_destroy(io);
-                }
+                // Send current ASDU and create a new one for the remaining values
+                IMasterConnection_sendASDU(con, newAsdu);
+                CS101_ASDU_destroy(newAsdu);
+                newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_PERIODIC, 0, 1, false, false);
             }
-            IMasterConnection_sendASDU(mConnection, newAsdu);
-            CS101_ASDU_destroy(newAsdu);
 
-            // Send analog values
-            newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_PERIODIC, 0, 1, false, false);
-            // kv = {<address>: {<tag>, eInput}}
-            for (const auto &kv : gServer->mAnalogPoints)
+            if (gServer->mDataManager->hasTag(tag))
             {
-                const std::string tag = kv.second.first;
-                if (CS101_ASDU_getPayloadSize(newAsdu) >= MAX_ASDU_PAYLOAD_SIZE)
-                {
-                    // Send current ASDU and create a new one for the remaining values
-                    IMasterConnection_sendASDU(mConnection, newAsdu);
-                    CS101_ASDU_destroy(newAsdu);
-                    newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_PERIODIC, 0, 1, false, false);
-                }
-
-                if (gServer->mDataManager->hasTag(tag))
-                {
-                    auto val = gServer->mDataManager->getDataByTag<double>(tag);
-                    InformationObject io = (InformationObject)MeasuredValueShort_create(NULL, kv.first, val, IEC60870_QUALITY_GOOD);
-                    CS101_ASDU_addInformationObject(newAsdu, io);
-                    InformationObject_destroy(io);
-                }
+                auto status = gServer->mDataManager->getDataByTag<bool>(tag);
+                InformationObject io = (InformationObject)SinglePointInformation_create(NULL, kv.first, status, IEC60870_QUALITY_GOOD);
+                CS101_ASDU_addInformationObject(newAsdu, io);
+                InformationObject_destroy(io);
             }
-            IMasterConnection_sendASDU(mConnection, newAsdu);
-            CS101_ASDU_destroy(newAsdu);
-            std::this_thread::sleep_for(std::chrono::seconds(mReversePollRate));
         }
-        else
+        IMasterConnection_sendASDU(con, newAsdu);
+        CS101_ASDU_destroy(newAsdu);
+
+        // Send analog values
+        newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_PERIODIC, 0, 1, false, false);
+        // kv = {<address>: {<tag>, eInput}}
+        for (const auto& kv : gServer->mAnalogPoints)
         {
-            // Wait until connected to client
-            while (!mConnected) { std::this_thread::sleep_for(std::chrono::seconds(1)); }
+            const std::string tag = kv.second.first;
+            if (CS101_ASDU_getPayloadSize(newAsdu) >= MAX_ASDU_PAYLOAD_SIZE)
+            {
+                // Send current ASDU and create a new one for the remaining values
+                IMasterConnection_sendASDU(con, newAsdu);
+                CS101_ASDU_destroy(newAsdu);
+                newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_PERIODIC, 0, 1, false, false);
+            }
+
+            if (gServer->mDataManager->hasTag(tag))
+            {
+                auto val = gServer->mDataManager->getDataByTag<double>(tag);
+                InformationObject io = (InformationObject)MeasuredValueShort_create(NULL, kv.first, val, IEC60870_QUALITY_GOOD);
+                CS101_ASDU_addInformationObject(newAsdu, io);
+                InformationObject_destroy(io);
+            }
+        }
+        IMasterConnection_sendASDU(con, newAsdu);
+        CS101_ASDU_destroy(newAsdu);
+        if (!pollSleep(std::chrono::seconds(mReversePollRate)))
+        {
+            return;
         }
     }
 }
@@ -225,50 +282,46 @@ void Server::reversePollSinglePoint()
  */
 void Server::reversePollDoublePoint()
 {
-    while (1)
+    IMasterConnection con;
+    while (waitForPollConnection(con))
     {
-        if (mConnected)
+        CS101_AppLayerParameters alParams = IMasterConnection_getApplicationLayerParameters(con);
+
+        // Send binary values
+        // kv = {<address>: {<tag>, eInput}}
+        for (const auto& kv : gServer->mBinaryPoints)
         {
-            CS101_AppLayerParameters alParams = IMasterConnection_getApplicationLayerParameters(mConnection);
-
-            // Send binary values
-            // kv = {<address>: {<tag>, eInput}}
-            for (const auto &kv : gServer->mBinaryPoints)
-            {
-                const std::string tag = kv.second.first;
-                sendSpontaneousUpdate(mConnection, kv.first, convertBoolToDPValue(gServer->mDataManager->getDataByTag<bool>(tag)));
-            }
-
-            // Send analog values
-            CS101_ASDU newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_PERIODIC, 0, 1, false, false);
-            // kv = {<address>: {<tag>, eInput}}
-            for (const auto &kv : gServer->mAnalogPoints)
-            {
-                const std::string tag = kv.second.first;
-                if (CS101_ASDU_getPayloadSize(newAsdu) >= MAX_ASDU_PAYLOAD_SIZE)
-                {
-                    // Send current ASDU and create a new one for the remaining values
-                    IMasterConnection_sendASDU(mConnection, newAsdu);
-                    CS101_ASDU_destroy(newAsdu);
-                    newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_PERIODIC, 0, 1, false, false);
-                }
-
-                if (gServer->mDataManager->hasTag(tag))
-                {
-                    auto val = gServer->mDataManager->getDataByTag<double>(tag);
-                    InformationObject io = (InformationObject)MeasuredValueShort_create(NULL, kv.first, val, IEC60870_QUALITY_GOOD);
-                    CS101_ASDU_addInformationObject(newAsdu, io);
-                    InformationObject_destroy(io);
-                }
-            }
-            IMasterConnection_sendASDU(mConnection, newAsdu);
-            CS101_ASDU_destroy(newAsdu);
-            std::this_thread::sleep_for(std::chrono::seconds(mReversePollRate));
+            const std::string tag = kv.second.first;
+            sendSpontaneousUpdate(con, kv.first, convertBoolToDPValue(gServer->mDataManager->getDataByTag<bool>(tag)));
         }
-        else
+
+        // Send analog values
+        CS101_ASDU newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_PERIODIC, 0, 1, false, false);
+        // kv = {<address>: {<tag>, eInput}}
+        for (const auto& kv : gServer->mAnalogPoints)
         {
-            // Wait until connected to client
-            while (!mConnected) { std::this_thread::sleep_for(std::chrono::seconds(1)); }
+            const std::string tag = kv.second.first;
+            if (CS101_ASDU_getPayloadSize(newAsdu) >= MAX_ASDU_PAYLOAD_SIZE)
+            {
+                // Send current ASDU and create a new one for the remaining values
+                IMasterConnection_sendASDU(con, newAsdu);
+                CS101_ASDU_destroy(newAsdu);
+                newAsdu = CS101_ASDU_create(alParams, false, CS101_COT_PERIODIC, 0, 1, false, false);
+            }
+
+            if (gServer->mDataManager->hasTag(tag))
+            {
+                auto val = gServer->mDataManager->getDataByTag<double>(tag);
+                InformationObject io = (InformationObject)MeasuredValueShort_create(NULL, kv.first, val, IEC60870_QUALITY_GOOD);
+                CS101_ASDU_addInformationObject(newAsdu, io);
+                InformationObject_destroy(io);
+            }
+        }
+        IMasterConnection_sendASDU(con, newAsdu);
+        CS101_ASDU_destroy(newAsdu);
+        if (!pollSleep(std::chrono::seconds(mReversePollRate)))
+        {
+            return;
         }
     }
 }
@@ -710,6 +763,17 @@ bool Server::connectionRequestHandler(void *parameter, const char *ipAddress)
     return true;
 }
 
+// Stop polling con, but only if it is the connection being polled: another client closing must not
+// stop (or redirect) polling of the active one
+void Server::releasePollConnection(IMasterConnection con)
+{
+    std::lock_guard<std::mutex> lock(mConnectionMutex);
+    if (mConnected && mConnection == con)
+    {
+        mConnected = false;
+    }
+}
+
 void Server::connectionEventHandler(void *parameter, IMasterConnection con, CS104_PeerConnectionEvent event)
 {
     Server* self = parameter ? static_cast<Server*>(parameter) : gServer.get();
@@ -719,8 +783,6 @@ void Server::connectionEventHandler(void *parameter, IMasterConnection con, CS10
         if (self)
         {
             self->clearSelectionsForConnection(con);
-            self->mConnection = con;
-            self->mConnected = true;
         }
     }
     else if (event == CS104_CON_EVENT_CONNECTION_CLOSED)
@@ -728,19 +790,28 @@ void Server::connectionEventHandler(void *parameter, IMasterConnection con, CS10
         printf("Connection closed (%p)\n", con);
         if (self)
         {
-            self->mConnected = false;
+            self->releasePollConnection(con);
             self->clearSelectionsForConnection(con);
         }
     }
     else if (event == CS104_CON_EVENT_ACTIVATED)
     {
         printf("Connection activated (%p)\n", con);
+        if (self)
+        {
+            // Only the active connection (a single redundancy group has one) receives data, so it is the one to poll
+            std::lock_guard<std::mutex> lock(self->mConnectionMutex);
+            self->mConnection = con;
+            self->mConnected = true;
+            self->mPollCv.notify_all();
+        }
     }
     else if (event == CS104_CON_EVENT_DEACTIVATED)
     {
         printf("Connection deactivated (%p)\n", con);
         if (self)
         {
+            self->releasePollConnection(con);
             self->clearSelectionsForConnection(con);
         }
     }

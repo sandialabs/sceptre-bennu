@@ -57,19 +57,32 @@ void TcpChannel::readHandler(const boost::system::error_code& error, size_t byte
             // Because this is a TCP connection, we should be able to synchronously read message contents after initial read
             bytesTransferred += boost::asio::read(mSocket, boost::asio::buffer(&mData[4], 2), boost::asio::transfer_exactly(2), ec);
 
-            if (ec)
+            uint16_t length = 0;
+            if (!ec)
             {
-                std::cerr << "Modbus RTU receive message length failed with error: " << ec.message() << std::endl;
+                uint16_t readData;
+                std::memcpy(&readData, &mData[4], 2);
+                length = ntohs(readData);
+
+                // The MBAP length counts the unit id and the PDU (so at least 2) and the body must fit in mData
+                if (length < 2 || length > mData.size() - 6)
+                {
+                    ec = boost::asio::error::message_size;
+                }
             }
 
-            uint16_t readData;
-            std::memcpy(&readData, &mData[4], 2);
-            uint16_t length = ntohs(readData);
+            if (!ec)
+            {
+                bytesTransferred += boost::asio::read(mSocket, boost::asio::buffer(&mData[6], length), boost::asio::transfer_exactly(length), ec);
+            }
 
-            bytesTransferred += boost::asio::read(mSocket, boost::asio::buffer(&mData[6], length), boost::asio::transfer_exactly(length), ec);
             if (ec)
             {
-                std::cerr << "Modbus RTU receive message of length " << length << " failed with error: " << ec.message() << std::endl;
+                // A truncated or invalid request must not be processed, and the stream is out of sync: drop the connection
+                std::cerr << "Modbus TCP receive message of length " << length << " failed with error: " << ec.message() << std::endl;
+                close();
+                mProtocolStack.reset();
+                return;
             }
             mProtocolStack->data_receive_signal(&mData[0], bytesTransferred);
 
