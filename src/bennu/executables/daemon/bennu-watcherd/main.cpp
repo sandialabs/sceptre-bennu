@@ -143,7 +143,6 @@ bool isDeviceRunning(const std::string& instance)
     pid_t pid = 0;
     is >> pid;
 
-    std::cerr << "pid = " << pid << std::endl;
     if (pid != 0)
     {
         return true;

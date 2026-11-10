@@ -36,3 +36,7 @@ target_include_directories(test_fd_104_sbo PRIVATE
   ${CMAKE_SOURCE_DIR}/src/bennu/devices/modules/comms/iec60870-5/protocol/src/hal/inc
 )
 target_link_libraries(test_fd_104_sbo -Wl,--no-as-needed bennu-field-device-base bennu-comms bennu-utility bennu-iec60870-5-module lib60870-shared)
+
+# bennu-watcherd must not flood its stderr log (needs root and installed bennu-watcherd; skips otherwise)
+add_test(NAME watcher_log_flood COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/watcher_log_flood.py)
+set_tests_properties(watcher_log_flood PROPERTIES SKIP_RETURN_CODE 77)
