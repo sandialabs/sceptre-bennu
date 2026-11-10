@@ -1,5 +1,7 @@
 #include "Server.hpp"
 
+#include <algorithm>
+#include <chrono>
 #include <functional>
 
 #include <boost/fusion/include/has_key.hpp>
@@ -16,7 +18,8 @@ namespace modbus {
 
 Server::Server(std::shared_ptr<field_device::DataManager> dm) :
     bennu::utility::DirectLoggable("modbus-server"),
-    mIOService()
+    mIOService(),
+    mRetryTimer(mIOService)
 {
     setAdditionalFilterInformation("modbus");
     setDataManager(dm);
@@ -85,11 +88,21 @@ void Server::acceptConnectionHandler(const boost::system::error_code& error)
     if (!error)
     {
         setupConnection(error);
-        std::cerr << "A new incoming connection started." << std::endl;  
+        std::cerr << "A new incoming connection started." << std::endl;
+        // Drop channels whose client has gone (their sockets are already closed)
+        auto finished = [](const std::shared_ptr<Channel>& c) {
+            auto tcp = std::dynamic_pointer_cast<TcpChannel>(c);
+            return tcp && tcp->finished();
+        };
+        mConnections.erase(std::remove_if(mConnections.begin(), mConnections.end(), finished), mConnections.end());
     }
     else
     {
         std::cerr << "There was a problem with accepting an incoming connection: " << error.message() << std::endl;
+        // e.g. EMFILE: retrying immediately would spin and flood the log, so back off
+        mRetryTimer.expires_after(std::chrono::seconds(1));
+        mRetryTimer.async_wait([this](const boost::system::error_code&) { accept(mEndpoint); });
+        return;
     }
 
     accept(mEndpoint);
@@ -470,9 +483,10 @@ error_code_t::type Server::readInputRegisters(uint16_t startAddress, uint16_t si
     return error_code_t::NO_ERROR;
 }
 
-Server::Server(const Server& server) : 
+Server::Server(const Server& server) :
     bennu::utility::DirectLoggable("modbus-server"),
-    mIOService()
+    mIOService(),
+    mRetryTimer(mIOService)
 {
     mAcceptor = server.mAcceptor;
     mChannel = server.mChannel;

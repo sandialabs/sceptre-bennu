@@ -80,7 +80,14 @@ void TcpChannel::readHandler(const boost::system::error_code& error, size_t byte
     else
     {
         // If TCP connection is closed unexpectedly, we'll get this error, but we should be handling any additional requests
-        std::cerr << "Modbus RTU receive message failed with error: " << error.message() << std::endl;
+        if (error != boost::asio::error::eof)
+        {
+            std::cerr << "Modbus RTU receive message failed with error: " << error.message() << std::endl;
+        }
+        // No read is pending anymore: release the fd now, and drop the protocol stack (its
+        // transmit_fn holds a shared_ptr back to this channel) so Server can prune us.
+        close();
+        mProtocolStack.reset();
     }
 }
 
