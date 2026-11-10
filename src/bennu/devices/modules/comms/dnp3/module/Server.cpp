@@ -153,12 +153,37 @@ void Server::init(const std::string& endpoint, const std::uint16_t& address)
 void Server::start()
 {
     mOutstation->Enable();
-    mUpdateThread.reset(new std::thread(std::bind(&Server::update, this)));
+    mUpdateThread = std::thread(&Server::update, this);
+}
+
+void Server::stop()
+{
+    bool first;
+    {
+        std::lock_guard<std::mutex> lock(mStopMutex);
+        first = !mStop;
+        mStop = true;
+    }
+    mStopCv.notify_all();
+    if (mUpdateThread.joinable())
+    {
+        mUpdateThread.join();
+    }
+    // The update thread is gone, so nothing else applies updates; now stop opendnp3's io threads
+    if (first && mManager)
+    {
+        mManager->Shutdown();
+    }
+}
+
+Server::~Server()
+{
+    stop();
 }
 
 void Server::update()
 {
-    while (1)
+    while (true)
     {
         for (const auto& kv : mBinaryPoints)
         {
@@ -216,7 +241,11 @@ void Server::update()
                 mOutstation->Apply(builder.Build());
             }
         }
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::unique_lock<std::mutex> lock(mStopMutex);
+        if (mStopCv.wait_for(lock, std::chrono::seconds(1), [this] { return mStop; }))
+        {
+            return;
+        }
     }
 }
 

@@ -37,7 +37,8 @@ TCPServer::TCPServer(const Logger& logger,
       executor(executor),
       endpoint(asio::ip::tcp::v4(), endpoint.port),
       acceptor(*executor->get_context()),
-      socket(*executor->get_context())
+      socket(*executor->get_context()),
+      retryTimer(*executor->get_context())
 {
     this->Configure(endpoint.address, ec);
 }
@@ -50,6 +51,7 @@ void TCPServer::Shutdown()
     this->isShutdown = true;
 
     std::error_code ec;
+    this->retryTimer.cancel(ec);
     this->acceptor.close(ec);
 
     if (ec)
@@ -105,8 +107,28 @@ void TCPServer::StartAccept()
     auto callback = [self = shared_from_this()](std::error_code ec) {
         if (ec)
         {
-            SIMPLE_LOG_BLOCK(self->logger, flags::INFO, ec.message().c_str());
-            self->OnShutdown();
+            if (self->isShutdown || ec == asio::error::operation_aborted)
+            {
+                SIMPLE_LOG_BLOCK(self->logger, flags::INFO, ec.message().c_str());
+                self->OnShutdown();
+                return;
+            }
+
+            // Transient failure (e.g. EMFILE, ECONNABORTED): keep accepting, after a short
+            // backoff so a persistent error does not spin. Log the first failure of a run only.
+            if (!self->acceptFailing)
+            {
+                self->acceptFailing = true;
+                FORMAT_LOG_BLOCK(self->logger, flags::WARN, "Accept failed, retrying: %s", ec.message().c_str());
+            }
+
+            self->retryTimer.expires_after(std::chrono::milliseconds(200));
+            self->retryTimer.async_wait(self->executor->wrap([self](const std::error_code& timerEc) {
+                if (!timerEc && !self->isShutdown)
+                {
+                    self->StartAccept();
+                }
+            }));
         }
         else
         {
@@ -125,6 +147,8 @@ void TCPServer::StartAccept()
                 self->StartAccept();
                 return;
             }
+
+            self->acceptFailing = false;
 
             const auto ID = self->session_id;
             ++self->session_id;

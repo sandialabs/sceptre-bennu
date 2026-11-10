@@ -1,6 +1,8 @@
 #ifndef BENNU_FIELDDEVICE_COMMS_IEC60870_5_SERVER_HPP
 #define BENNU_FIELDDEVICE_COMMS_IEC60870_5_SERVER_HPP
 
+#include <chrono>
+#include <condition_variable>
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -60,6 +62,11 @@ class Server : public CommsModule, public utility::DirectLoggable, public std::e
 {
 public:
     Server(std::shared_ptr<field_device::DataManager> dm);
+
+    ~Server() override;
+
+    // Stop the reverse-poll thread and the 104 slave. Idempotent.
+    void stop() override;
 
     void start(const std::string& endpoint, std::shared_ptr<Server> server, const uint32_t rPollRate, std::string subtype, bool sboEnabled = false, uint32_t sboTimeoutSecs = DEFAULT_SBO_TIMEOUT_SECS);
 
@@ -121,9 +128,16 @@ public:
     bool isValidOutputPoint(uint16_t ioa, IEC60870_5_TypeID typeId) const;
 
 private:
-    bool mConnected;
-    uint32_t mReversePollRate;                              // Server reverse-poll rate
-    IMasterConnection mConnection;                          // 104 master connection
+    bool mConnected;                 // guarded by mConnectionMutex
+    uint32_t mReversePollRate;       // Server reverse-poll rate
+    IMasterConnection mConnection;   // active 104 master connection (the reverse-poll target)
+    std::mutex mConnectionMutex;     // Guards mConnected, mConnection and mStop (library threads write, poll thread reads)
+    std::condition_variable mPollCv; // Wakes the poll thread on connect and stop
+    bool mStop{false};               // guarded by mConnectionMutex
+    CS104_Slave mSlave{nullptr};     // owned; stopped and destroyed in stop()
+    bool waitForPollConnection(IMasterConnection& con);
+    bool pollSleep(std::chrono::seconds d);
+    void releasePollConnection(IMasterConnection con);
     std::shared_ptr<std::thread> pServerPollThread;			// Server reverse-poll thread
     std::map<uint16_t, std::pair<std::string, PointType>> mBinaryPoints;
     std::map<uint16_t, std::pair<std::string, PointType>> mAnalogPoints;

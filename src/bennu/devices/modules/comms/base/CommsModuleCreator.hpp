@@ -36,6 +36,9 @@ public:
         mCommsDataHandlers.push_back(handler);
     }
 
+    // Stop every module (join its threads). Registered with atexit on first use.
+    void stopAll();
+
     void handleCommsTreeData(const boost::property_tree::ptree& tree, std::shared_ptr<field_device::DataManager> dm);
 
 protected:

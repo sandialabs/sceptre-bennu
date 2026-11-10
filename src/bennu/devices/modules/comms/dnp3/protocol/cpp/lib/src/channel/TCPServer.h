@@ -71,8 +71,10 @@ private:
     asio::ip::tcp::endpoint endpoint;
     asio::ip::tcp::acceptor acceptor;
     asio::ip::tcp::socket socket;
+    asio::steady_timer retryTimer;
     asio::ip::tcp::endpoint remote_endpoint;
     bool isShutdown = false;
+    bool acceptFailing = false;
     uint64_t session_id = 0;
 };
 

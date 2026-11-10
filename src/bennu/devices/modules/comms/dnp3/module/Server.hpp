@@ -1,8 +1,10 @@
 #ifndef BENNU_FIELDDEVICE_COMMS_DNP3_SERVER_HPP
 #define BENNU_FIELDDEVICE_COMMS_DNP3_SERVER_HPP
 
+#include <condition_variable>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <thread>
 
@@ -60,6 +62,11 @@ class Server : public CommsModule, public utility::DirectLoggable, public std::e
 public:
     Server(std::shared_ptr<field_device::DataManager> dm);
 
+    ~Server() override;
+
+    // Stop and join the update thread, then shut down the opendnp3 stack. Idempotent.
+    void stop() override;
+
     void init(const std::string& endpoint, const std::uint16_t& address);
 
     void start();
@@ -108,7 +115,12 @@ private:
     std::shared_ptr<opendnp3::IChannel> mChannel;       // TCPServer channel
     std::shared_ptr<opendnp3::IOutstation> mOutstation; // DNP3 outstation object
     std::uint16_t mAddress;                             // DNP3 address of local RTU
-    std::shared_ptr<std::thread> mUpdateThread;
+    // Owned by this Server: started in start(), joined in stop() (also from ~Server).
+    // It uses mOutstation, mDataManager and the point maps, which outlive it.
+    std::thread mUpdateThread;
+    std::mutex mStopMutex;           // Guards mStop
+    std::condition_variable mStopCv; // Wakes the update thread's 1 s sleep on stop()
+    bool mStop{false};
     std::uint16_t mEventBufferSize {100};               // Per-type event buffer capacity
 
     // Inputs and outputs are tracked separately so they can be registered in

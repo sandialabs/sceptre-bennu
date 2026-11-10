@@ -14,7 +14,7 @@ namespace po = boost::program_options;
 using std::placeholders::_1;
 using std::placeholders::_2;
 
-static bool running = true;
+static volatile std::sig_atomic_t running = 1;
 static size_t gSignalCount = 0;
 
 void signalHandler(int)
@@ -25,7 +25,7 @@ void signalHandler(int)
         raise(SIGKILL);
     }
     gSignalCount++;
-    running = false;
+    running = 0;
 }
 
 int main(int argc, char** argv)
@@ -60,6 +60,7 @@ int main(int argc, char** argv)
     }
 
     std::signal(SIGINT, signalHandler);
+    std::signal(SIGTERM, signalHandler);
 
     bennu::parsers::Parser::the()->registerTagForDynamicLibrary("field-device", "bennu-field-device-base");
 
