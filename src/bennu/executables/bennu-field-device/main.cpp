@@ -8,6 +8,7 @@
 #include <boost/program_options.hpp>
 
 #include "bennu/parsers/Parser.hpp"
+#include "bennu/utility/LogControl.hpp"
 
 namespace po = boost::program_options;
 
@@ -30,11 +31,16 @@ void signalHandler(int)
 
 int main(int argc, char** argv)
 {
+    if (argc > 1 && std::string(argv[1]) == "log")
+    {
+        return bennu::utility::logControlClient(argc - 2, argv + 2);
+    }
+
     po::variables_map vm;
 
     try
     {
-        std::string program = "A simulation startup for bennu field devices.";
+        std::string program = "A simulation startup for bennu field devices.\nTo change logging on a running process: bennu-field-device log --help";
         po::options_description desc(program);
         desc.add_options()("help", "show this help menu")("file", po::value<std::string>(), "Configuration file to load")("log-level", po::value<std::string>(), "Log level: error, warn, info (default), debug (or 0-3)");
 
@@ -61,6 +67,8 @@ int main(int argc, char** argv)
 
     std::signal(SIGINT, signalHandler);
 
+    bennu::utility::startLogControl("bennu-field-device");
+
     bennu::parsers::Parser::the()->registerTagForDynamicLibrary("field-device", "bennu-field-device-base");
 
     if (vm.count("file"))
@@ -82,5 +90,6 @@ int main(int argc, char** argv)
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
+    bennu::utility::stopLogControl();
     return 0;
 }

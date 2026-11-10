@@ -1,6 +1,7 @@
 #ifndef BENNU_UTILITY_LOG_HPP
 #define BENNU_UTILITY_LOG_HPP
 
+#include <atomic>
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
@@ -17,36 +18,52 @@ enum LogLevel
     LOG_DEBUG = 3
 };
 
-// Level comes from env BENNU_LOG_LEVEL (error|warn|info|debug or 0-3), read once.
-// Unset or invalid -> INFO. Env is process-global so every shared lib agrees.
+// "error|warn|info|debug" or "0-3" -> LogLevel, or -1 if unrecognised.
+inline int parseLogLevel(std::string s)
+{
+    for (auto& c : s)
+    {
+        c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+    }
+    if (s == "error" || s == "0")
+    {
+        return LOG_ERROR;
+    }
+    if (s == "warn" || s == "warning" || s == "1")
+    {
+        return LOG_WARN;
+    }
+    if (s == "info" || s == "2")
+    {
+        return LOG_INFO;
+    }
+    if (s == "debug" || s == "3")
+    {
+        return LOG_DEBUG;
+    }
+    return -1;
+}
+
+// Process-wide level. Starts from env BENNU_LOG_LEVEL (unset or invalid -> INFO) and can
+// be changed at runtime (see LogControl.hpp). Env is process-global so every shared lib agrees.
+inline std::atomic<int>& logLevelRef()
+{
+    static std::atomic<int> level([]() {
+        const char* env = std::getenv("BENNU_LOG_LEVEL");
+        int l = env ? parseLogLevel(env) : -1;
+        return l < 0 ? static_cast<int>(LOG_INFO) : l;
+    }());
+    return level;
+}
+
 inline int logLevel()
 {
-    static const int level = []() {
-        const char* env = std::getenv("BENNU_LOG_LEVEL");
-        if (!env)
-        {
-            return static_cast<int>(LOG_INFO);
-        }
-        std::string s(env);
-        for (auto& c : s)
-        {
-            c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
-        }
-        if (s == "error" || s == "0")
-        {
-            return static_cast<int>(LOG_ERROR);
-        }
-        if (s == "warn" || s == "warning" || s == "1")
-        {
-            return static_cast<int>(LOG_WARN);
-        }
-        if (s == "debug" || s == "3")
-        {
-            return static_cast<int>(LOG_DEBUG);
-        }
-        return static_cast<int>(LOG_INFO);
-    }();
-    return level;
+    return logLevelRef().load(std::memory_order_relaxed);
+}
+
+inline void setLogLevel(int level)
+{
+    logLevelRef().store(level, std::memory_order_relaxed);
 }
 
 inline bool logEnabled(LogLevel l)
