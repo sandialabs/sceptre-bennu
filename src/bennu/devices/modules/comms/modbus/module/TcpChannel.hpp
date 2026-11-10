@@ -45,6 +45,12 @@ public:
 
     std::string getChannelType();
 
+    // true once the read loop has ended (peer closed or error); safe to destroy
+    bool finished() const
+    {
+        return !mProtocolStack;
+    }
+
     boost::asio::ip::tcp::socket mSocket;
 
 private:

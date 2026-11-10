@@ -85,3 +85,6 @@ target_link_libraries(test_fd_104_sbo -Wl,--no-as-needed bennu-field-device-base
 # bennu-watcherd must not flood its stderr log (needs root and installed bennu-watcherd; skips otherwise)
 add_test(NAME watcher_log_flood COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/watcher_log_flood.py)
 set_tests_properties(watcher_log_flood PROPERTIES SKIP_RETURN_CODE 77)
+
+# Modbus/TCP server must not leak a socket fd per closed client (needs installed bennu-field-device)
+add_test(NAME modbus_fd_leak COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/modbus_fd_leak.py)
