@@ -70,6 +70,7 @@ protected:
 
 private:
     boost::asio::io_service mIOService;
+    boost::asio::steady_timer mRetryTimer;
     std::shared_ptr<Channel> mChannel;
     std::shared_ptr<boost::asio::ip::tcp::acceptor> mAcceptor;
     std::atomic<bool> mStopping{false};
