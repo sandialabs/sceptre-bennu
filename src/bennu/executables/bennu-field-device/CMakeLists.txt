@@ -13,6 +13,7 @@ add_executable(bennu-field-device
 target_link_libraries(bennu-field-device
   ${Boost_LIBRARIES}
   bennu-parsers
+  bennu-utility
 )
 
 install(TARGETS bennu-field-device

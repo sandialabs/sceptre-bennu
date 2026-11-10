@@ -16,6 +16,7 @@
 
 #include "bennu/devices/modules/shell/BrashServer.hpp"
 #include "bennu/parsers/Parser.hpp"
+#include "bennu/utility/LogControl.hpp"
 
 namespace po = boost::program_options;
 
@@ -114,11 +115,16 @@ void start(const std::string& instance)
 
 int main(int argc, char** argv)
 {
+    if (argc > 1 && std::string(argv[1]) == "log")
+    {
+        return bennu::utility::logControlClient(argc - 2, argv + 2);
+    }
+
     po::variables_map vm;
 
     try
     {
-        std::string program = "A simulation startup for a basic field device daemon in bennu (must be run as root).";
+        std::string program = "A simulation startup for a basic field device daemon in bennu (must be run as root).\nTo change logging on a running daemon: bennu-field-deviced log --help";
         po::options_description desc(program);
         desc.add_options()
             ("help", "show this help menu")
@@ -250,6 +256,9 @@ int main(int argc, char** argv)
         std::cerr << "error opening stderr log: " << stderrLog.c_str() << std::endl;
     }
 
+    // after the freopen above, so "log off" returns to those files
+    bennu::utility::startLogControl(instance);
+
     bennu::parsers::Parser::the()->registerTagForDynamicLibrary("field-device", "bennu-field-device-base");
 
     if (vm.count("file"))
@@ -272,6 +281,8 @@ int main(int argc, char** argv)
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
+
+    bennu::utility::stopLogControl();
 
     // Close the log
     syslog(LOG_INFO, "bennu-field-deviced exiting...");
