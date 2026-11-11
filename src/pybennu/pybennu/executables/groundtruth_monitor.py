@@ -26,7 +26,7 @@ import sys
 import threading
 import time
 from configparser import ConfigParser, NoOptionError
-from datetime import datetime
+from datetime import datetime, timezone
 
 from elasticsearch import Elasticsearch, helpers
 from loguru import logger
@@ -141,7 +141,7 @@ class GroundTruthMonitor(Daemon, Subscriber):
 
         self.__es = Elasticsearch([{"host": elastic_ip, "port": "9200"}])
         Subscriber.__init__(self, self.publish_endpoint)
-        self.time_last_send = datetime.now()
+        self.time_last_send = datetime.now(timezone.utc)
         Daemon.__init__(self, "/var/run/bennu-ground-truth-mon-%s.pid" % (args.env))
 
         # setup thread to deal with pushes to elastic
@@ -180,8 +180,7 @@ class GroundTruthMonitor(Daemon, Subscriber):
         Args:
             message (str): published zmq message as a string
         """
-        now = datetime.now()
-        time_diff = now - self.time_last_send
+        now = datetime.now(timezone.utc)
         self.__parse_filter()
 
         points = message.split(",")
@@ -193,12 +192,14 @@ class GroundTruthMonitor(Daemon, Subscriber):
                 tag = split[0]
                 value = split[1]
                 if "alert" in tag or "batch" in tag:
-                    if time_diff.seconds >= 30:
+                    # rate limit alert/batch points only; the rest of the
+                    # message is still ingested
+                    if (now - self.time_last_send).total_seconds() >= 30:
                         self.time_last_send = now
                     else:
-                        return
+                        continue
 
-                message_dict["@timestamp"] = datetime.now()
+                message_dict["@timestamp"] = now
                 message_dict["provider"] = E.Endpoint_str_get(self.publish_endpoint)
                 tags = tag.split(".")
                 if len(tags) == 2:
@@ -253,7 +254,7 @@ class GroundTruthMonitor(Daemon, Subscriber):
             with self.__lock:
                 messages = list(self.new_data)
                 self.new_data = []
-            index = "bennu-" + datetime.now().strftime("%Y.%m.%d")
+            index = "bennu-" + datetime.now(timezone.utc).strftime("%Y.%m.%d")
             actions = [
                 {"_index": index, "type": "doc", "_source": message}
                 for message in messages
@@ -274,7 +275,7 @@ class GroundTruthMonitor(Daemon, Subscriber):
         Returns:
             A doc ID string (e.g. bus-1~20170202_120153)
         """
-        return device + "~" + datetime.now().strftime("%Y%m%d_%H%M%S")
+        return device + "~" + datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
 
 
 def main():
