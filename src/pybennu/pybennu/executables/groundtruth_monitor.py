@@ -55,15 +55,13 @@ class GroundTruthMonitor(Daemon, Subscriber):
         Args:
             args (argparse.Namespace): object that has command line args as members
         """
+        config_file = (
+            args.config_file if args.config_file else f"/etc/sceptre/{args.env}.ini"
+        )
         if args.operation in (
             "start",
             "restart",
         ):  # only care about the config file when starting
-            if args.config_file:
-                config_file = args.config_file
-            else:
-                config_file = "/etc/sceptre/%s.ini" % (args.env)
-
             if os.path.exists(config_file):
                 config_file = os.path.abspath(config_file)
             else:
