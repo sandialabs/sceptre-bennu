@@ -6,8 +6,7 @@ to license your contribution to the {fmt} project owners and the community,
 agree that your contributions are licensed under the {fmt} license, and agree
 to future changes to the licensing.
 
-All C++ code must adhere to [Google C++ Style Guide](
-https://google.github.io/styleguide/cppguide.html) with the following
+All C++ code must adhere to [Google C++ Style Guide](https://google.github.io/styleguide/cppguide.html) with the following
 exceptions:
 
 * Exceptions are permitted

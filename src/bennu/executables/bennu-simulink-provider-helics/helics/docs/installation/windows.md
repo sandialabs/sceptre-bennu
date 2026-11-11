@@ -18,36 +18,35 @@ _Note_: Keep in mind that your CMake version should be newer than the boost vers
 
 To set up your environment:
 
-1.  Install Microsoft Visual C++ 2015 or newer (2017 or later is recommended)[MSVC](https://visualstudio.microsoft.com/)
-2.  Install
-    [Boost](https://www.boost.org/doc/libs/1_70_0/more/getting_started/windows.html)
-    [Windows downloads](https://dl.bintray.com/boostorg/release/1.70.0/binaries/)
-    1.61 or later recommended (core library should build with 1.58,
-    but tests will not). For CMake to detect it automatically either
-    extract Boost to the root of your drive, or set the `BOOST_INSTALL_PATH`
-    environment variable to the install location. The CMake will only automatically find
-    boost 1.58 or newer.
-    Building with Visual Studio 2017 will require boost 1.65.1 or newer and CMake 3.9
-    or newer. Use 14.0 versions for Visual Studio 2015, 14.1 files for Visual studio 2017. Visual studio 2019 will require CMake 3.14 or later.
-    Boost 1.70 with CMake 3.14+ is the current recommended configuration.
+1. Install Microsoft Visual C++ 2015 or newer (2017 or later is recommended)[MSVC](https://visualstudio.microsoft.com/)
+2. Install
+   [Boost](https://www.boost.org/doc/libs/1_70_0/more/getting_started/windows.html)
+   [Windows downloads](https://dl.bintray.com/boostorg/release/1.70.0/binaries/)
+   1.61 or later recommended (core library should build with 1.58,
+   but tests will not). For CMake to detect it automatically either
+   extract Boost to the root of your drive, or set the `BOOST_INSTALL_PATH`
+   environment variable to the install location. The CMake will only automatically find
+   boost 1.58 or newer.
+   Building with Visual Studio 2017 will require boost 1.65.1 or newer and CMake 3.9
+   or newer. Use 14.0 versions for Visual Studio 2015, 14.1 files for Visual studio 2017. Visual studio 2019 will require CMake 3.14 or later.
+   Boost 1.70 with CMake 3.14+ is the current recommended configuration.
 
-    As an (experimental) alternative for installing Boost (and ZeroMQ), you can use [vcpkg](https://github.com/microsoft/vcpkg#getting-started) -- it is slower
-    because it builds all dependencies but handles getting the right install paths to dependencies set correctly.
-    To use it, follow the vcpkg getting started directions to install vcpkg and then run `cmake` using
-    `-DCMAKE_TOOLCHAIN_FILE=[path to vcpkg]/scripts/buildsystems/vcpkg.cmake`, or by setting the environment
-    variable `VCPKG_ROOT=[path to vcpkg]` prior to running `cmake`.
-
-3.  _Optional_ Only if you need a global Install of ZeroMQ [ZeroMQ](http://zeromq.org/build:_start).
-    We **highly recommend skipping** this step and running CMake with the
-    `HELICS_ZMQ_SUBPROJECT=ON` option enabled(which is default on windows) to automatically set up a project-only
-    copy of ZeroMQ. The ZeroMQ Windows installer is **very**
-    outdated and will not work with new versions of Visual Studio. The CMake generator from ZeroMQ on windows is also functional and can be used to store ZMQ in another location that will need to be specified for HELICS.
-4.  _Optional_ Install
-    [MS-MPI](<https://msdn.microsoft.com/en-us/library/bb524831(v=vs.85).aspx>)
-    if you need MPI support.
-5.  _Optional_ Install
-    [SWIG](http://www.swig.org/download.html)
-    if you wish to generate the interface libraries, appropriate build files are included in the repository so it shouldn't be necessary to regenerate unless the libraries are modified. If you want to generate the MATLAB interface a modified version of swig is necessary see [MATLAB Swig](../introduction/matlab). For Matlab, Python 3, and Java swig is not necessary. For Octave, Python2, and C\# swig install is necessary. The simplest way to install swig is to use [chocolatey](https://chocolatey.org/) and use
+   As an (experimental) alternative for installing Boost (and ZeroMQ), you can use [vcpkg](https://github.com/microsoft/vcpkg#getting-started) -- it is slower
+   because it builds all dependencies but handles getting the right install paths to dependencies set correctly.
+   To use it, follow the vcpkg getting started directions to install vcpkg and then run `cmake` using
+   `-DCMAKE_TOOLCHAIN_FILE=[path to vcpkg]/scripts/buildsystems/vcpkg.cmake`, or by setting the environment
+   variable `VCPKG_ROOT=[path to vcpkg]` prior to running `cmake`.
+3. _Optional_ Only if you need a global Install of ZeroMQ [ZeroMQ](http://zeromq.org/build:_start).
+   We **highly recommend skipping** this step and running CMake with the
+   `HELICS_ZMQ_SUBPROJECT=ON` option enabled(which is default on windows) to automatically set up a project-only
+   copy of ZeroMQ. The ZeroMQ Windows installer is **very**
+   outdated and will not work with new versions of Visual Studio. The CMake generator from ZeroMQ on windows is also functional and can be used to store ZMQ in another location that will need to be specified for HELICS.
+4. _Optional_ Install
+   [MS-MPI](<https://msdn.microsoft.com/en-us/library/bb524831(v=vs.85).aspx>)
+   if you need MPI support.
+5. _Optional_ Install
+   [SWIG](http://www.swig.org/download.html)
+   if you wish to generate the interface libraries, appropriate build files are included in the repository so it shouldn't be necessary to regenerate unless the libraries are modified. If you want to generate the MATLAB interface a modified version of swig is necessary see [MATLAB Swig](../introduction/matlab). For Matlab, Python 3, and Java swig is not necessary. For Octave, Python2, and C\# swig install is necessary. The simplest way to install swig is to use [chocolatey](https://chocolatey.org/) and use
 
 ```shell
      choco install swig
@@ -55,24 +54,24 @@ To set up your environment:
 
 from windows power shell.
 
-6.  Open a Visual Studio Command Prompt, and go to your working
-    directory.
-7.  Make sure _CMake_ and _git_ are available in the Command Prompt.
-    If they aren't, add them to the system PATH variable.
+6. Open a Visual Studio Command Prompt, and go to your working
+   directory.
+7. Make sure _CMake_ and _git_ are available in the Command Prompt.
+   If they aren't, add them to the system PATH variable.
 
 Getting and building from source:
 
-1.  Set up your environment.
-2.  Open a command prompt. Use git clone to check out a copy of
-    HELICS.
+1. Set up your environment.
+2. Open a command prompt. Use git clone to check out a copy of
+   HELICS.
 
 ```bash
     git clone https://github.com/GMLC-TDC/HELICS.git
 ```
 
-3.  Go to the checked out HELICS project folder (the default folder
-    name is HELICS). Create a build folder and open the build
-    folder. Alternatively, cmake-gui can be used.
+3. Go to the checked out HELICS project folder (the default folder
+   name is HELICS). Create a build folder and open the build
+   folder. Alternatively, cmake-gui can be used.
 
 ```bash
     cd HELICS
@@ -80,34 +79,34 @@ Getting and building from source:
     cd build
 ```
 
-4.  Run CMake. It should automatically detect where MPI is installed
-    if the system path variables are set up correctly, otherwise you
-    will have to set the CMake path manually. `ZMQ_LOCAL_BUILD` is set to ON
-    so ZeroMQ will automatically be built unless the option is changed.
+4. Run CMake. It should automatically detect where MPI is installed
+   if the system path variables are set up correctly, otherwise you
+   will have to set the CMake path manually. `ZMQ_LOCAL_BUILD` is set to ON
+   so ZeroMQ will automatically be built unless the option is changed.
 
-    `cmake ..`
+   `cmake ..`
 
-    If you need CMake to use a generator other than the default (ex:
-    selecting between a 32-bit or 64-bit project), the -G option can be
-    used to specify one of the generators listed by CMake --help. For
-    Visual Studio 2017, the generator name would be
-    `Visual Studio 15 2017 [arch]`, where \[arch\] is optional and can be
-    either Win64 for a 64-bit project, or left out to generate a 32-bit
-    project. To avoid problems when building later, this should match the
-    version of the Boost libraries you are using.
+   If you need CMake to use a generator other than the default (ex:
+   selecting between a 32-bit or 64-bit project), the -G option can be
+   used to specify one of the generators listed by CMake --help. For
+   Visual Studio 2017, the generator name would be
+   `Visual Studio 15 2017 [arch]`, where \[arch\] is optional and can be
+   either Win64 for a 64-bit project, or left out to generate a 32-bit
+   project. To avoid problems when building later, this should match the
+   version of the Boost libraries you are using.
 
-    If you installed boost into the root of the C or D drives with the
-    default location (or the BOOST_INSTALL_PATH environment variable has been set),
-    CMake should automatically detect their location. Otherwise the
-    location will need to be manually given to CMake.
-    NOTE: CMake 3.14 and later separate the architecture into a separate field for the generator
+   If you installed boost into the root of the C or D drives with the
+   default location (or the BOOST_INSTALL_PATH environment variable has been set),
+   CMake should automatically detect their location. Otherwise the
+   location will need to be manually given to CMake.
+   NOTE: CMake 3.14 and later separate the architecture into a separate field for the generator
 
-5.  Open the Visual Studio solution generated by CMake. Under the
-    _Build_ menu, select _Build the Solution_. Alternatively, in the
-    MSBuild command prompt, run the command msbuild HELICS.sln from
-    the build folder to compile the entire solution. HELICS.sln can be
-    replaced with the name of one of the projects to build only that
-    part of HELICS.
+5. Open the Visual Studio solution generated by CMake. Under the
+   _Build_ menu, select _Build the Solution_. Alternatively, in the
+   MSBuild command prompt, run the command msbuild HELICS.sln from
+   the build folder to compile the entire solution. HELICS.sln can be
+   replaced with the name of one of the projects to build only that
+   part of HELICS.
 
 ## Testing
 
@@ -217,7 +216,7 @@ $ helics_broker --version
 The helics apps and libraries are now installed, and can be updated when HELICS gets an update. For the MINGw32 use
 
 ```bash
-$ pacman -Sy mingw32/mingw-w64-i686-helics
+pacman -Sy mingw32/mingw-w64-i686-helics
 ```
 
 if you are installing both the 32 and 64 bit versions or just want a simpler command to type
@@ -251,7 +250,7 @@ After MSYS2 has been successfully updated Some packages need to be installed in 
 All packages can be installed by typing the following:
 
 ```bash
-$ pacman -Sy base-devel mingw-w64-x86_64-toolchain git mingw-w64-x86_64-CMake mingw-w64-x86_64-boost mingw-w64-x86_64-qt5 mingw-w64-x86_64-zeromq
+pacman -Sy base-devel mingw-w64-x86_64-toolchain git mingw-w64-x86_64-CMake mingw-w64-x86_64-boost mingw-w64-x86_64-qt5 mingw-w64-x86_64-zeromq
 ```
 
 For base-devel and mingw-w64-x86_64-toolchain you may have to hit enter for installing all packages that are part of the group package. The qt5 package is quite large, if you are only using it once it might be faster to use ccmake which is a text based interface to CMake. After all the packages have been installed has been done /mingw64/bin must be in the PATH environment variable. If it isn't then it must be added. Please note that this is only necessary if you are compiling in MSYS2 shell. If you are compiling in the MSYS2 MINGW-64bit shell then /mingw64/bin will be automatically added to the PATH environment variable. If not
@@ -265,7 +264,7 @@ $ export PATH=$PATH:/mingw64/bin
 Now that the MSYS2 environment has been setup and all prerequisite packages have been installed the source code can be compiled and installed. The HELICS source code can be cloned from GitHub by performing the following:
 
 ```bash
-$ git clone https://github.com/GMLC-TDC/HELICS.git
+git clone https://github.com/GMLC-TDC/HELICS.git
 ```
 
 git will clone the source code into a folder in the current working directory called HELICS. This path will be referred to by this guide as HELICS_ROOT_DIR.
@@ -275,7 +274,7 @@ git will clone the source code into a folder in the current working directory ca
 Change directories to HELICS_ROOT_DIR. Create a directory called helics-build. This can be accomplished by using the mkdir command. cd into this directory. Now type the following:
 
 ```bash
-$ CMake-gui ../
+CMake-gui ../
 ```
 
 If this fails that is because mingw-w64-x86_64-qt5 was not installed. If you did install it the CMake gui window should pop up. click the Advanced check box next to the search bar. Then click Configure. A window will pop up asking you to specify the generator for this project. Select "MSYS Makefiles" from the dropdown menu. The native compilers can be used and will most likely default to gcc. The compilers can also be specified manually. Select Finish; once the configure process completes finished several variables will show up highlighted in red. Since this is the first time setup the Boost and ZeroMQ library. Below are the following CMake variables that could to be verified.
@@ -297,13 +296,13 @@ Once these CMake variables have been correctly verified click Configure if anyth
 Back in the MSYS2 command window\[ make sure you are in the build directory\] type:
 
 ```bash
-$ make -j x
+make -j x
 ```
 
 where x is the number of threads you can give the make process to speed up the build. Then once that is complete type: `make -j` will just use the number of cores you have available
 
 ```bash
-$ make install
+make install
 ```
 
 unless you changed the value of CMake_INSTALL_PREFIX everything the default install location /usr/local/helics_2_1_0. This install path will be referred to as HELICS_INSTALL for the sections related to GridLab-D.

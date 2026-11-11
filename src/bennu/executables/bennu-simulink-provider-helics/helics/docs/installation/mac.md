@@ -52,7 +52,6 @@ To set up your environment:
    b) Install cmake with `brew install cmake`. Alternately, a DMG
    file is available for cmake from their
    [website](https://cmake.org/download/).
-
 4. Install most dependencies using homebrew.
 
    ```bash
@@ -190,8 +189,8 @@ Keep in mind that your cmake version should be newer than the boost version, so 
 Unzip the folder `boost_1_69_0` to any location, for example Downloads.
 
 ```bash
-$ cd ~/Downloads/boost_1_69_0
-$ ./bootstrap.sh --prefix=/ --prefix=$HOME/local/boost-gcc-1.69.0
+cd ~/Downloads/boost_1_69_0
+./bootstrap.sh --prefix=/ --prefix=$HOME/local/boost-gcc-1.69.0
 ```
 
 Open `project-config.jam` and changes the lines as follows:
@@ -211,10 +210,10 @@ using gcc : 8.2 : /usr/local/bin/g++-8 ;
 ```
 
 ```bash
-$ ./b2
-$ ./b2 install
-$ # OR
-$ ./bjam cxxflags='-fPIC' cflags='-fPIC' -a link=static install # For static linking
+./b2
+./b2 install
+# OR
+./bjam cxxflags='-fPIC' cflags='-fPIC' -a link=static install # For static linking
 ```
 
 This will install boost in the `~/local/boost-gcc-1.69.0` folder
@@ -222,8 +221,8 @@ This will install boost in the `~/local/boost-gcc-1.69.0` folder
 Next, you will need to build HELICS and tell it what the `BOOST_ROOT` is.
 
 ```bash
-$ cmake -DCMAKE_INSTALL_PREFIX="$HOME/local/helics-gcc-X.X.X/" -DBOOST_ROOT="$HOME/local/boost-gcc-1.69.0" -DBUILD_PYTHON_INTERFACE=ON -DCMAKE_C_COMPILER=/usr/local/Cellar/gcc/8.2.0/bin/gcc-8 -DCMAKE_CXX_COMPILER=/usr/local/Cellar/gcc/8.2.0/bin/g++-8 ../
-$ make clean; make -j 4; make install
+cmake -DCMAKE_INSTALL_PREFIX="$HOME/local/helics-gcc-X.X.X/" -DBOOST_ROOT="$HOME/local/boost-gcc-1.69.0" -DBUILD_PYTHON_INTERFACE=ON -DCMAKE_C_COMPILER=/usr/local/Cellar/gcc/8.2.0/bin/gcc-8 -DCMAKE_CXX_COMPILER=/usr/local/Cellar/gcc/8.2.0/bin/g++-8 ../
+make clean; make -j 4; make install
 ```
 
 ## Testing HELICS

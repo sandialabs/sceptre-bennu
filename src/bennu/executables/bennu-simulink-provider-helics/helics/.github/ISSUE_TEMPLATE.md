@@ -28,5 +28,4 @@ $ helics_app --version
 
 - Operating System: [all | Windows | Mac | Linux]
 - Language Extension: [all | Python | MATLAB | Java]
-
 - **Other information** (e.g. detailed explanation, stacktraces, related issues, suggestions how to fix, links for us to have context, eg. stackoverflow, gitter, etc)

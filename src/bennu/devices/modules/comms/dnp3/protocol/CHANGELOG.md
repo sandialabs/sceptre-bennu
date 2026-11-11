@@ -1,8 +1,10 @@
 ### 3.1.1 ###
+
 * :beetle: Fix static octet string serilazation bug.
 * :star: Add missing octet string configuration to C# `EventBufferConfig`.
 
 ### 3.1.0 ###
+
 * :star: Added `IOutstationApplication::OnConfirmProcess`.
   See PR [#403](https://github.com/dnp3/opendnp3/pull/403).
 * :star: `OutstationParams::maxControlsPerRequest` is now a`uint32_t` and its
@@ -11,10 +13,12 @@
   See issue [#389](https://github.com/dnp3/opendnp3/pull/389).
 
 ### 3.0.4 ###
+
 * :beetle: Fix regression in 3.0 .NET bindings which causes deadband settings to
   not be applied. See PR [#387](https://github.com/dnp3/opendnp3/pull/387).
 
 ### 3.0.3 ###
+
 * :beetle: Fix `TimeDuration` overflow bug. See PR
   [#382](https://github.com/dnp3/opendnp3/pull/382).
 * :beetle: Revert `EventMode::EventOnly` to 2.x behaviour. See PR
@@ -22,16 +26,19 @@
   [#386](https://github.com/dnp3/opendnp3/pull/386).
 
 ### 3.0.2 ###
+
 * :beetle: Fix discrepancy between `DNPTime::TimestampQuality` and
   `HeaderInfo::TimestampQuality`. See PR [#379](https://github.com/dnp3/opendnp3/pull/379).
 
 ### 3.0.1 ###
+
 * :beetle: Fix double-delete issue in C# adapter. See PR
   [#376](https://github.com/dnp3/opendnp3/pull/376).
 
 ### 3.0.0 ###
 
 New features:
+
 * :star: Add support for Immediate Freeze (`0x07`), Immediate Freeze No Ack
   (`0x08`), Freeze-and-Clear (`0x09`), Freeze-and-Clear No Ack (`0x10`). See PR [#320](https://github.com/dnp3/opendnp3/pull/320).
 * Add support for broadcast. See PR [#312](https://github.com/dnp3/opendnp3/pull/312).
@@ -44,6 +51,7 @@ New features:
   [#372](https://github.com/dnp3/opendnp3/pull/372).
 
 API changes:
+
 * :star: Complete reorganization of the code to produce a single library.
   Properly separate the public header files from the private ones. Refactor the
   CMake to use modern practices.
@@ -79,6 +87,7 @@ API changes:
   [#367](https://github.com/dnp3/opendnp3/pull/367).
 
 Bindings changes:
+
 * :star: Add typed flag handling in Java and C#. See PR
   [#342](https://github.com/dnp3/opendnp3/pull/342).
 * :star: In the Java bindings, when `DNP3Manager` fails, an descriptive
@@ -92,15 +101,17 @@ Bindings changes:
   [#360](https://github.com/dnp3/opendnp3/pull/360).
 
 CI:
+
 * :hammer: Move continuous integration to [GitHub
   Actions](https://github.com/dnp3/opendnp3/actions).
 * :hammer: Add automated Subset Level 2 conformance testing. The report
-  is available here: https://dnp3.github.io/conformance/report.html
+  is available here: <https://dnp3.github.io/conformance/report.html>
 * :hammer: Add code coverage results using
   [Codecov](https://codecov.io/gh/dnp3/opendnp3). See PR
   [#301](https://github.com/dnp3/opendnp3/pull/301).
 
 Other:
+
 * :beetle: Fix few minor conformance issues. See PR
   [#356](https://github.com/dnp3/opendnp3/pull/356).
 * :beetle: Fix issue in data-link state machine. See issue
@@ -110,22 +121,27 @@ Other:
   [#365](https://github.com/dnp3/opendnp3/pull/365).
 
 ### 2.4.0 ###
+
 * :star: Added optional reconnection delay parameter to `ChannelRetry`. When a connection is lost, this parameter is used to wait before reattempting to establish a connection. Then, the same reconnection strategy as before is used for retries. See issue [#354](https://github.com/dnp3/opendnp3/issues/354).
 * :beetle: Fix conformance issue with data-link confirmations. See PR [#359](https://github.com/dnp3/opendnp3/pull/359).
 * :beetle: Fix conformance issue select & operate behaviour. See PR [#359](https://github.com/dnp3/opendnp3/pull/359).
 * :beetle: Fix issue when compiling with MingW. See PR [#345](https://github.com/dnp3/opendnp3/pull/345).
 
 ### 2.3.3 ###
+
 * :beetle: Fix C# exception on time conversion upon restart command not supported. See issue [#350](https://github.com/dnp3/opendnp3/issues/350).
 
 ### 2.3.2 ###
+
 * :beetle: Fix C# issue where `EventConfig::clazz` was never set. See issue [#291](https://github.com/dnp3/opendnp3/issues/291).
 
 ### 2.3.1 ###
+
 * :beetle: Fix final case for issue [#216](https://github.com/dnp3/opendnp3/issues/216#issuecomment-500637263). See [PR #310](https://github.com/dnp3/opendnp3/pull/310).
 * :beetle: Add missing include for usage with `ASIO_DYN_LINK` (see [PR #311](https://github.com/dnp3/opendnp3/pull/311))
 
 ### 2.3.0 ###
+
 * :beetle: Fixes for issues [#268](https://github.com/dnp3/opendnp3/issues/268), [#262](https://github.com/dnp3/opendnp3/issues/262), [#259](https://github.com/dnp3/opendnp3/issues/259), [#257](https://github.com/dnp3/opendnp3/issues/257), [#255](https://github.com/dnp3/opendnp3/issues/255), [#251](https://github.com/dnp3/opendnp3/issues/251), [#228](https://github.com/dnp3/opendnp3/issues/228), [#216](https://github.com/dnp3/opendnp3/issues/216).
 * :star: Added overloaded methods for TCP and TLS clients to support outstation redundancy ([#277](https://github.com/dnp3/opendnp3/issues/277)).
 * :star: .NET bindings can now be configured and built using CMake (requires CMake >= 3.8).
@@ -135,6 +151,7 @@ Other:
 * :pencil: Added automatic code formating with [clang-format](https://clang.llvm.org/docs/ClangFormat.html).
 
 ### 2.3.0-M1 ###
+
 * :star: Small internal change to support openssl 1.1.x ([pull request](https://github.com/dnp3/opendnp3/pull/207))
 * :star: TCP server channels can now configurably drop or accept.
 * :wrench: This causes a breaking API change by adding a parameter to DNP3Manager::AddTCPServer(...).
@@ -146,23 +163,29 @@ Other:
 * :beetle: Fix [memory leak](https://github.com/dnp3/opendnp3/issues/214) in C# DNP3ManagerAdapter.
 
 ### 2.2.0 ###
+
 * No changes from 2.2.0-RC5
 
 ### 2.2.0-RC5 ###
+
 * :beetle: Fixed a [bug](https://github.com/dnp3/opendnp3/issues/200) where connection attempts were not retrieved after failed DNS resolution.
 
 ### 2.2.0-RC4 ###
+
 * :beetle: Fixed a [regression](https://github.com/dnp3/opendnp3/issues/197) in outstation whereby the session could hang indefinitely if a non-read request was received during UnsolConirmWait.
 
 ### 2.2.0-RC3 ###
+
 * :beetle: Fixed a [regression](https://github.com/dnp3/opendnp3/issues/195) whereby multi segment messages could be transmitted with trailing garbage.
 * :beetle: Fixed a bug whereby improper TLS shutdown from the remote host could result in an infinite loop. TLS shutdown is no longer utilized in favor of just a hard TCP close.
 
 ### 2.2.0-RC2 ###
+
 * :beetle: Java bindings in 2.2.0-RC1 were leaking local references. Modified the bindings to use resource management class to ensure this doens't happen going forward.
 * :beetle: Fixed a [bug](https://github.com/dnp3/opendnp3/issues/187) in outstation/master enable/disable that put the session into an invalid state.
 
 ### 2.2.0-RC1 ###
+
 * :star: Java bindings have been added to the project.
 * :star: New API for creating "masters as servers" (aka GPRS-based systems)
 * :wrench: DNP3Manager now returns shared_ptr<IChannel>. IChannel now returns shared_ptr<IMaster/IOutstation>. Shutdown is now idempotent on
@@ -175,9 +198,11 @@ these interfaces used via shared_ptr.
 * :beetle: Fixed a [bug](https://github.com/dnp3/opendnp3/issues/173) in the TLS client that caused the channel to be unrecoverable after any disconnect.
 
 ### 2.1.0 ###
+
 * Minor formatting and documentation tweaks
 
 ### 2.1.0-RC6 ###
+
 * :wrench: The C# LinkConfig class now uses Timespan for timeouts for consistency with other API elements. This also solved
 an issue where the LinkTimeout could not be effectively disabled since MaxInt wasn't big enough to ensure it never ran.
 * :wrench: Moved experimental SA components to the "secauth" branch.
@@ -187,23 +212,28 @@ an issue where the LinkTimeout could not be effectively disabled since MaxInt wa
 * Refactored cmake build files into several sub-files for better modularity.
 
 ### 2.1.0-RC5 ###
+
 * :beetle: Fixed a bug in the master multi-drop functionality where removing an active master, caused remaining session to freeze.
 * :beetle: Fixed a bug in ClearRestartTask where the completion callback was invoked with the wrong task type.
 * :star: HeaderInfo class in ISOEHandler now exposes isEvent member which tells user if header is for an event type. Added this to C# as well.
 * :star: C++ outstation demos now load the current timestamp using overloaded MeasUpdate constructor
 
 ### 2.1.0-RC4 ###
+
 * :star: Tagged released now automatically deployed to Nuget via AppVeyor build
 * :star: Code generator now produces lookup functions for group variation time/tag information.
 * :star: Added a decoder feature used to power the website decoder.
 
 ### 2.1.0-RC3 ###
+
 * :beetle: Fixed a bug in the C# bindings where non-zero based indices were not being detected properly.
 
 ### 2.1.0-RC2 ###
+
 * :beetle: Fixed a bug that was causing the keep-alive to not retry at the configured rate
 
 ### 2.1.0-RC1 ###
+
 * Migrated fully to CMake, including generated SLN
 * Separated include vs private headers
 * New guide + doxygen docs
@@ -217,25 +247,28 @@ an issue where the LinkTimeout could not be effectively disabled since MaxInt wa
 * :beetle: Fixed a bug in the way CTO objects were handled w/ Group2Var3 and Group4Var3
 * C# bindings now use .NET Task[T] instead of custom Future[T]
 * Introduced an experimental version of SAv5 (not intended for production use)
- * Significantly refactored the master/outstation internals to accommodate adding SA via inheritance.
- * Added parser/formatter generators for variable-length objects in Group120
-
+* Significantly refactored the master/outstation internals to accommodate adding SA via inheritance.
+* Added parser/formatter generators for variable-length objects in Group120
 
 ### 2.0.1 ###
+
 No changes to 2.0.1-RC3 for final 2.0.1 release
 
 ### 2.0.1-RC3 ###
+
 * Workaround for broken std::chrono::steady_clock impl thanks to Liam MacIsaac.
 * Based on user feedback, the .NET outstation API now uses a more intuitive "ChangeSet" to update values in the outstation.
 * The .NET "simulator" has been restored with more features surfaced and outstation plugins can now be written to simulate devices.
 
 ### 2.0.1-RC2 ###
+
 * DNPManager.AddTCPClient now takes an additional parameter for the local adapter address (0.0.0.0 == all adapters)
 * Overloaded CROB constructor allows for non-standard control codes to be specified.
 * Fixed a thread-safety issue in the outstation on data update. The API has shifted for updating the outstation database to accomodate this fix.
 * Fixed an uninitialized control code variable in the CROB introduced in 2.0.1-RC1.
 
 ### 2.0.1-RC1 ###
+
 * Added support for Group50Var4 (Time and Interval) objects. These are static only objects (no events) that can are read/write.
 * Added support for Binary/Analog command events to the parser and the master API courtesy of Sid Hoda.
 * Added support for the ASSIGN_CLASS function code.
@@ -257,15 +290,14 @@ No changes to 2.0.1-RC3 for final 2.0.1 release
 * Arbitrary master scans (qualifiers 0x06, 0x00/0x01, 0x07/0x08) can now be created in C# using an API contributed by Damon Sutherland
 * Added a flag to the outstation that limits the number of queued event checks to 1. This was done for determinism on embedded systems with limited space to queue executor actions.
 
-
-
 ### 2.0.0 ###
+
 * Fixed an issue in openpal::Synchronized where the stack would deadlock under heavy contention
 * Fixed bug where counter 'numTransportErrorRx' was incremented twice
 * The log alias in LogRoot is now dynamically sized removed the artificial limitation
 
-
 ### 2.0.0-RC3 ###
+
 * Dynamic memory allocation now allowed in core library during initialization.
   * Removed various redundant static container types in openpal
   * Database and event buffers now create they underlying storage from configuration
@@ -277,25 +309,25 @@ No changes to 2.0.1-RC3 for final 2.0.1 release
 * ICommandHandler semantics switched back to Select/Operate to more closely match spec. Operate is indistinguisable from DirectOperate at user layer
 * Include guards now prepend library name to avoid potential conflicts
 * Master can now bind arbitrary 0x06 (all objects) periodic scans
-  
 
 ### 2.0.0-RC2 ###
 
 Conformance fixes based on testing with 3rd party harness. Only remaining level 2 conformance item is handling broadcast addressing.
-  * Outstation now handles limited count (0x07, 0x08) request headers for class polls and specific variation polls.
-  * IOutstationApplication can now handle cold/warm restart function codes.
+
+* Outstation now handles limited count (0x07, 0x08) request headers for class polls and specific variation polls.
+* IOutstationApplication can now handle cold/warm restart function codes.
 
 Master measurement API (ISOEHandler) now informs application of qualifer, group variation, and validity of timestamps for each header received.
-  
+
 ### 2.0.0-RC1 ###
 
-## Refactoring / Improvements  - General ##
+## Refactoring / Improvements - General ##
+
 * To enable ports to other platforms and MCUs, the 1.1.x library was divided into 4 sub-libraries.
   * openpal - The Platform Abstraction Layer (PAL) provides abtract base classes for key abstractions like IPhysicalLayer, IExecutor, ITimer, etc.
   * opendnp3 - The core dnp3 library. It only depends on openpal and is platform independent C++11.
-  * asiopal - Implements the PAL using boost::asio.  This PAL can be used on server platforms like Windows, Linux, & OSX. It only depends on openpal.
+  * asiopal - Implements the PAL using boost::asio. This PAL can be used on server platforms like Windows, Linux, & OSX. It only depends on openpal.
   * asiodnp3 - Provides a nice wrapper to opendnp3 for server platforms. Depends on all three libraries.
-
 * Library uses a new parser and generator that vastly improves readability, maintainability, performance, and safety.
 * Example applications for Atmel Studio for Arduino boards have been added. They are not yet production ready, but a proof of concept.
 * Stack depth has been reduced to better suite embedded systems.
@@ -337,10 +369,11 @@ Master measurement API (ISOEHandler) now informs application of qualifer, group 
 * Outstation now supports additional types:
   * Frozen Counters, Double-bit Binaries, and AO/BO status events
 * Java Future can now be called with an optional timeout
-* Channels now have expoential backoff capability controlled by min/max retry parameters. 
+* Channels now have expoential backoff capability controlled by min/max retry parameters.
 * Each channel can low control the its log level dynamically via the SetLogFilters() method.
 
 ## Bug / conformance fixes ##
+
 * Default integrity poll is now a Class 1/2/3/0 scan as per the specification.
 * Outstation now reports events in correct order-of-occurence across all seven types it supports.
 * Physical layer disconnects now observer the minRetry parameter. This prevents rapid connect/disconnect cycling when a server is closing connections.
@@ -350,6 +383,7 @@ Master measurement API (ISOEHandler) now informs application of qualifer, group 
 * Ticket 62 - Fixed a bug where the master scheduler could hang if the the channel was closed while waiting for response to a command.
 
 ## Removed ##
+
 * VTO "routers" are now longer provided. 0-length strings of all types (Groups 110-113) are now explicitly not allowed.
 * ASIOPAL now explicitly uses std::chrono::steady_clock for timers. There is no longer a typedef.
 * Library no longer supports 4-octet qualifier codes. All indices used uint16_t as underlying type.

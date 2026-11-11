@@ -14,22 +14,22 @@ Good places to start include:
 
 ### Running a simple player recorder example
 
-1.  Open three terminal windows
-2.  Run the following in the first window
+1. Open three terminal windows
+2. Run the following in the first window
 
 ```bash
 cd /path/to/helics_install/bin
 ./helics_broker 2
 ```
 
-3.  Run the following in the second window
+3. Run the following in the second window
 
 ```bash
 cd /path/to/helics_install/bin
 ./helics_player /path/to/HELICS/examples/example1.player
 ```
 
-4.  Run the following in the last window
+4. Run the following in the last window
 
 ```bash
 cd /path/to/helics_install/bin

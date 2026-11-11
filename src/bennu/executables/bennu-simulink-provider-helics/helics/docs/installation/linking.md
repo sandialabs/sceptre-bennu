@@ -36,5 +36,4 @@ The most likely to be missing is `vcruntime140_1.dll`, which can be fixed by dow
 - For C\++14 in common build configurations use the C shared library or the C++ shared library from the installers or build it yourself to ensure library compatibility.
 - For specific C++ applications desiring static builds and using CMake, use HELICS as a subproject in CMake (the main use is some helics extensions, but other applications can use it as well)
 - For specific C++ applications with particular build considerations or flags use HELICS as a subproject and link the static or shared C++ Libraries.
-
 - For other languages - work with swig or use the foreign language capabilities of the language to import the C shared library.

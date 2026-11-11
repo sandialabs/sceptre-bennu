@@ -25,7 +25,7 @@ Please provide a minimal working example of the bug if possible.
 - HELICS version: <!-- 1.3.0 (07-31-18) -->
 
 ```bash
-$ helics_app --version
+helics_app --version
 ```
 
 **Additional context and information**

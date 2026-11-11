@@ -79,10 +79,10 @@ x.x.x (20XX-XX-XX)
 Run the following:
 
 ```bash
-$ sudo apt-get install python3-dev
-$ CMake -DBUILD_PYTHON_INTERFACE=ON -DCMake_INSTALL_PREFIX=~/.local/helics-X.X.X/ ..
-$ make -j8
-$ make install
+sudo apt-get install python3-dev
+CMake -DBUILD_PYTHON_INTERFACE=ON -DCMake_INSTALL_PREFIX=~/.local/helics-X.X.X/ ..
+make -j8
+make install
 ```
 
 Add the following to your `~/.bashrc` file.

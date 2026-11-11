@@ -8,6 +8,7 @@ Using cmake or meson you can generate an XCode, Visual Studio, Unix Makefile, Ni
 An example of a common Meson/Ninja environment is described next.
 
 ## Building and testing with Meson/Ninja
+
 Thanks to David Seifert (@SoapGentoo), we (the maintainers) now use
 [meson](http://mesonbuild.com/) and [ninja](https://ninja-build.org/) to build
 for debugging, as well as for continuous integration (see
@@ -20,19 +21,22 @@ If you wish to install to a directory other than /usr/local, set an environment 
 
 Then,
 
-    cd jsoncpp/
-    BUILD_TYPE=debug
-    #BUILD_TYPE=release
-    LIB_TYPE=shared
-    #LIB_TYPE=static
-    meson --buildtype ${BUILD_TYPE} --default-library ${LIB_TYPE} . build-${LIB_TYPE}
-    ninja -v -C build-${LIB_TYPE}
-    cd build-${LIB_TYPE}
-    meson test --no-rebuild --print-errorlogs
-    sudo ninja install
+```text
+cd jsoncpp/
+BUILD_TYPE=debug
+#BUILD_TYPE=release
+LIB_TYPE=shared
+#LIB_TYPE=static
+meson --buildtype ${BUILD_TYPE} --default-library ${LIB_TYPE} . build-${LIB_TYPE}
+ninja -v -C build-${LIB_TYPE}
+cd build-${LIB_TYPE}
+meson test --no-rebuild --print-errorlogs
+sudo ninja install
+```
 
 ## Building and testing with other build systems
-See https://github.com/open-source-parsers/jsoncpp/wiki/Building
+
+See <https://github.com/open-source-parsers/jsoncpp/wiki/Building>
 
 ## Running the tests manually
 
@@ -41,28 +45,32 @@ You need to run tests manually only if you are troubleshooting an issue.
 In the instructions below, replace `path/to/jsontest` with the path of the
 `jsontest` executable that was compiled on your platform.
 
-    cd test
-    # This will run the Reader/Writer tests
-    python runjsontests.py path/to/jsontest
+```text
+cd test
+# This will run the Reader/Writer tests
+python runjsontests.py path/to/jsontest
 
-    # This will run the Reader/Writer tests, using JSONChecker test suite
-    # (http://www.json.org/JSON_checker/).
-    # Notes: not all tests pass: JsonCpp is too lenient (for example,
-    # it allows an integer to start with '0'). The goal is to improve
-    # strict mode parsing to get all tests to pass.
-    python runjsontests.py --with-json-checker path/to/jsontest
+# This will run the Reader/Writer tests, using JSONChecker test suite
+# (http://www.json.org/JSON_checker/).
+# Notes: not all tests pass: JsonCpp is too lenient (for example,
+# it allows an integer to start with '0'). The goal is to improve
+# strict mode parsing to get all tests to pass.
+python runjsontests.py --with-json-checker path/to/jsontest
 
-    # This will run the unit tests (mostly Value)
-    python rununittests.py path/to/test_lib_json
+# This will run the unit tests (mostly Value)
+python rununittests.py path/to/test_lib_json
 
-    # You can run the tests using valgrind:
-    python rununittests.py --valgrind path/to/test_lib_json
+# You can run the tests using valgrind:
+python rununittests.py --valgrind path/to/test_lib_json
+```
 
 ## Building the documentation
 
 Run the Python script `doxybuild.py` from the top directory:
 
-    python doxybuild.py --doxygen=$(which doxygen) --open --with-dot
+```text
+python doxybuild.py --doxygen=$(which doxygen) --open --with-dot
+```
 
 See `doxybuild.py --help` for options.
 
@@ -139,6 +147,6 @@ bool Reader::decodeNumber(Token& token) {
 
 Before submitting your code, ensure that you meet the versioning requirements above, follow the style guide of the file you are modifying (or the above rules for new files), and run clang format. Meson exposes clang format with the following command:
 
-```
+```text
 ninja -v -C build-${LIB_TYPE}/ clang-format
 ```

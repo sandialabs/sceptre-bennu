@@ -118,14 +118,14 @@ Though contained here in this section on value federates, the options below are 
 
 To demonstrate how a to build a co-simulation, an example of a simple integrated transmission system and distribution system powerflow can be built; all the necessary files are found [here](../../examples/user_guide_examples/Example_1a) but to use them you'll need to get some specific software installed; here are the instructions:
 
-1.  [HELICS](https://helics.readthedocs.io/en/latest/installation/index.html)
-2.  [GridLAB-D](https://github.com/gridlab-d/gridlab-d/tree/develop) - Enable HELICS, see instructions [here](http://gridlab-d.shoutwiki.com/wiki/Connection:helics_msg)
-3.  [Python](https://www.anaconda.com/download/) - Anaconda installation, if you don't already have Python installed. You may need to also install the following Python packages (`conda install` ...)
-    - matplotlib
-    - time
-    - logging
-4.  [PyPower](https://pypi.org/project/PYPOWER/) - `pip install pypower`
-5.  [helics_cli](https://github.com/GMLC-TDC/helics-cli) - `pip install git+git://github.com/GMLC-TDC/helics-cli.git@master`
+1. [HELICS](https://helics.readthedocs.io/en/latest/installation/index.html)
+2. [GridLAB-D](https://github.com/gridlab-d/gridlab-d/tree/develop) - Enable HELICS, see instructions [here](http://gridlab-d.shoutwiki.com/wiki/Connection:helics_msg)
+3. [Python](https://www.anaconda.com/download/) - Anaconda installation, if you don't already have Python installed. You may need to also install the following Python packages (`conda install` ...)
+   - matplotlib
+   - time
+   - logging
+4. [PyPower](https://pypi.org/project/PYPOWER/) - `pip install pypower`
+5. [helics_cli](https://github.com/GMLC-TDC/helics-cli) - `pip install git+git://github.com/GMLC-TDC/helics-cli.git@master`
 
 This example has a very simple message topology (with only one message being sent by either federate at each time step) and uses only a single broker. Diagrams of the message and broker topology can be found below:
 
@@ -179,10 +179,10 @@ To show the difference between running these two simulators in a stand-alone ana
 
 The figure below shows the total load on the transmission node to which the distribution system model is attached over the course of the simulated day, both when operating stand-alone and when running in a co-simulation with the distribution system.
 
-![Ex. 1a  transmission bus voltage](../img/Ex1a_Bus_voltage_118.png)
+![Ex. 1a transmission bus voltage](../img/Ex1a_Bus_voltage_118.png)
 
 As can be seen, the impacts of co-simulation are relatively modest in this case. Even when the transmission system provides a dynamic high-side substation voltage (rather than just assuming a fixed value) and even with loads that have been created to be very voltage sensitive, the changing substation voltage doesn't impact the load substantially and change the voltage profiles significantly. (If you're curious to see an even bigger impact, you can disable the voltage regulators in GridLAB-D by editing the `regulator_configuration` objects so that the `Control` parameter is set to `MANUAL`. This will lock the regulators into place and allow the substation voltage to propagate through the circuit unregulated.) (xxxxxxx - double-check this.)
 
 The load of the distribution circuit as seen by the transmission model with and without co-simulation is similarly muted.
 
-![Ex. 1a  distribution system load](../img/Ex1a_Feeder_consumption.png)
+![Ex. 1a distribution system load](../img/Ex1a_Feeder_consumption.png)

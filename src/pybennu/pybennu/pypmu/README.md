@@ -4,10 +4,11 @@ Synchrophasor module represents implementation of IEEE C37.118.2
 standard in Python. `synchrophasor` module is still in development phase
 but we have a few very interesting tools.
 
-### Notes: 
+## Notes ##
 
-##### - Latest Alpha release: v1.0.0-alpha
-##### - We need some beta testers!
+### - Latest Alpha release: v1.0.0-alpha ###
+
+#### - We need some beta testers ####
 
 ## Getting Started ##
 
@@ -15,32 +16,34 @@ Synchrophasor module is made to be easy to install and run.
 
 ### Prerequisites ###
 
-You will need `python3` to run module correctly. Check 
+You will need `python3` to run module correctly. Check
 your Python version:
-```
+
+```text
 python --version
 ```
+
 If you're using Python 2 version you can install [Python 3](https://www.python.org/downloads/) alongside with
-Python 2. 
+Python 2.
 
 ### Installing ###
 
 * Install using `pip` for Python 3: `pip3 install synchrophasor`
 
 * You can download this project as `zip` file and extract it or clone it
-using git `git clone https://github.com/iicsys/pypmu.git` and then run 
+using git `git clone https://github.com/iicsys/pypmu.git` and then run
 `python3 setup.py install` inside project folder.
 
 ### Running the tests ###
 
 Right now we only have one test for frame encapsulation validation. You
 can check it like this:
-```
+
+```text
 python3 tests/validate_frames.py
 ```
 
 If ```AssertionError``` is **not** shown you're good to go!
-
 
 ## Usage - What do we have so far? ##
 
@@ -53,20 +56,19 @@ Possible practical use of the synchrophasor module would be data-stream
 splitter. In case you need to send phasor measurements to multiple
 destinations following 4 lines of code will do it:
 
-```
+```text
 from synchrophasor.splitter import StreamSplitter
 
 sp = StreamSplitter(source_ip="127.0.0.1", source_port=1410, listen_ip="127.0.0.1", listen_port=1502)
 sp.run()
 ```
 
-
 ### TinyPMU ###
 
 With only few lines of code you can bring up a PMU simulator which will
-send constant phasor measurements to connected PDCs. 
+send constant phasor measurements to connected PDCs.
 
-```
+```text
 from synchrophasor.pmu import Pmu
 
 
@@ -87,12 +89,12 @@ pmu.join()
 
 ### TinyPDC ###
 
-Here's an example of a very simple PDC. tinyPDC supports only one 
+Here's an example of a very simple PDC. tinyPDC supports only one
 connection to a PMU and still cannot understand measurements or
-configuration but with your help we can learn tinyPDC to read 
+configuration but with your help we can learn tinyPDC to read
 Data Frames and Configuration Frames
 
-```
+```text
 from synchrophasor.pdc import Pdc
 
 pdc = Pdc(pdc_id=7, pmu_ip="127.0.0.1", pmu_port=1410)
@@ -113,7 +115,7 @@ while True:
 
 ## Applications ##
 
-If you really don't want to know what is inside of these scripts we've 
+If you really don't want to know what is inside of these scripts we've
 prepared applications for you inside `apps` folder.
 
 Make them executable like this:
@@ -143,6 +145,7 @@ connected PDCs:
 `
 ./pmy.py -i 511 -ip 127.0.0.1 -p 1995 -r 30'
 `
+
 ## We don't have it yet? :( ##
 
 Since `synchrophasor` module is in early development phase we're
@@ -163,7 +166,7 @@ do not hesitate to contact us: <stevan.sandi@gmail.com> or
 2. Fork this repo.
 3. Create new branch: `git checkout -b fixing-your-stupid-bug`
 4. Commit changes: `git commit -m 'There you go! Fixed your stupid bug.'`
-5. Push changes to the branch: `git push origin fixing-your-stupid-bug` 
+5. Push changes to the branch: `git push origin fixing-your-stupid-bug`
 6. Submit pull request.
 
 ## Credits ##
@@ -178,8 +181,8 @@ Please check [LICENSE.txt](LICENSE.txt).
 
 ## References ##
 
-* C37.118.2-2011 - IEEE Standard for Synchrophasor Data Transfer for Power Systems,  [>>](http://standards.ieee.org/findstds/standard/C37.118.2-2011.html)
- 
+* C37.118.2-2011 - IEEE Standard for Synchrophasor Data Transfer for Power Systems, [>>](http://standards.ieee.org/findstds/standard/C37.118.2-2011.html)
+
 ## Citations ##
 
 _If you use the pyPMU code for your research, please cite the following publication:_

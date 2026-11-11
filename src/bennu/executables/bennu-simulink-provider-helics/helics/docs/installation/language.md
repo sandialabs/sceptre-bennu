@@ -5,9 +5,9 @@
 Run the following:
 
 ```bash
-$ cmake -DBUILD_PYTHON_INTERFACE=ON -DCMAKE_INSTALL_PREFIX=/Users/$(whoami)/local/helics-x.x.x/ ..
-$ make -j8
-$ make install
+cmake -DBUILD_PYTHON_INTERFACE=ON -DCMAKE_INSTALL_PREFIX=/Users/$(whoami)/local/helics-x.x.x/ ..
+make -j8
+make install
 ```
 
 Add the following to your `~/.bashrc` file.
@@ -38,9 +38,9 @@ using the `interfaces/python` folder as a standalone CMake project ("e.g. `cmake
 Run the following:
 
 ```bash
-$ cmake -DBUILD_PYTHON2_INTERFACE=ON -DPYTHON_INCLUDE_DIR=$(python2-config --prefix)/include/python2.7/ -DPYTHON_LIBRARY=$(python2-config --prefix)/lib/python2.7/libpython2.7.dylib -DCMAKE_INSTALL_PREFIX=/Users/$(whoami)/local/helics-x.x.x/ ..
-$ make -j8
-$ make install
+cmake -DBUILD_PYTHON2_INTERFACE=ON -DPYTHON_INCLUDE_DIR=$(python2-config --prefix)/include/python2.7/ -DPYTHON_LIBRARY=$(python2-config --prefix)/lib/python2.7/libpython2.7.dylib -DCMAKE_INSTALL_PREFIX=/Users/$(whoami)/local/helics-x.x.x/ ..
+make -j8
+make install
 ```
 
 Add the following to your `~/.bashrc` file.
@@ -73,13 +73,13 @@ boost.org website.
 Unzip the folder boost_1_70_0 to any location, for example Downloads.
 
 ```bash
-$ cd ~/Downloads/boost_1_70_0
-$ ./bootstrap.sh --with-python=/Users/$USER/miniconda3/python3 --prefix=/usr/local/Cellar/gcc/7.2.0_1/bin/gcc-7
-$ ./bootstrap.sh --prefix=/ --prefix=/Users/$USER/local/boost-gcc-1.70
-$ ./b2
-$ ./b2 install
-$ # OR
-$ ./bjam cxxflags='-fPIC' cflags='-fPIC' -a link=static install # For static linking
+cd ~/Downloads/boost_1_70_0
+./bootstrap.sh --with-python=/Users/$USER/miniconda3/python3 --prefix=/usr/local/Cellar/gcc/7.2.0_1/bin/gcc-7
+./bootstrap.sh --prefix=/ --prefix=/Users/$USER/local/boost-gcc-1.70
+./b2
+./b2 install
+# OR
+./bjam cxxflags='-fPIC' cflags='-fPIC' -a link=static install # For static linking
 ```
 
 This will install boost in the `~/local/boost-gcc-1.70` folder
@@ -87,8 +87,8 @@ This will install boost in the `~/local/boost-gcc-1.70` folder
 Next, you will need to build HELICS and tell it what the BOOST_ROOT is.
 
 ```bash
-$ cmake -DCMAKE_INSTALL_PREFIX="/Users/$USER/local/helics-gcc-x.x.x/" -DBOOST_ROOT="/Users/$USER/local/boost-gcc-1.64" -DBUILD_PYTHON_INTERFACE=ON -DPYTHON_LIBRARY=$(python3-config --prefix)/lib/libpython3.6m.dylib -DPYTHON_INCLUDE_DIR=$(python3-config --prefix)/include/python3.6m -DCMAKE_C_COMPILER=/usr/local/Cellar/gcc/7.2.0_1/bin/gcc-7 -DCMAKE_CXX_COMPILER=/usr/local/Cellar/gcc/7.2.0_1/bin/g++-7 ../
-$ make clean; make -j 4; make install
+cmake -DCMAKE_INSTALL_PREFIX="/Users/$USER/local/helics-gcc-x.x.x/" -DBOOST_ROOT="/Users/$USER/local/boost-gcc-1.64" -DBUILD_PYTHON_INTERFACE=ON -DPYTHON_LIBRARY=$(python3-config --prefix)/lib/libpython3.6m.dylib -DPYTHON_INCLUDE_DIR=$(python3-config --prefix)/include/python3.6m -DCMAKE_C_COMPILER=/usr/local/Cellar/gcc/7.2.0_1/bin/gcc-7 -DCMAKE_CXX_COMPILER=/usr/local/Cellar/gcc/7.2.0_1/bin/g++-7 ../
+make clean; make -j 4; make install
 ```
 
 ## HELICS with MATLAB
