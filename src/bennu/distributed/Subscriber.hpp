@@ -1,6 +1,7 @@
 #ifndef BENNU_DISTRIBUTED_SUBSCRIBER_HPP
 #define BENNU_DISTRIBUTED_SUBSCRIBER_HPP
 
+#include <atomic>
 #include <functional> // std::function
 #include <memory>
 #include <string>
@@ -31,6 +32,7 @@ private:
     SubscriptionHandler mHandler;
     uint64_t mDatagrams = 0; // receive-thread only
     std::shared_ptr<std::thread> mSubscriberThread;
+    std::atomic<bool> mRunning{true};
 };
 
 } // namespace distributed

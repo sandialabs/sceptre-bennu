@@ -116,6 +116,15 @@ class GtnetSktSettings(BaseModel):
         description="IMPORTANT: The order of this list matters! It determines the order in which values are serialized on the wire in packets, which determines how they're read by the RTDS. See docstring in rtds.py for details.",
     )
 
+    @field_validator("tags")
+    @classmethod
+    def validate_tags_limit(cls, v: list[GtnetSktTag]) -> list[GtnetSktTag]:
+        if len(v) > 30:
+            raise ValueError(
+                "GTNET-SKT supports a maximum of 30 data points per channel"
+            )
+        return v
+
 
 class PmuDevice(BaseModel):
     """

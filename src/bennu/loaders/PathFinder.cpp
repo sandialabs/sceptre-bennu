@@ -11,9 +11,9 @@ bennu::loaders::PathFinder::PathFinder()
 {
 }
 
-bool bennu::loaders::PathFinder::findFile(const boost::filesystem::path& path,  // in this directory,
-                                            const std::string& filename, // search for this name,
-                                            boost::filesystem::path& pathFound) // placing path here if found
+bool bennu::loaders::PathFinder::findFile(const boost::filesystem::path& path, // in this directory,
+                                          const std::string& filename,         // search for this name,
+                                          boost::filesystem::path& pathFound)  // placing path here if found
 {
     if (!boost::filesystem::exists(path))
     {
@@ -49,6 +49,42 @@ void bennu::loaders::PathFinder::setPaths(const std::vector<std::string>& x)
     p_paths = x;
 }
 
+void bennu::loaders::PathFinder::setPath(const std::string& paths, const std::string& separator)
+{
+    p_paths.clear();
+    if (paths.empty())
+    {
+        return;
+    }
+    if (separator.empty())
+    {
+        p_paths.push_back(paths);
+        return;
+    }
+    size_t start = 0;
+    size_t pos = 0;
+    while ((pos = paths.find(separator, start)) != std::string::npos)
+    {
+        p_paths.push_back(paths.substr(start, pos - start));
+        start = pos + separator.length();
+    }
+    p_paths.push_back(paths.substr(start));
+}
+
+std::string bennu::loaders::PathFinder::getPath(const std::string& separator) const
+{
+    std::string result;
+    for (size_t i = 0; i < p_paths.size(); ++i)
+    {
+        if (i > 0)
+        {
+            result += separator;
+        }
+        result += p_paths[i];
+    }
+    return result;
+}
+
 std::vector<std::string> bennu::loaders::PathFinder::getPaths() const
 {
     std::vector<std::string> paths = p_paths;
@@ -70,7 +106,6 @@ std::string bennu::loaders::PathFinder::getPathForFilename(const std::string& fi
         }
     }
 
-
     if (!stat(filename.c_str(), &status) && S_ISREG(status.st_mode))
     {
         return filename;
@@ -86,7 +121,10 @@ void bennu::loaders::PathFinder::pushWorkingDirectory(const std::string& x)
 
 void bennu::loaders::PathFinder::popWorkingDirectory()
 {
-    p_workingDirectory.pop_back();
+    if (!p_workingDirectory.empty())
+    {
+        p_workingDirectory.pop_back();
+    }
 }
 
 std::vector<std::string> bennu::loaders::PathFinder::getWorkingDirectory()
@@ -117,7 +155,7 @@ std::string bennu::loaders::PathFinder::extractDirectory(const std::string& full
     boost::filesystem::path fname(fullName);
     if (boost::filesystem::exists(fname))
     {
-        //file exists
+        // file exists
         if (lastSlashPos != std::string::npos)
         {
             // directory supplied in fullName
@@ -140,7 +178,9 @@ std::string bennu::loaders::PathFinder::extractDirectory(const std::string& full
     else
     {
         // file does not exist
-        std::cerr << "ERROR: file " << fullName << " does not exist\n" << std::endl;;
+        std::cerr << "ERROR: file " << fullName << " does not exist\n"
+                  << std::endl;
+        ;
     }
 
     return directory;
@@ -154,7 +194,7 @@ std::string bennu::loaders::PathFinder::checkAndFixFilename(const std::string& o
     if (dot != std::string::npos)
     {
         //  Extract the extension that was found.
-        tail = newFilename.substr(dot+1);
+        tail = newFilename.substr(dot + 1);
 
 #if defined(__APPLE__)
         if (tail == "so")
@@ -222,5 +262,5 @@ std::string bennu::loaders::PathFinder::checkAndFixFilename(const std::string& o
     return tail;
 }
 
-} // namespace bennu
 } // namespace loaders
+} // namespace bennu
