@@ -40,17 +40,16 @@ protected:
     // Must return "ACK=<value>" or "ERR=<error message>"
     virtual std::string read(const std::string& tag) = 0;
     // Must return "ACK=<success message>" or "ERR=<error message>"
-    virtual std::string write(const std::unordered_map<std::string,std::string>& tags) = 0;
+    virtual std::string write(const std::unordered_map<std::string, std::string>& tags) = 0;
     /* Method to periodically publish data. Inheriting providers must implement */
-    [[ noreturn ]] virtual void periodicPublish() = 0;
+    [[noreturn]] virtual void periodicPublish() = 0;
 
-private:
     zmq::message_t messageHandler(const zmq::message_t& request);
 
+private:
     std::shared_ptr<Server> mServer;
     std::shared_ptr<Publisher> mPublisher;
     std::shared_ptr<std::thread> mPublishThread;
-
 };
 
 } // namespace distributed

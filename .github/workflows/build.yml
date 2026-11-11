@@ -41,40 +41,13 @@ jobs:
         run: |
           cd build/
           make -j$(nproc)
-      - name: test bennu
+      - name: install bennu
         run: |
           cd build/
           sudo make install
           sudo ldconfig
-          bennu-test-ep-server --d 1 >ep.out 2>&1 &
-          bennu-field-device --f ../data/configs/ep/dnp3-server.xml >fd-server.out 2>&1 &
-          bennu-field-device --f ../data/configs/ep/dnp3-client.xml >fd-client.out 2>&1 &
-          sleep 5
-          bennu-probe --c query >probe.out
-          grep "brkr" probe.out
-          sleep 10
-          bennu-probe --c read --t brkr >>probe.out
-          bennu-probe --c read --t load-power >>probe.out
-          sleep 3
-          cat probe.out
-          grep "brkr:true" probe.out
-          grep "load-power:400.5" probe.out
-          bennu-probe --c write --t load-breaker-toggle --s false >>probe.out
-          bennu-probe --c write --t load-mw-setpoint --v 999 >>probe.out
-          sleep 8
-          bennu-probe --c read --t brkr >>probe.out
-          bennu-probe --c read --t load-power >>probe.out
-          sleep 3
-          cat probe.out
-          grep "brkr:false" probe.out
-          grep "load-power:999" probe.out
-          echo -e "help\nexit" | bennu-brash >brash.out 2>&1
-          grep "SCEPTRE Field-Device" brash.out
-          bennu-watcherd --help
-          bennu-simulink-provider --help
-          bennu-field-deviced --help
-          bennu-simulink-provider-helics --help
-      - name: run unit tests
+      - name: run tests
+        # integration tests (test_*.cpp) drive the installed binaries
         run: |
           cd build/
           ctest --output-on-failure
@@ -171,7 +144,7 @@ jobs:
           make dist
       - name: run pybennu unit tests
         run: |
-          python3 -m pip install --break-system-packages pytest pyzmq "loguru>=0.7,<1"
+          python3 -m pip install --break-system-packages pytest pyzmq "loguru>=0.7,<1" "pydantic>2.0.0,<3.0.0" pydantic-settings "pymodbus>=3.8.0,<=3.9.2" py-expression-eval==0.3.14
           PYTHONPATH=src/pybennu python3 -m pytest src/pybennu/tests
       - name: upload wheel
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2

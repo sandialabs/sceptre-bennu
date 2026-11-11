@@ -5,7 +5,7 @@ The macOS host cannot build the C++ parts, so everything runs in a container.
 
     docker/test/run.sh [-s SRC_DIR] [-v CACHE_VOLUME] <mode>...
 
-Modes: `build`, `smoke` (build.yml "test bennu" script), `ctest`, `pytest` (src/pybennu/tests, skipped if absent),
+Modes: `build`, `ctest` (includes the end-to-end probe and `--help` integration tests; `smoke` is an alias), `pytest` (src/pybennu/tests, skipped if absent),
 `lint` (python/codespell `make check` plus `cpp-check`; set `BASE=<ref>` to change the diff base; not part of `all` until the tree is clean), `throughput`, `all`.
 
 - The image (`bennu-verify:22.04-lint`) is built on first use from `docker/test/Dockerfile`.

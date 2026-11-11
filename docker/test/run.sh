@@ -34,41 +34,7 @@ build() {
 }
 install_() { [ -f $B/Makefile ] || build; (cd $B && make install >/dev/null) && ldconfig; }
 
-smoke() {  # verbatim from .github/workflows/build.yml "test bennu"
-    install_
-    rm -rf /tmp/smoke && mkdir /tmp/smoke && cd /tmp/smoke
-    local cfg=$W/data/configs/ep
-    bennu-test-ep-server --d 1 >ep.out 2>&1 &
-    bennu-field-device --f $cfg/dnp3-server.xml >fd-server.out 2>&1 &
-    bennu-field-device --f $cfg/dnp3-client.xml >fd-client.out 2>&1 &
-    sleep 5
-    bennu-probe --c query >probe.out
-    grep "brkr" probe.out
-    sleep 10
-    bennu-probe --c read --t brkr >>probe.out
-    bennu-probe --c read --t load-power >>probe.out
-    sleep 3
-    cat probe.out
-    grep "brkr:true" probe.out
-    grep "load-power:400.5" probe.out
-    bennu-probe --c write --t load-breaker-toggle --s false >>probe.out
-    bennu-probe --c write --t load-mw-setpoint --v 999 >>probe.out
-    sleep 8
-    bennu-probe --c read --t brkr >>probe.out
-    bennu-probe --c read --t load-power >>probe.out
-    sleep 3
-    cat probe.out
-    grep "brkr:false" probe.out
-    grep "load-power:999" probe.out
-    echo -e "help\nexit" | bennu-brash >brash.out 2>&1
-    grep "SCEPTRE Field-Device" brash.out
-    bennu-watcherd --help
-    bennu-simulink-provider --help
-    bennu-field-deviced --help
-    bennu-simulink-provider-helics --help
-    echo SMOKE OK
-}
-ctest_() { install_; ln -sfn $W/data /cache/data; cd $B && ctest --output-on-failure; }
+ctest_() { sync_src; (cd $B && make -j"$(nproc)") && install_; ln -sfn $W/data /cache/data; cd $B && ctest --output-on-failure; }
 pytest_() {
     sync_src
     [ -d $W/src/pybennu/tests ] || { echo "no src/pybennu/tests, skipping"; return 0; }
@@ -103,12 +69,12 @@ throughput() {  # ~N output-mapped tags change every cycle; count WRITEs arrivin
 }
 
 for m in "$@"; do
-    [ "$m" = all ] && set -- build smoke ctest pytest throughput
+    [ "$m" = all ] && set -- build ctest pytest throughput
 done
 for m in "$@"; do
     echo "=== $m ==="
     case $m in
-        build) build;; smoke) smoke;; ctest) ctest_;; pytest) pytest_;;
+        build) build;; smoke|ctest) ctest_;; pytest) pytest_;;
         lint) lint;; throughput) throughput;; *) echo "unknown mode $m"; exit 2;;
     esac
 done
