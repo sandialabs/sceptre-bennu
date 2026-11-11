@@ -87,7 +87,7 @@ install:
 # Install only the dev tools (the full ".[dev]" extra would also build pyzmq/helics from git)
 install-dev:
 	$(call check-command,pip)
-	PIP_BREAK_SYSTEM_PACKAGES=1 pip install "codespell>=2.2.4" pytest pytest-cov ruff vulture pyzmq "loguru>=0.7,<1"
+	PIP_BREAK_SYSTEM_PACKAGES=1 pip install "codespell>=2.2.4" pytest pytest-cov ruff vulture pyzmq "loguru>=0.7,<1" "pydantic>2.0.0,<3.0.0" pydantic-settings "pymodbus>=3.8.0,<=3.9.2" py-expression-eval==0.3.14
 
 # Lint code (ruff, codespell) and fix issues
 lint:

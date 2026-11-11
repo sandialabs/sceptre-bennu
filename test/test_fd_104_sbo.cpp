@@ -8,6 +8,7 @@
 #include "bennu/devices/modules/comms/iec60870-5/module/Server.hpp"
 
 extern std::string exec(const char*);
+extern void stopProcesses(const std::string& name);
 
 using bennu::comms::eStatusReadWrite;
 using bennu::comms::eValueReadWrite;
@@ -88,7 +89,7 @@ TEST_CASE("testing iec60870-5-104 select-before-operate server startup")
 {
     exec("bennu-field-device --f ../data/configs/ep/iec60870-5-104-server-sbo.xml >fd-104-sbo.out 2>&1 &");
     exec("sleep .1");
-    exec("pkill -f bennu-field-device");
+    stopProcesses("bennu-field-device");
     std::string res("Initialized IEC60870-5-104 server: tcp://127.0.0.1:2404 (select-before-operate enabled)\n");
     CHECK(exec("grep -o -e 'Initialized IEC60870-5-104 server: tcp://127.0.0.1:2404 (select-before-operate enabled)' fd-104-sbo.out") == res);
 }

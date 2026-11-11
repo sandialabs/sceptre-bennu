@@ -2,6 +2,7 @@
 #include <string>
 
 extern std::string exec(const char*);
+extern void stopProcesses(const std::string& name);
 
 TEST_CASE("testing probe -- WRITE")
 {
@@ -20,8 +21,8 @@ TEST_CASE("testing probe -- WRITE")
          "bennu-probe --c read --t load-power 2>&1 | grep -q 'load-power:999' && break; sleep 1; done");
     exec("bennu-probe --c read --t brkr >probe.out 2>&1");
     exec("bennu-probe --c read --t load-power >>probe.out 2>&1");
-    exec("pkill -f bennu-test-ep-server");
-    exec("pkill -f bennu-field-device");
+    stopProcesses("bennu-test-ep-server");
+    stopProcesses("bennu-field-device");
     res = "I: ACK\nReply:\n\tbrkr:false\nI: ACK\nReply:\n\tload-power:999.000000\n";
     CHECK(exec("grep -v 'Client connect' probe.out") == res);
 }

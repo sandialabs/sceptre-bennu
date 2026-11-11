@@ -3,6 +3,7 @@
 #include <string>
 
 extern std::string exec(const char*);
+extern void stopProcesses(const std::string& name);
 
 // Runtime log control of a running field device: status, file logging with rotation cap,
 // level with auto-revert, live tail, socket permissions, discovery and stale-socket cleanup.
@@ -30,7 +31,7 @@ c2 = c2 + 1
 )";
     sh("cp lc/a.xml lc/b.xml");
     std::string sockdir = "/tmp/bennu-$(id -u)";
-    sh("pkill -f bennu-field-device"); // from other tests; separate sh, or it would kill itself
+    stopProcesses("bennu-field-device"); // left over from other tests
     sh("rm -f " + sockdir + "/*.sock");
     sh("unset BENNU_LOG_LEVEL; " + fd + " --f lc/a.xml >lc/a.out 2>&1 & echo $! > lc/a.pid; sleep 2");
 
@@ -142,5 +143,5 @@ c2 = c2 + 1
     // a normal exit (SIGINT) removes its socket
     sh("kill -INT $(cat lc/a.pid); sleep 1");
     CHECK(sh("ls " + sockdir + " | grep -c sock$") == "0\n");
-    sh("pkill -f bennu-field-device");
+    stopProcesses("bennu-field-device");
 }
