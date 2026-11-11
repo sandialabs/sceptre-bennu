@@ -13,7 +13,6 @@ serialization and deserialization to and from strings. It can also preserve
 existing comment in unserialization/serialization steps, making it a convenient
 format to store user input files.
 
-
 ## Documentation
 
 [JsonCpp documentation][JsonCpp-documentation] is generated using [Doxygen][].
@@ -21,23 +20,24 @@ format to store user input files.
 [JsonCpp-documentation]: http://open-source-parsers.github.io/jsoncpp-docs/doxygen/index.html
 [Doxygen]: http://www.doxygen.org
 
-
 ## A note on backward-compatibility
 
 * `1.y.z` is built with C++11.
 * `0.y.z` can be used with older compilers.
 * Major versions maintain binary-compatibility.
 
-
 ## Using JsonCpp in your project
 
 ### Amalgamated source
-https://github.com/open-source-parsers/jsoncpp/wiki/Amalgamated
+
+<https://github.com/open-source-parsers/jsoncpp/wiki/Amalgamated>
 
 ### The Meson Build System
+
 If you are using the [Meson Build System](http://mesonbuild.com), then you can get a wrap file by downloading it from [Meson WrapDB](https://wrapdb.mesonbuild.com/jsoncpp), or simply use `meson wrap install jsoncpp`.
 
 ### Other ways
+
 If you have trouble, see the Wiki, or post a question as an Issue.
 
 ## License

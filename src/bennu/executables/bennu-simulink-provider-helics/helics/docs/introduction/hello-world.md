@@ -53,8 +53,8 @@ To compile the federates, you can use the following commands.
 Linux and Mac:
 
 ```bash
-$ cc hello_world_sender.c -o ./hello_world_sender -lhelicsSharedLib
-$ cc hello_world_receiver.c -o ./hello_world_receiver -lhelicsSharedLib
+cc hello_world_sender.c -o ./hello_world_sender -lhelicsSharedLib
+cc hello_world_receiver.c -o ./hello_world_receiver -lhelicsSharedLib
 ```
 
 You may need to include additional include paths and library paths in
@@ -68,19 +68,19 @@ Next, open three terminals. In the first terminal, run the following
 command.
 
 ```bash
-$ ./helics_broker -f2
+./helics_broker -f2
 ```
 
 In the second terminal, run the following command.
 
 ```bash
-$ ./hello_world_sender
+./hello_world_sender
 ```
 
 In a third terminal, run the following command.
 
 ```bash
-$ ./hello_world_receiver
+./hello_world_receiver
 ```
 
 You should see `Hello, World` printed out in the terminal where you ran

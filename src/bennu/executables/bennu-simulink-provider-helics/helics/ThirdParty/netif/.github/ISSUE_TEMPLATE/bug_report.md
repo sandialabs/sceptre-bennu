@@ -16,9 +16,10 @@ Steps to reproduce the behavior:
 Please provide a minimal working example of the bug if possible.
 
 **Environment (please complete the following information):**
- - Operating System: [all | Windows | Mac | Linux | BSD]
- - What compiler or setup process did you use?
- - Which version/commit of the library did you use?
+
+- Operating System: [all | Windows | Mac | Linux | BSD]
+- What compiler or setup process did you use?
+- Which version/commit of the library did you use?
 
 **Additional context and information**
 (e.g. detailed explanation, stacktraces, related issues, suggestions how to fix, links for us to have context, eg. stackoverflow, gitter, etc)

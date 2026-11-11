@@ -20,15 +20,15 @@ abstract: TDC Specification document describing philosophy, layers, APIs, testin
 version: 0.4.0
 ---
 
-# Introduction
+## Introduction
 
 This guiding document describes the development specification for the TDC co-simulation tool.
 
-# Basic Requirements
+## Basic Requirements
 
 The following was adapted from TDC Simulation Requirements developed by team November 7, 2016
 
-## Required by Stakeholders
+### Required by Stakeholders
 
 - **High Scalable:** Support co-simulation with 2 to >100,000 federates (WECC capable)
 - **Cross-platform:**
@@ -66,7 +66,7 @@ The following was adapted from TDC Simulation Requirements developed by team Nov
 - **Documentation and Examples**
   - Templates for common use cases
 
-## Nice to haves
+### Nice to haves
 
 - Check-pointing
 - Roll-back
@@ -81,45 +81,45 @@ The following was adapted from TDC Simulation Requirements developed by team Nov
 - Data Collection and Analysis
   - Standardize / inform on a common data model / API for common classes of analysis
 
-# Overview
+## Overview
 
-## Key questions
+### Key questions
 
-### Broker vs. Broker-less vs Hierarchical Broker
+#### Broker vs. Broker-less vs Hierarchical Broker
 
 - Single broker is useful because it represents single IP address.
   - This mirrors HLA portico approach
 - Single broker will not scale
 - Hierarchical broker may scale better but may put burden on modelers.
 
-### Location/structure of federate configuration data
+#### Location/structure of federate configuration data
 
 - One large definition
 - Individual files
 
-### Supported data exchange patterns
+#### Supported data exchange patterns
 
-#### Time coordination
+##### Time coordination
 
 - Syncing
 - Reiteration
 - Advancement
 
-### What features should we borrow from
+#### What features should we borrow from
 
 - HLA
 - FMI
 - FNCS
 
-## Over-arching Design Decisions
+### Over-arching Design Decisions
 
-### Static Federate Connections
+#### Static Federate Connections
 
 TDC-Tool will assume all federate connections are static, that is known in advance.
 
 _Note: dynamic additions of federates at runtimes can be emulated by predefining connections and only exchanging data at a later time._
 
-# Layers
+## Layers
 
 The following layers will be defined in the TDC co-simulation tool.
 
@@ -130,7 +130,7 @@ For each layer, the following are described
 - API
 - Testing Specification
 
-## User Interface
+### User Interface
 
 The complexity of co-simulation drives us to the need for applications that support the user in creating models, configuring the co-simulation engine and simulator connections, automate the deployment of the simulators to the appropriate computers (whether local, hpc, or cloud), and process and visualize the information produced.
 
@@ -140,7 +140,7 @@ The following figure provides a block diagram of the elements needed to support 
 
 ![](./img/workflow.png)
 
-### Scenario Generation
+#### Scenario Generation
 
 Generating scenarios, and the underlying models to support the scenarios, is fundamental to using the co-simulation environment. However, describing those scenarios can be time consuming and error prone. For example, a GridLAB-D model may contain a million lines of model code, but one errant setting could drastically change the solution. Now, multiply this by 10,000 distribution circuits, add transmission and market simulators, and layer communication networks over the top, and the likelihood of ill-configured simulations grows. At this larger scale, simply managing the correspondingly large set of files and initiating the runs for each simulator requires automation. Automation of scenario generation is necessary to maintain model continuity and ensure proper alignment across domains.
 
@@ -160,30 +160,30 @@ Additionally, the first time a scenario or use case is created is the most diffi
 
 **_Open question_: How far do we define this (e.g., all the way down to the programming language)? Or do we want to define general parameters of a framework that we can then incorporate functions into later? Do we want to define a philosophy or specific software requirements?**
 
-### Configuration
+#### Configuration
 
-### Automation
+#### Automation
 
-### Visualization and Data Processing
+#### Visualization and Data Processing
 
-### API
+#### API
 
-### Testing Specification
+#### Testing Specification
 
-## Simulators
+### Simulators
 
 While the co-simulation environment will support any simulation element that meets the minimum requirements, it is envisioned many TDC applications will rely heavily on a common style of simulators. As a result we will define two classes of simulator interfaces:
 
-1.  General purpose, including HLA and FMI interface standards.
-2.  TDC optimized for common TDC application types:
-    - Transmission Simulator
-    - Distribution Simulator
-    - Communication Simulator
-    - Market Simulator
+1. General purpose, including HLA and FMI interface standards.
+2. TDC optimized for common TDC application types:
+   - Transmission Simulator
+   - Distribution Simulator
+   - Communication Simulator
+   - Market Simulator
 
 The lower-level details of these interfaces are defined in the "Application" Section below; however, this section provides two key extensions: standardized data exchange patterns (variable naming, types, timing/synchronization, etc.) and a higher-level API for certain common operations.
 
-### Common Configuration
+#### Common Configuration
 
 Note that as we are modeling multiple layers of cyber-physical power systems, there is a natural split between simulation coordination (e.g. synchronizing simulation data), and communication-system data. In some cases the same datapoint will be represented in both layers, though with subtle differences. For instance the voltage at a particular node may be exchanged for both simulation coordination and via the communication system. The simulation coordination physical data should be exchanged as accurately and fast as possible, likely with re-iteration since it represents a physical link. In contrast the same data seen in the communication system would be exchanged only once (no reiteration), likely with sensor delay and possibly sensor noise introduced.
 
@@ -191,7 +191,7 @@ As such the configurations here can in some cases be mixed and matched, for inst
 
 Note: in each group, a \* is used to indicate the configurations (proposed) to be built out first. These are defined in more detail below.
 
-#### Multiple Power-flows
+##### Multiple Power-flows
 
 Many configurations: T+D, T+D, D+D, resulting in many combinations First distinguished as **single-pass vs reiterative**, and further distinguished by the type of power flow interface presented:
 
@@ -219,7 +219,7 @@ For each, the raw power signals will typically be exchanged using 3-ph represent
 \[^2\]: Huang, Q. & V. Vittal. "Integrated Transmission and Distribution System Power Flow and Dynamic Simulation Using Mixed Three-Sequence/Three-Phase Modeling" IEEE Transactions in Power Systems, 2016
 \[^3\]: This was called "P3" in version 0.3.0 dated 2/11/2017
 
-- #### Power Systems (Physical) Data to/from Communication (Cyber) Exchange
+- ##### Power Systems (Physical) Data to/from Communication (Cyber) Exchange
 
   There are a wide range of communication links relevant for TDC use cases. Including:
 
@@ -244,7 +244,7 @@ For each, the raw power signals will typically be exchanged using 3-ph represent
 
   **\*Config C2—Packetized Network Simulation:** This is full network simulation including packetization and detailed multi-OSI-level stack simulation as provided by ns-3 and similar tools. _Note: stared instead of simple delays for political reasons… seems we really need to have ns-3 in our next demo to bolster the "C" in TDC_
 
-- #### Market Simulation
+- ##### Market Simulation
 
   There are a wide range of market scenarios that might be captured with the TDC tool including:
 
@@ -258,7 +258,7 @@ For each, the raw power signals will typically be exchanged using 3-ph represent
 
   **Config M3—Transactive Energy:** Full transactive energy, where there could be multiple layers of interactively bidding markets, including aggregators.
 
-- #### External Models
+- ##### External Models
 
   In addition to the core TDCM federates, and generic HLA and FMI interfaces, it seems there is value in having templates/interfaces for a few common external model types.
 
@@ -274,9 +274,9 @@ For each, the raw power signals will typically be exchanged using 3-ph represent
 
   **Config +US—User provided communication server model:** This configuration targets cybersecurity use cases, where the user may add a detailed communication server representation that includes additional cybersecurity monitoring or other protections.
 
-### Standard Data Schemas
+#### Standard Data Schemas
 
-#### Conventions
+##### Conventions
 
 This section defines a standard naming convention for valueNames, and communication federate source/destinations.
 
@@ -304,7 +304,7 @@ For each level in the hierarchy, the user can pick names to match the data. If g
 
 For example, voltage is nominally presented and passed as volts (V), but can be specified in kV or MV.
 
-#### Config P1A-M1A+UC
+##### Config P1A-M1A+UC
 
 _Note: this is roughly the main setup for IGMS_
 
@@ -321,15 +321,15 @@ _Note: this is roughly the main setup for IGMS_
 | transmission | bus00x/gen0x/power_actual | Actual power output from generator. Total, complex                                                        |                                                                                                                      |
 | agc          | bus00x/gen0x/agc          | Percent of 5minute dispatch level                                                                         | Based on an off-hand comment, I am under the impression that AGC signals may be sent this way… not confirmed.        |
 
-#### Additional Specified Configurations
+##### Additional Specified Configurations
 
 _Additional input required: Target of 3-5 total._
 
-### Timing/Synchronization Conventions
+#### Timing/Synchronization Conventions
 
 _The intent of this section is to capture the order of data I/O during standard configurations. Crux could be agreeing on the order/master for reiteration._
 
-### Higher-level Simulator-Type-Specific API
+#### Higher-level Simulator-Type-Specific API
 
 This Simulator-Type-Specific API builds on top of the raw application API described below to provide standardized convenience functions for common use cases.
 
@@ -338,9 +338,9 @@ This Simulator-Type-Specific API builds on top of the raw application API descri
 - pfPublish3ph(valueName, value_array, input_format='3ph')—Helper function for publishing voltage and current values. The function accepts any input format from {'3ph(ase)', '3seq(uence)', 'pos(itive sequence)', 'sum'} and automatically converts the values to three phase representation. The 'sum' type is particularly useful in the Get3ph function to combine the total (complex) power across all 3 phases.
 - pfGet3ph(valueName, output_format='3ph')—Complementary helper function to receive 3-phase values and internally convert to other representations
 
-#### Additional Simulator-Types
+##### Additional Simulator-Types
 
-### Testing Specification
+#### Testing Specification
 
 Dummy simulators for each implemented configuration should be made available as the interface, API, and schema's evolve. These can be tested/verified (ideally with continuous integration checks) using standard configuration combinations. In addition any configurations not included in these combinations can be tested individually with appropriate test player/tracer support.
 
@@ -351,7 +351,7 @@ Initial test configuration combinations:
 - P2: T+D dynamics
 - P2-C2: T+D dynamics with packetized cyber data exchange. Use case: Wide-Area control with synchrophasor exchange
 
-## Application
+### Application
 
 The general application API will act as a basic interface for applications to translate between the programs and the Core API. It is anticipated application specific API's will be build on top of these basic API's to provide additional functionality.
 
@@ -371,15 +371,15 @@ all types of interfaces will have some properties
   - arbitrary - can interact at any time interval up to cosim resolution (ns?)
 - rollback [yes/no]
 
-### API
+#### API
 
 The API code itself should have version in C, C++, python, and matlab at a minimum. The API code will be written in C++, with a shared library layer using only C constructs. An application could use the C shared library, or directly include the C++ code in the application.
 
-#### Value based API
+##### Value based API
 
 This API is used by federates to pass values directly, it can be iterative, And is meant to emulate a direct physical coupling, though other uses are possible.
 
-##### Federate Management
+###### Federate Management
 
 - register(simConfiguration) --simConfiguration should be structure describing the simulator properties and capabilities, this should be able to be an object or file name containing the description in some format.
   Borrowing ideas from FMI the objects are in a couple different states (startup, initialization, continuous, event, error, terminate). I would propose reducing this to 4 (startup, initialization, operation, finalize), may be want the error state as well. Certain functions then only work in certain modes
@@ -392,7 +392,7 @@ This API is used by federates to pass values directly, it can be iterative, And 
 - terminate() -- the result should depend on the type of simulation, an observation only federate should have no impact on the overall simulation.
 - error() -- the federate encountered an error and cannot continue
 
-##### Value Exchange Interface
+###### Value Exchange Interface
 
 everything should be type checked for matching with the defined values above) These functions should be available in initialization and operation mode, getValue should also be available in the finalize(or error) state as well
 
@@ -401,7 +401,7 @@ everything should be type checked for matching with the defined values above) Th
 - queryUpdate(valueName) –query if a value has been updated since the last getValue Call
   What I am a little unclear about is the value of historical data to applications. I would propose any buffering for these types of values be done in an higher level API built on this one.
 
-##### time synchronization
+###### time synchronization
 
 Only available in operation mode (currently based on FNCS model)
 
@@ -409,26 +409,24 @@ Only available in operation mode (currently based on FNCS model)
 
 a different option might be to have the time advancement be callback based in which case the API would be responsible for calling the federate function call to advance in time when appropriate.
 
-#### Packet Based API
+##### Packet Based API
 
 I propose a separate interface for communication messages
 Basically data packets. What I would ideally want is a system that routed specific data packets through a comm system model if one were present and just delivered them if one wasn’t. The applications shouldn’t care what if any communication system model was present or not. This means that the power system model should not have to be aware of the communication system model and directly send data to and from it. It should be automatically routed through the appropriate communication system. This implies that the setup for a communication system will have to declare which federates it links with. Some mechanics of cross comm system linking will also need to be worked out but that is at a lower level. These functions should only work in operation mode. These packets will need to be buffered.
 
-##### Federate Management
+###### Federate Management
 
 - register(simConfiguration) --simConfiguration should be structure describing the simulator properties and capabilities, this should be able to be an object or file name containing the description in some format.
   Borrowing ideas from FMI the objects are in a couple different states (startup, initialization, continuous, event, error, terminate). I would propose reducing this to 4 (startup, initialization, operation, finalize), may be want the error state as well. Certain functions then only work in certain modes
 - setMode(mode) -- change the mode of operation, probably should be a blocking function that only returns once the mode has been successfully changed.
   In the startup mode a federate should register its publish and subscribe communication values either by functions or by file
-
 - RegisterEndPoint(name, NAMESPACE, userType) --there should be able to be a large number of comm points in a single federate.
   NAMESPACE is a flag either GLOBAL or LOCAL Endpoints must be unique in the given namespace, GLOBAL is across the entire cosimulation, LOCAL is within the federate. userType is a user defined string nameing the type of packets that this endpoint generates or receives it should be optional and meant to aid in type checking, if included additional error checking should be included.
   -RegisterTargetDestination(name, userTYpe) -- function to give guidance to the Core about communication paths and setup, also to aid in validity checking.
-
 - terminate() -- the result should depend on the type of simulation, an observation only federate should have no impact on the overall simulation.
 - error() -- the federate encountered an error and cannot continue
 
-##### message exchange interface
+###### message exchange interface
 
 - Transmit(source, destination, data, datalength) -destination could be inside the same or different federate.
 - packetCount(destination) --return the number of packets available.
@@ -436,17 +434,16 @@ Basically data packets. What I would ideally want is a system that routed specif
 
 We may want to allow the ability to specify a callback here to be called on packet arrival?
 
-#### Packet Filter API
+##### Packet Filter API
 
 The means by which a comm simulation interacts with the other types of simulations is not clear cut, there are timing issues and delays and packet translation an other issues which get awkward if they are not designed in. In the cosimulation framework there is a need for simulating direct physical connections with real values passed back and forth, and those same simulations interact with the digital world translating between physical phenomenon and digital communications, and still others types of federates that interact purely in the digital communication world. This separations of purpose lead to the concept of a separation of functionality to better tune the interface to correspond to the physical world. So In addition to the value based interface and a packet based interface we add a third interface intended to operate on packets, for translating, manipulating, or delaying them.
 
-##### Federate Management
+###### Federate Management
 
 - register(simConfiguration) --simConfiguration should be structure describing the simulator properties and capabilities, this should be able to be an object or file name containing the description in some format.
   Borrowing ideas from FMI the objects are in a couple different states (startup, initialization, continuous, event, error, terminate). I would propose reducing this to 4 (startup, initialization, operation, finalize), may be want the error state as well. Certain functions then only work in certain modes
 - setMode(mode) -- change the mode of operation, probably should be a blocking function that only returns once the mode has been successfully changed.
   In the startup mode a federate should register its publish and subscribe communication values either by functions or by file
-
 - RegisterSrcFilter(srcEndpoint, srcUserType) SrcEndpoint is a named src endpoint to filter packats from, it can be from a packet generation API or packate pfilter API
   -RegisterFilterOutput(outputName, NAMESPACE, outputType)
   outputName is the endpoint packets reappear from, it should be unique in the federate but multiple srcEndpints registrations can output from the same outputName endpoint. srcUserType must match the definition from the src endpoint, outputUserType defines what the output type is. THis function defines an endpoint which processed packets may exit. The name may be the same as one defined by a message exchange interface
@@ -457,7 +454,7 @@ NAMESPACE is a flag either GLOBAL or LOCAL Endpoints must be unique in the given
 - terminate() -- the result should depend on the type of simulation, an observation only federate should have no impact on the overall simulation.
 - error() -- the federate encountered an error and cannot continue
 
-##### message exchange interface
+###### message exchange interface
 
 - Transmit(source, origSource, destination, data, datalength,delay\*) -destination could be inside the same or different federate. optional delay
 - packetCount(destination) --return the number of packets available.
@@ -465,12 +462,12 @@ NAMESPACE is a flag either GLOBAL or LOCAL Endpoints must be unique in the given
 
 We probably want to allow the ability to specify a callback here to be called on packet arrival? particularly for packat processors that do not depend on time, and are simply functions.
 
-### Testing Specification
+#### Testing Specification
 
 We should develop a set of semi-configurable mini-federates that test all the possible combinations of federates with an assortment of communication patterns with dummy data and exercise the API fully.
 The same set could be used for testing the broker functionality.
 
-## Core
+### Core
 
 The core represents a distributed key/value store. The specification does not dictate the on-the-wire protocol for the distribution of values. The specification does not dictate whether zero or more brokers are used.
 
@@ -478,7 +475,7 @@ Initialization occurs by parsing a configuration file or using the step-by-step 
 
 Time advances are allowed to be greater than or equal to the current time. If the same time is requested more than once, an internal counter logs the number of times the same time has been requested. In other words, internally a pair of values is incremented -- (time,counter) -- where the caller only is exposed to the time value. Every instance where time is actually incremented, the counter is reset to zero.
 
-### API
+#### API
 
 ```cpp
 #ifndef _GMLCTDC_CORE_
@@ -541,9 +538,9 @@ namespace gmlctdc {
 #endif /* _GMLCTDC_CORE_ */
 ```
 
-### Testing Specification
+#### Testing Specification
 
-## Platform
+### Platform
 
 A goal of the co-simulation environment is to be portable across a
 wide range of computing environments ranging from desktop, cloud services,
@@ -552,7 +549,7 @@ and supercomputers.
 OS specific APIs are being avoid and additional library requirements
 are being kept to a minimum to enable easier deployment.
 
-### Operating Systems
+#### Operating Systems
 
 Operating systems to be supported are Unix (Linux), Windows, and
 MacOS. It is not expected that there will be large numbers of
@@ -562,7 +559,7 @@ Operating system specific features that are required will supported by
 introducing small wrapper classes and methods. OS specific versions
 of these will be supplied for the supported operating systems.
 
-### Transport Layer
+#### Transport Layer
 
 The targeted range of platforms have different communication transport
 layers that are optimized for the platform. Supercomputers
@@ -581,7 +578,7 @@ to serve as the interface to the specific communications layer. An
 MPI and ZeroMQ implementation will be supplied but other communication
 systems could be added if needed.
 
-#### MPI
+##### MPI
 
 The MPI-3 specification will be targeted excluding dynamic process
 management features. The batch scheduling systems deployed at most
@@ -589,13 +586,13 @@ supercomputer centers does not support dynamic process management.
 The TD&C tool is initially is targeting static federate
 configurations.
 
-#### ZeroMQ
+##### ZeroMQ
 
 ZeroMQ version 4.2.0 or greater is being targeted.
 
-### Languages and Compilers
+#### Languages and Compilers
 
-#### C++
+##### C++
 
 The TD&C tool will principally be written in C++ for speed and memory efficiency.
 
@@ -610,7 +607,7 @@ Specific compilers that are being targeted are:
 - Clang 3.5
 - Intel 16
 
-#### Python
+##### Python
 
 Python bindings can be supported for both Python2 and Python3. The bindings will at a minimum support Python >=2.7.x. Python >=3.5 is expected to be supported. Cython will be used to provide C/CPP to Python bindings, since that will allow better error reporting.
 
@@ -619,7 +616,7 @@ Python bindings can be supported for both Python2 and Python3. The bindings will
 1. Player example
 2. Recorder example
 
-#### MATLAB
+##### MATLAB
 
 MATLAB bindings will be provided using the mex functionality.
 
@@ -628,11 +625,11 @@ MATLAB bindings will be provided using the mex functionality.
 1. Player example
 2. Recorder example
 
-### Custom plugin API
+#### Custom plugin API
 
 Documentation will list the minimum necessary functions that will have to be implemented to build a custom plugin.
 
-### External Package Dependencies
+#### External Package Dependencies
 
 The Question of using Boost is still up for debate.
 
@@ -640,7 +637,7 @@ _Open Issue_ : Steve's comments on Boost - Steve has used Boost virtually all C+
 
 _Open Issue_ : I/O libraries
 
-### Configuration, Build, and Test
+#### Configuration, Build, and Test
 
 CMake is the targeted build/configuration system. CMake is a cross
 platform set of tools that support the targeted operating systems and
@@ -654,13 +651,13 @@ regression tests.
 
 _Open Issue_ : Should CTest be used? Since we are using CMake CTest is already there.
 
-## Source Code Control System and Development Environment
+### Source Code Control System and Development Environment
 
 Github will be employed as the SCCS system as well as issue tracking.
 This will enable easy interacting with the distributed team and
 provides a smooth transition path for enabling access to a wider
 community. A continuous intergratiion server like TravisCI will be implemented for testing.
 
-### API
+#### API
 
-### Testing Specification
+#### Testing Specification

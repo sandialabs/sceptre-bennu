@@ -434,6 +434,55 @@ class ServerDaemon(Daemon):
                 )
 
             #########################################
+            ############### Speedgoat ###############
+            #########################################
+            # SpeedgoatProvider prompts an operator for the SSH username and
+            # password on purpose; credentials are never stored in config.ini.
+            # Run as a daemon (-d, as SCEPTRE's automated startup does) it has
+            # no terminal and exits with an error by design. Start it manually
+            # in the foreground instead, without -d. See speedgoat.py.
+            elif solver == "Speedgoat":
+                try:
+                    E.Endpoint_str_set(
+                        server_endpoint,
+                        config.get("power-solver-service", "server-endpoint").strip(),
+                    )
+                    E.Endpoint_str_set(
+                        publish_endpoint,
+                        config.get("power-solver-service", "publish-endpoint").strip(),
+                    )
+                    matlab_host = config.get(
+                        "power-solver-service", "matlab-host"
+                    ).strip()
+                    simulink_file = config.get(
+                        "power-solver-service", "simulink-file"
+                    ).strip()
+                    publish_points = config.get(
+                        "power-solver-service", "publish-points"
+                    ).strip()
+                except NoOptionError:
+                    logger.error(
+                        "The following must be defined in the "
+                        "configuration file: 'server-endpoint', "
+                        "'publish-endpoint', 'matlab-host', 'simulink-file', "
+                        "'publish-points'"
+                    )
+                    sys.exit(-1)
+
+                from pybennu.providers.power.solvers.speedgoat.speedgoat import (
+                    SpeedgoatProvider,
+                )
+
+                self.solver = SpeedgoatProvider(
+                    server_endpoint,
+                    publish_endpoint,
+                    matlab_host,
+                    simulink_file,
+                    publish_points,
+                    debug,
+                )
+
+            #########################################
             ############### Default #################
             #########################################
             else:

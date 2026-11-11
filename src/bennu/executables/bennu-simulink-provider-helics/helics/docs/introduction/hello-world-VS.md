@@ -223,4 +223,4 @@ broker, helics_world_sender, helics_world_receiver, respectively :
 
 ![](./visuals/results.jpg)
 
-## Congratulations you ran your first HELICS simulation through Visual Studio!
+## Congratulations you ran your first HELICS simulation through Visual Studio

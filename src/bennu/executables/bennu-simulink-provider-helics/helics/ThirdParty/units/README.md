@@ -92,23 +92,23 @@ These libraries will work well if the number of units being dealt with is known 
 
 ### Reasons to choose this units library vs. another option
 
-1.  Conversions to and from regular strings are required
-2.  The number of units in use is large
-3.  A specific single unit or measurement type is required to handle many different kinds of units or measurements
-4.  Uncertainties are needed to be included with the measurements
-5.  Working with per unit values
-6.  Dealing with commodities in addition to regular units. i.e. differentiate between a gallon of water and a gallon of gasoline
-7.  Dealing with equation type units
-8.  Complete C++ type safety is not a critical design requirement.
-9.  Support is needed for some funky custom unit with bizarre base units.
+1. Conversions to and from regular strings are required
+2. The number of units in use is large
+3. A specific single unit or measurement type is required to handle many different kinds of units or measurements
+4. Uncertainties are needed to be included with the measurements
+5. Working with per unit values
+6. Dealing with commodities in addition to regular units. i.e. differentiate between a gallon of water and a gallon of gasoline
+7. Dealing with equation type units
+8. Complete C++ type safety is not a critical design requirement.
+9. Support is needed for some funky custom unit with bizarre base units.
 
 ### Reasons to choose something else
 
-1.  Type safety and dimensional analysis is a design requirement
-2.  Performance is absolutely critical (many other libraries are zero runtime overhead)
-3.  You are only working with a small number of known units
-4.  You cannot use C++11 yet.
-5.  You need to operate on arbitrary powers of base units
+1. Type safety and dimensional analysis is a design requirement
+2. Performance is absolutely critical (many other libraries are zero runtime overhead)
+3. You are only working with a small number of known units
+4. You cannot use C++11 yet.
+5. You need to operate on arbitrary powers of base units
 
 ## Types
 
@@ -234,7 +234,6 @@ There are also several operator overloads that apply to units and precise_units.
 
 - `<unit>=<unit>*<unit>` generate a new unit with the units multiplied ie `m*m` does what you might expect and produces a new unit with `m^2`
 - `<unit>=<unit>/<unit>` generate a new unit with the units divided ie `m/s` does what you might expect and produces a new unit with meters per second. NOTE: `m/m` will produce `1` it will not automatically produce a `pu` though we are looking at how to make a 'pu_m\*m=m' so units like strain might work smoothly.
-
 - `bool <unit>==<unit>` compare two units. this does a rounding compare so there is some tolerance to roughly 7 significant digits for \<unit> and 13 significant digits for <precise_unit>.
 - `bool <unit>!=<unit>` the opposite of `==`
 

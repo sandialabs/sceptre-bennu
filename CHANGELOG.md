@@ -1,6 +1,6 @@
 # [2026.11.03](https://github.com/sandialabs/sceptre-bennu/compare/v2026.09.30...v2026.11.03) - 2026-11-03
 
-### 🚀 Features
+## 🚀 Features
 
 - _(iec104)_ implement select-before-operate for control commands [_(eecacd2)_](https://github.com/sandialabs/sceptre-bennu/commit/eecacd23d8307a35605a9161aadbb583e8ab30d2) ([PR 68](https://github.com/sandialabs/sceptre-bennu/pull/68))
 

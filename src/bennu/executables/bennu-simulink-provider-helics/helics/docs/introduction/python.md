@@ -52,13 +52,13 @@ Linux and Mac:
 Next, open two terminals. In the first terminal, run the following command.
 
 ```bash
-$ python pisender.py
+python pisender.py
 ```
 
 In a second terminal, run the following command.
 
 ```bash
-$ python pireceiver.py
+python pireceiver.py
 ```
 
 If done correctly, you should see an output like so:

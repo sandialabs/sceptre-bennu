@@ -1,5 +1,4 @@
-toml11
-======
+# toml11
 
 [![Build Status on TravisCI](https://travis-ci.org/ToruNiina/toml11.svg?branch=master)](https://travis-ci.org/ToruNiina/toml11)
 [![Build status on Appveyor](https://ci.appveyor.com/api/projects/status/m2n08a926asvg5mg/branch/master?svg=true)](https://ci.appveyor.com/project/ToruNiina/toml11/branch/master)
@@ -122,7 +121,7 @@ const toml::value data = toml::parse(fname);
 
 If it encounters an error while opening a file, it will throw `std::runtime_error`.
 
-You can also pass a `std::istream` to the  `toml::parse` function.
+You can also pass a `std::istream` to the `toml::parse` function.
 To show a filename in an error message, however, it is recommended to pass the
 filename with the stream.
 
@@ -393,7 +392,6 @@ The above code works with the following toml file.
 # equivalent to {"physical.color": "orange"},
 # NOT {"physical": {"color": "orange"}}.
 ```
-
 
 ## Casting a toml value
 
@@ -1022,7 +1020,7 @@ an element of an empty `std::vector`.
 The comments will also be serialized. If comments exist, those comments will be
 added just before the values.
 
-__NOTE__: Result types from `toml::parse(...)` and
+**NOTE**: Result types from `toml::parse(...)` and
 `toml::parse<toml::preserve_comments>(...)` are different.
 
 ## Customizing containers
@@ -1120,7 +1118,7 @@ add a comma after the first element (like `[1,]`).
 "[[1],]"_toml;    // ditto.
 ```
 
-NOTE: `_toml` literal returns a `toml::value`  that does not have comments.
+NOTE: `_toml` literal returns a `toml::value` that does not have comments.
 
 ## Conversion between toml value and arbitrary types
 
@@ -1417,6 +1415,7 @@ struct source_location
 ```
 
 You can get this by
+
 ```cpp
 const toml::value           v   = /*...*/;
 const toml::source_location loc = v.location();
@@ -1637,7 +1636,7 @@ The most important difference between `std::string` and `toml::string` is that
 This feature is introduced to make it easy to write a custom serializer.
 
 `Datetime` variants are `struct` that are defined in this library.
-Because `std::chrono::system_clock::time_point` is a __time point__,
+Because `std::chrono::system_clock::time_point` is a **time point**,
 not capable of representing a Local Time independent from a specific day.
 
 ## Unreleased TOML features
@@ -1758,11 +1757,11 @@ After cloning this repository, run the following command (thank you @jwillikers
 for automating test set fetching!).
 
 ```sh
-$ mkdir build
-$ cd build
-$ cmake ..
-$ make
-$ make test
+mkdir build
+cd build
+cmake ..
+make
+make test
 ```
 
 To run the language agnostic test suite, you need to compile

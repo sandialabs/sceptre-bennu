@@ -58,7 +58,7 @@ To build the Docker image, run the following from the directory
 containing the `Dockerfile`:
 
 ```bash
-$ docker build -t helics .
+docker build -t helics .
 ```
 
 ## Run
@@ -66,7 +66,7 @@ $ docker build -t helics .
 To run the Docker image as a container, run the following:
 
 ```bash
-$ docker run -it --rm helics
+docker run -it --rm helics
 ```
 
 Doing so should print the version and exit.
