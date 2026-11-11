@@ -159,10 +159,11 @@ class GroundTruthMonitor(Daemon, Subscriber):
         """
 
         def handle_exit(signum, stack):
-            """Disconnect from provider when term signal received"""
+            """Exit cleanly when a term signal is received"""
             logger.info("Stopping ground truth monitor...")
-            self.running = False
-            self.disconnect()
+            # raised inside the blocking recv in Subscriber.run, so it unwinds
+            # (closing the pidfile via atexit) and exits with status 0
+            sys.exit(0)
 
         signal.signal(signal.SIGINT, handle_exit)
         signal.signal(signal.SIGTERM, handle_exit)
