@@ -46,6 +46,12 @@ class GroundTruthMonitor(Daemon, Subscriber):
     type of points available for systems. See self.__type() for a list of types.
     """
 
+    # Points held while Elasticsearch is slow or down; the oldest are dropped first.
+    MAX_PENDING = 100000
+    # Seconds between attempts after a failed push: doubles up to the maximum.
+    RETRY_MIN = 1
+    RETRY_MAX = 30
+
     def __init__(self, args):
         """Initialize ES, Subscriber and Daemon
 
@@ -216,6 +222,7 @@ class GroundTruthMonitor(Daemon, Subscriber):
                 if self.__filter_message(message_dict):
                     with self.__lock:
                         self.new_data.append(message_dict)
+                        del self.new_data[: -self.MAX_PENDING]  # drop the oldest
 
     def __parse_filter(self):
         filters = self._filter.split(" ")
@@ -246,6 +253,7 @@ class GroundTruthMonitor(Daemon, Subscriber):
         return in_filter
 
     def push_updates_to_elastic(self):
+        delay = self.RETRY_MIN
         while True:
             if not self.new_data:
                 time.sleep(0.5)
@@ -255,13 +263,41 @@ class GroundTruthMonitor(Daemon, Subscriber):
                 self.new_data = []
             index = "bennu-" + datetime.now().strftime("%Y.%m.%d")
             actions = [
-                {"_index": index, "type": "doc", "_source": message}
+                {
+                    "_index": index,
+                    "_id": self.__doc_id(message),
+                    "type": "doc",
+                    "_source": message,
+                }
                 for message in messages
             ]
             try:
-                helpers.bulk(self.__es, actions, request_timeout=30)
+                _, errors = helpers.bulk(
+                    self.__es, actions, request_timeout=30, raise_on_error=False
+                )
             except Exception:
-                logger.exception("Bulk push to Elasticsearch failed")
+                logger.exception("Bulk push to Elasticsearch failed, will retry")
+                # put the batch back in front of what arrived meanwhile,
+                # keeping the newest MAX_PENDING points
+                with self.__lock:
+                    self.new_data[:0] = messages
+                    del self.new_data[: -self.MAX_PENDING]
+                time.sleep(delay)
+                delay = min(delay * 2, self.RETRY_MAX)
+                continue
+            delay = self.RETRY_MIN
+            if errors:
+                # rejected by Elasticsearch (e.g. mapping): retrying cannot help
+                logger.error("{} documents rejected by Elasticsearch", len(errors))
+
+    @staticmethod
+    def __doc_id(message):
+        """Deterministic doc ID, so a retried bulk overwrites what chunks it already
+        indexed instead of duplicating them (e.g. bus-1~voltage~2017-02-02T12:01:53.123456)
+        """
+        return "~".join(
+            (message["device"], message["field"], message["@timestamp"].isoformat())
+        )
 
     def __generate_id(self, device):
         """Generate an elasticsearch doc ID
