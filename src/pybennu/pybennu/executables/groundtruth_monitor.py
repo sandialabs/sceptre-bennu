@@ -139,7 +139,7 @@ class GroundTruthMonitor(Daemon, Subscriber):
                     self._filter,
                 )
 
-        self.__es = Elasticsearch([{"host": elastic_ip, "port": "9200"}])
+        self.__es = Elasticsearch(f"http://{elastic_ip}:9200")
         Subscriber.__init__(self, self.publish_endpoint)
         self.time_last_send = datetime.now()
         Daemon.__init__(self, "/var/run/bennu-ground-truth-mon-%s.pid" % (args.env))
