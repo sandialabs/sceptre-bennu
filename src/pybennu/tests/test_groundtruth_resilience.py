@@ -142,3 +142,26 @@ def test_backoff_doubles_up_to_the_maximum(monkeypatch):
         with pytest.raises(Stop):
             mon.push_updates_to_elastic()
     assert sleeps == [1, 2, 4, 4, 4]
+
+
+def test_retry_after_a_partial_bulk_does_not_duplicate_documents(monkeypatch):
+    """A bulk that dies after its first chunk is retried whole; docs must overwrite by _id."""
+    monkeypatch.setattr(gtm.GroundTruthMonitor, "RETRY_MIN", 0.01)
+    mon = make_monitor()
+    store, calls, chunk = {}, [], 2
+
+    def bulk(_es, actions, **kw):
+        calls.append(1)
+        for i, a in enumerate(actions):
+            if len(calls) == 1 and i == chunk:  # second chunk fails on the first try
+                raise ConnectionError("died mid-bulk")
+            store[a["_id"]] = a["_source"]  # an index action with the same _id replaces
+        return len(actions), []
+
+    with patch.object(gtm.helpers, "bulk", bulk):
+        feed(mon, 4)
+        run_pusher(mon)
+        assert wait_for(lambda: len(calls) >= 2)
+        time.sleep(0.1)
+    assert len(calls) == 2
+    assert sorted(d["device"] for d in store.values()) == [f"dev-{i}" for i in range(4)]

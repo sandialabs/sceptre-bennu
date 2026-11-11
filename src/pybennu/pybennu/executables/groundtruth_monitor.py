@@ -263,7 +263,12 @@ class GroundTruthMonitor(Daemon, Subscriber):
                 self.new_data = []
             index = "bennu-" + datetime.now().strftime("%Y.%m.%d")
             actions = [
-                {"_index": index, "type": "doc", "_source": message}
+                {
+                    "_index": index,
+                    "_id": self.__doc_id(message),
+                    "type": "doc",
+                    "_source": message,
+                }
                 for message in messages
             ]
             try:
@@ -284,6 +289,15 @@ class GroundTruthMonitor(Daemon, Subscriber):
             if errors:
                 # rejected by Elasticsearch (e.g. mapping): retrying cannot help
                 logger.error("{} documents rejected by Elasticsearch", len(errors))
+
+    @staticmethod
+    def __doc_id(message):
+        """Deterministic doc ID, so a retried bulk overwrites what chunks it already
+        indexed instead of duplicating them (e.g. bus-1~voltage~2017-02-02T12:01:53.123456)
+        """
+        return "~".join(
+            (message["device"], message["field"], message["@timestamp"].isoformat())
+        )
 
     def __generate_id(self, device):
         """Generate an elasticsearch doc ID
