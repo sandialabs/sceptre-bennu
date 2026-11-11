@@ -227,6 +227,9 @@ class GroundTruthMonitor(Daemon, Subscriber):
                         del self.new_data[: -self.MAX_PENDING]  # drop the oldest
 
     def __parse_filter(self):
+        if getattr(self, "_parsed_filter", None) == self._filter:
+            return  # unchanged since the last message: keep the parsed lists
+        self._parsed_filter = self._filter
         filters = self._filter.split(" ")
         self.providers = []
         self.devices = []
