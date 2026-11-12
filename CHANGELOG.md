@@ -1,3 +1,37 @@
+# [2026.11.12](https://github.com/sandialabs/sceptre-bennu/compare/v2026.11.03...v2026.11.12) - 2026-11-12
+
+### ❌ Breaking
+
+_(gobennu)_ [**breaking**]: remove deprecated gobennu [_(e6b8fe6)_](https://github.com/sandialabs/sceptre-bennu/commit/e6b8fe6081678cd5837518314d7d02e4cddc7b82) ([PR 74](https://github.com/sandialabs/sceptre-bennu/pull/74))
+
+> Removes the deprecated and unused Go implementation of bennu
+> (`src/gobennu`) along with all associated build targets, CI jobs,
+> test harnesses, developer tooling, and documentation references.
+
+> remove deprecated gobennu
+
+### 🚀 Features
+
+- add speedgoat provider [_(cd3bb5b)_](https://github.com/sandialabs/sceptre-bennu/commit/cd3bb5b28be1a97c4b22123fd8a8cd183ecf81c6) ([PR 83](https://github.com/sandialabs/sceptre-bennu/pull/83))
+
+- _(logging)_ toggle file logging and level on a running field device [_(35d5718)_](https://github.com/sandialabs/sceptre-bennu/commit/35d57181e4df7719abd03159aacadf2d514eaab5) ([PR 80](https://github.com/sandialabs/sceptre-bennu/pull/80))
+
+- _(build)_ build bennu debs natively on arm64 [_(5831624)_](https://github.com/sandialabs/sceptre-bennu/commit/583162469daee434381da859b0a4d7f75434c27d) ([PR 78](https://github.com/sandialabs/sceptre-bennu/pull/78))
+
+### 🐛 Bug Fixes
+
+- harden shutdown, input validation and edge cases found by new tests [_(29d7299)_](https://github.com/sandialabs/sceptre-bennu/commit/29d7299f13e1a47504852e66497365604059a179) ([PR 76](https://github.com/sandialabs/sceptre-bennu/pull/76))
+
+- _(comms)_ harden goose, modbus, dnp3 and iec-104 servers against errors [_(bb3dbf9)_](https://github.com/sandialabs/sceptre-bennu/commit/bb3dbf9756571db260a480c0254e3d2161979fd8) ([PR 81](https://github.com/sandialabs/sceptre-bennu/pull/81))
+
+- _(logic)_ substitute every occurrence of a repeated tag [_(8e6a670)_](https://github.com/sandialabs/sceptre-bennu/commit/8e6a670f195ad48cec707d479364c981ae070c9e) ([PR 77](https://github.com/sandialabs/sceptre-bennu/pull/77))
+
+- _(watcherd)_ stop logging "pid = N" on every poll [_(bd2da65)_](https://github.com/sandialabs/sceptre-bennu/commit/bd2da65080374f058c44d24fbbd0bdd3019a49ae) ([PR 82](https://github.com/sandialabs/sceptre-bennu/pull/82))
+
+### 🧪 Testing
+
+- add comprehensive automated unit and regression test suites in prep for Ubuntu 26.04 upgrade [_(808bbea)_](https://github.com/sandialabs/sceptre-bennu/commit/808bbea5aa6b48b702bccf2c1787b784bd55f15b) ([PR 76](https://github.com/sandialabs/sceptre-bennu/pull/76))
+
 # [2026.11.03](https://github.com/sandialabs/sceptre-bennu/compare/v2026.09.30...v2026.11.03) - 2026-11-03
 
 ## 🚀 Features
