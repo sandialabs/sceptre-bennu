@@ -2,6 +2,7 @@
 #define BENNU_FIELDDEVICE_DATAMANAGER_HPP
 
 #include <algorithm>
+#include <cmath>
 #include <chrono>
 #include <iostream>
 #include <map>
@@ -108,11 +109,53 @@ public:
         return false;
     }
 
+    // Stream (provider datagram) update. A recently ACKed write is held: stream values that disagree
+    // are ignored until the stream shows the ACKed value or the hold expires, then the stream wins.
     template <typename T>
     bool setDataByPoint(const std::string& point, const T& value) const
     {
+        std::lock_guard<std::mutex> lock(mHoldMutex);
+        auto hold = mAckHolds.find(point);
+        if (hold != mAckHolds.end())
+        {
+            double v = static_cast<double>(value);
+            double h = hold->second.value;
+            if (std::fabs(v - h) <= 1e-6 * std::max(1.0, std::fabs(h)))
+            {
+                mAckHolds.erase(hold); // the stream caught up
+            }
+            else if (std::chrono::steady_clock::now() < hold->second.deadline)
+            {
+                return mExternalData->hasData(point); // stale (pre-apply) value: ignore
+            }
+            else
+            {
+                mAckHolds.erase(hold); // provider never confirmed: the stream wins
+            }
+        }
         double ts = std::chrono::duration<double>(std::chrono::system_clock::now().time_since_epoch()).count();
         return mExternalData->setData<T>(point, value, ts);
+    }
+
+    // OutputModule: the provider ACKed this write. Set the point and hold the value against stale
+    // datagrams published before the provider applied it; a newer ACK replaces the hold.
+    template <typename T>
+    bool ackDataByTag(const std::string& tag, const T& value) const
+    {
+        std::string point;
+        if (!getPointByTag(tag, point))
+        {
+            return false;
+        }
+        std::lock_guard<std::mutex> lock(mHoldMutex);
+        mAckHolds[point] = {static_cast<double>(value), std::chrono::steady_clock::now() + mAckHoldTime};
+        return setDataByTag<T>(tag, value);
+    }
+
+    // how long an ACKed value shields against disagreeing stream values (before init only)
+    void setAckHoldTime(std::chrono::milliseconds t)
+    {
+        mAckHoldTime = t;
     }
 
     bool addTagToPointMapping(const std::string& tag, const std::string& point)
@@ -325,6 +368,15 @@ private:
     std::map<std::string, double> mUpdatedAnalogTags;
     std::shared_mutex mBinaryMutex;
     std::shared_mutex mAnalogMutex;
+
+    struct AckHold
+    {
+        double value; // bool as 0/1
+        std::chrono::steady_clock::time_point deadline;
+    };
+    std::chrono::milliseconds mAckHoldTime{2000};
+    mutable std::mutex mHoldMutex; // order: before the DataStore lock
+    mutable std::map<std::string, AckHold> mAckHolds;
 };
 
 } // namespace field_device
