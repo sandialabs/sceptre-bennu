@@ -170,6 +170,29 @@ TEST_CASE("Provider messageHandler: key-value parsing robustness")
     CHECK(mock.lastWrittenTags["p2"] == "20");
 }
 
+TEST_CASE("Provider messageHandler: WRITE duplicate tags and malformed points")
+{
+    MockProvider mock;
+
+    // last value wins for a repeated tag
+    zmq::message_t repDup = mock.messageHandler(makeReq("WRITE=a:1,a:2"));
+    CHECK(std::string(repDup.data<char>()) == "ACK=ok");
+    CHECK(mock.lastWrittenTags["a"] == "2");
+
+    // a malformed point rejects the whole request instead of being dropped
+    mock.writeCalls = 0;
+    zmq::message_t repBad = mock.messageHandler(makeReq("WRITE=a:1,b"));
+    CHECK(std::string(repBad.data<char>()).rfind("ERR=", 0) == 0);
+    CHECK(mock.writeCalls == 0);
+
+    // no valid points at all
+    zmq::message_t repJunk = mock.messageHandler(makeReq("WRITE=junk"));
+    CHECK(std::string(repJunk.data<char>()).rfind("ERR=", 0) == 0);
+    zmq::message_t repEmpty = mock.messageHandler(makeReq("WRITE="));
+    CHECK(std::string(repEmpty.data<char>()).rfind("ERR=", 0) == 0);
+    CHECK(mock.writeCalls == 0);
+}
+
 TEST_CASE("Provider messageHandler: error responses")
 {
     MockProvider mock;
