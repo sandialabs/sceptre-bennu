@@ -196,3 +196,19 @@ TEST_CASE("DataStore: concurrent multi-threaded stress test")
         CHECK(store.getData<int>(ptName) > 0);
     }
 }
+
+TEST_CASE("DataStore: a value of the wrong type is coerced and the point keeps its type")
+{
+    DataStore<std::string> store;
+    store.addData("ana", 0.0);
+    store.addData("bin", false);
+
+    // a provider publishing "true" on an analog point / "1.5" on a binary point
+    CHECK(store.setData("ana", true));
+    CHECK_NOTHROW(store.getData<double>("ana"));
+    CHECK(store.getData<double>("ana") == 1.0);
+
+    CHECK(store.setData("bin", 1.5));
+    CHECK_NOTHROW(store.getData<bool>("bin"));
+    CHECK(store.getData<bool>("bin") == true);
+}

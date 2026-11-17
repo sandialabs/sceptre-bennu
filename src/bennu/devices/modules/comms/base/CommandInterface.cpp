@@ -20,7 +20,12 @@ CommandInterface::CommandInterface(const distributed::Endpoint& endpoint, std::s
 
 zmq::message_t CommandInterface::messageHandler(const zmq::message_t& req)
 {
-    std::string request(req.data<char>());
+    // senders may or may not include a trailing NUL, so read exactly req.size() bytes
+    std::string request(req.data<char>(), req.size());
+    while (!request.empty() && request.back() == '\0')
+    {
+        request.pop_back();
+    }
     std::string opDelim{"="}, op, tag;
     std::string reply;
     try {
@@ -115,7 +120,15 @@ zmq::message_t CommandInterface::messageHandler(const zmq::message_t& req)
             }
             else
             {
-                result = mClient.lock()->writeAnalogTag(tag, std::stod(val));
+                try
+                {
+                        result = mClient.lock()->writeAnalogTag(tag, std::stod(val));
+                }
+                catch (const std::exception&)
+                {
+                        result.status = STATUS_FAIL;
+                        result.message = const_cast<char*>("value is not a number");
+                }
             }
 
             if (result.status)

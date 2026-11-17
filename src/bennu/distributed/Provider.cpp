@@ -30,7 +30,12 @@ void Provider::run()
 // "WRITE=<tag name>:<value>[,<tag name>:<value>...]"
 zmq::message_t Provider::messageHandler(const zmq::message_t& request)
 {
-    std::string req(request.data<char>());
+    // senders may or may not include a trailing NUL, so read exactly request.size() bytes
+    std::string req(request.data<char>(), request.size());
+    while (!req.empty() && req.back() == '\0')
+    {
+        req.pop_back();
+    }
     std::string opDelim{"="}, op, payload;
     std::string reply;
     try
@@ -56,32 +61,34 @@ zmq::message_t Provider::messageHandler(const zmq::message_t& request)
     else if (op == "WRITE" || op == "write")
     {
         std::unordered_map<std::string, std::string> tags;
+        bool malformed = false;
 
         std::string pointDelim{","};
-        try
+        for (auto& point : distributed::split(payload, pointDelim))
         {
-            auto split = distributed::split(payload, pointDelim);
-
-            for (auto& point : split)
+            if (point.empty())
             {
-                std::string valDelim{":"};
-                try
-                {
-                    auto split = distributed::split(point, valDelim);
-                    tags.insert({split.at(0), split.at(1)});
-                }
-                catch (std::exception& e)
-                {
-                    printf("Err: %s", e.what());
-                }
+                continue; // trailing comma
             }
-        }
-        catch (const std::exception& e)
-        {
-            printf("Err: %s", e.what());
+            std::string valDelim{":"};
+            auto kv = distributed::split(point, valDelim);
+            if (kv.size() < 2)
+            {
+                printf("Err: malformed WRITE point '%s'\n", point.data());
+                malformed = true;
+                break;
+            }
+            tags[kv[0]] = kv[1]; // last value wins
         }
 
-        reply += write(tags);
+        if (malformed || tags.empty())
+        {
+            reply += "ERR=Malformed WRITE payload";
+        }
+        else
+        {
+            reply += write(tags);
+        }
     }
     else
     {

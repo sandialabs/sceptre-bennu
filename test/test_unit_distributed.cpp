@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <cstdlib>
+#include <cstring>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -170,6 +171,29 @@ TEST_CASE("Provider messageHandler: key-value parsing robustness")
     CHECK(mock.lastWrittenTags["p2"] == "20");
 }
 
+TEST_CASE("Provider messageHandler: WRITE duplicate tags and malformed points")
+{
+    MockProvider mock;
+
+    // last value wins for a repeated tag
+    zmq::message_t repDup = mock.messageHandler(makeReq("WRITE=a:1,a:2"));
+    CHECK(std::string(repDup.data<char>()) == "ACK=ok");
+    CHECK(mock.lastWrittenTags["a"] == "2");
+
+    // a malformed point rejects the whole request instead of being dropped
+    mock.writeCalls = 0;
+    zmq::message_t repBad = mock.messageHandler(makeReq("WRITE=a:1,b"));
+    CHECK(std::string(repBad.data<char>()).rfind("ERR=", 0) == 0);
+    CHECK(mock.writeCalls == 0);
+
+    // no valid points at all
+    zmq::message_t repJunk = mock.messageHandler(makeReq("WRITE=junk"));
+    CHECK(std::string(repJunk.data<char>()).rfind("ERR=", 0) == 0);
+    zmq::message_t repEmpty = mock.messageHandler(makeReq("WRITE="));
+    CHECK(std::string(repEmpty.data<char>()).rfind("ERR=", 0) == 0);
+    CHECK(mock.writeCalls == 0);
+}
+
 TEST_CASE("Provider messageHandler: error responses")
 {
     MockProvider mock;
@@ -193,6 +217,20 @@ TEST_CASE("Provider messageHandler: error responses")
     auto singlePart = split("hello_world", "");
     REQUIRE(singlePart.size() == 1);
     CHECK(singlePart[0] == "hello_world");
+}
+
+TEST_CASE("Provider messageHandler: request is read by size, not up to a NUL terminator")
+{
+    MockProvider mock;
+
+    // wrap a buffer that continues past the message with unrelated bytes and no NUL after it
+    static char buf[64];
+    std::memset(buf, 'x', sizeof(buf));
+    const char cmd[] = "READ=tag1";
+    std::memcpy(buf, cmd, sizeof(cmd) - 1);
+    zmq::message_t req(buf, sizeof(cmd) - 1, nullptr);
+    mock.messageHandler(req);
+    CHECK(mock.lastReadTag == "tag1");
 }
 
 TEST_CASE("Server & Client In-Process REQ/REP over inproc://")
