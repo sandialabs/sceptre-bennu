@@ -205,7 +205,7 @@ bool Server::addHoldingRegister(const uint16_t address, const std::string& tag, 
         sv.mRange = range;
         sv.mSlope = c16bitScale / (range.first - range.second);
         sv.mIntercept = -(sv.mSlope * range.second);
-        mScaledValues[address] = sv;
+        mHoldingScale[address] = sv;
         return true;
     }
 
@@ -221,7 +221,7 @@ bool Server::addInputRegister(const uint16_t address, const std::string& tag, co
         sv.mRange = range;
         sv.mSlope = c16bitScale / (range.first - range.second);
         sv.mIntercept = -(sv.mSlope * range.second);
-        mScaledValues[address] = sv;
+        mInputScale[address] = sv;
         return true;
     }
     return false;
@@ -374,8 +374,8 @@ error_code_t::type Server::readHoldingRegisters(uint16_t startAddress, uint16_t 
         if (mDataManager->hasTag(iter->second))
         {
             double value = mDataManager->getDataByTag<double>(iter->second);
-            auto svIter = mScaledValues.find(i);
-            if (svIter != mScaledValues.end())
+            auto svIter = mHoldingScale.find(i);
+            if (svIter != mHoldingScale.end())
             {
                 values.push_back((svIter->second.mSlope * value) + svIter->second.mIntercept);
             }
@@ -426,8 +426,8 @@ error_code_t::type Server::writeHoldingRegisters(uint16_t startAddress, uint16_t
         }
 
         double newValue = value[i - startAddress];
-        auto svIter = mScaledValues.find(i);
-        if (svIter != mScaledValues.end())
+        auto svIter = mHoldingScale.find(i);
+        if (svIter != mHoldingScale.end())
         {
             newValue = (value[i - startAddress] - svIter->second.mIntercept) / svIter->second.mSlope;
         }
@@ -467,8 +467,8 @@ error_code_t::type Server::readInputRegisters(uint16_t startAddress, uint16_t si
         if (mDataManager->hasTag(iter->second))
         {
             double value = mDataManager->getDataByTag<double>(iter->second);
-            auto svIter = mScaledValues.find(i);
-            if (svIter != mScaledValues.end())
+            auto svIter = mInputScale.find(i);
+            if (svIter != mInputScale.end())
             {
                 values.push_back((svIter->second.mSlope * value) + svIter->second.mIntercept);
             }
