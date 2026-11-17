@@ -87,3 +87,7 @@ target_link_libraries(test_fd_104_sbo -Wl,--no-as-needed bennu-field-device-base
 # bennu-watcherd must not flood its stderr log (needs root and installed bennu-watcherd; skips otherwise)
 add_test(NAME watcher_log_flood COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/watcher_log_flood.py)
 set_tests_properties(watcher_log_flood PROPERTIES SKIP_RETURN_CODE 77)
+
+# bennu-field-deviced must not treat a pidfile for a dead process as "already running" (needs root and installed binary; skips otherwise)
+add_test(NAME field_deviced_stale_pidfile COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/field_deviced_stale_pidfile.py)
+set_tests_properties(field_deviced_stale_pidfile PROPERTIES SKIP_RETURN_CODE 77)

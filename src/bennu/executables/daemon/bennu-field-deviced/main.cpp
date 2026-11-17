@@ -32,6 +32,12 @@ void signalHandler(int)
     running = false;
 }
 
+// a pidfile left behind by a crashed daemon names a process that is gone (ESRCH)
+static bool processExists(pid_t pid)
+{
+    return kill(pid, 0) == 0 || errno != ESRCH;
+}
+
 bool isAlreadyRunning(const std::string& instance)
 {
     // If the LOCKFILE cannot be opened, then we're going to assume that this is the first time
@@ -48,12 +54,13 @@ bool isAlreadyRunning(const std::string& instance)
     is >> pid;
 
     syslog(LOG_NOTICE, "bennu-field-deviced | START | pid: %d", pid);
-    if (pid != 0)
+    if (pid != 0 && !processExists(pid))
     {
-        return true;
+        syslog(LOG_NOTICE, "bennu-field-deviced | stale pidfile %s, process %d is gone", lockfile.c_str(), pid);
+        return false;
     }
 
-    return false;
+    return pid != 0;
 }
 
 void stop(const std::string& instance)
@@ -74,7 +81,7 @@ void stop(const std::string& instance)
     is.close();
 
     syslog(LOG_NOTICE, "bennu-field-deviced | STOP  | pid: %d", pid);
-    if (pid != 0)
+    if (pid != 0 && processExists(pid))
     {
         kill(pid, SIGTERM);
         sleep(1);
