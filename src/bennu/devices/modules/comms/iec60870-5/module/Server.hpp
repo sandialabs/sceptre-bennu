@@ -109,23 +109,23 @@ public:
     // Record a SELECT for the given IOA/connection/command. Returns true if the IOA
     // is a valid output point for the command family (and the selection was recorded),
     // false otherwise.
-    bool select(uint16_t ioa, IMasterConnection connection, IEC60870_5_TypeID typeId, int intValue, float floatValue, int qualifier);
+    bool select(int ioa, IMasterConnection connection, IEC60870_5_TypeID typeId, int intValue, float floatValue, int qualifier);
     // Check for a valid, un-expired selection for the given IOA/connection matching
     // the EXECUTE command's type, value, and qualifier, and consume (clear) it.
     // Returns true if a matching valid select existed.
-    bool checkAndConsumeSelect(uint16_t ioa, IMasterConnection connection, IEC60870_5_TypeID typeId, int intValue, float floatValue, int qualifier);
+    bool checkAndConsumeSelect(int ioa, IMasterConnection connection, IEC60870_5_TypeID typeId, int intValue, float floatValue, int qualifier);
     // Drop any outstanding selection for the given IOA.
-    void clearSelect(uint16_t ioa);
+    void clearSelect(int ioa);
     // Cancel an outstanding selection for the given IOA if owned by connection
     // and valid for typeId. Returns true if a matching selection was cancelled.
-    bool cancelSelect(uint16_t ioa, IMasterConnection connection, IEC60870_5_TypeID typeId);
+    bool cancelSelect(int ioa, IMasterConnection connection, IEC60870_5_TypeID typeId);
     // Drop all outstanding selections associated with the given master connection.
     void clearSelectionsForConnection(IMasterConnection connection);
 
     // Returns true if the given IOA maps to a configured output point matching
     // the requested command family (binary output for C_SC_NA_1/C_DC_NA_1,
     // analog output for C_SE_NC_1).
-    bool isValidOutputPoint(uint16_t ioa, IEC60870_5_TypeID typeId) const;
+    bool isValidOutputPoint(int ioa, IEC60870_5_TypeID typeId) const;
 
 private:
     bool mConnected;                 // guarded by mConnectionMutex

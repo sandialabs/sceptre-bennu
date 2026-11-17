@@ -1,6 +1,7 @@
 #include "Server.hpp"
 
 #include <chrono>
+#include <cstdint>
 #include <sstream>
 
 #include "bennu/devices/modules/comms/iec60870-5/module/DataHandler.hpp"
@@ -533,7 +534,7 @@ bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_AS
         }
 
         SingleCommand sc = (SingleCommand)io;
-        uint16_t addr = InformationObject_getObjectAddress(io);
+        int addr = InformationObject_getObjectAddress(io);
         bool state = SingleCommand_getState(sc);
         int qu = SingleCommand_getQU(sc);
         bool isSelect = SingleCommand_isSelect(sc);
@@ -616,7 +617,7 @@ bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_AS
         }
 
         DoubleCommand dc = (DoubleCommand)io;
-        uint16_t addr = InformationObject_getObjectAddress(io);
+        int addr = InformationObject_getObjectAddress(io);
         int state = DoubleCommand_getState(dc);
         int qu = DoubleCommand_getQU(dc);
         bool isSelect = DoubleCommand_isSelect(dc);
@@ -706,7 +707,7 @@ bool Server::asduHandler(void *parameter, IMasterConnection connection, CS101_AS
         }
 
         SetpointCommandShort sc = (SetpointCommandShort)io;
-        uint16_t addr = InformationObject_getObjectAddress(io);
+        int addr = InformationObject_getObjectAddress(io);
         float value = SetpointCommandShort_getValue(sc);
         int ql = SetpointCommandShort_getQL(sc);
         bool isSelect = SetpointCommandShort_isSelect(sc);
@@ -900,8 +901,14 @@ void Server::writeAnalog(std::uint16_t address, float value)
     logEvent("write analog", "info", log_stream.str());
 }
 
-bool Server::isValidOutputPoint(uint16_t ioa, IEC60870_5_TypeID typeId) const
+bool Server::isValidOutputPoint(int ioa, IEC60870_5_TypeID typeId) const
 {
+    // The IOA is 24 bits on the wire but points are keyed by 16 bits; do not alias IOA 65536+N to N.
+    if (ioa < 0 || ioa > UINT16_MAX)
+    {
+        return false;
+    }
+
     if (typeId == C_SC_NA_1 || typeId == C_DC_NA_1)
     {
         auto iter = mBinaryPoints.find(ioa);
@@ -915,7 +922,7 @@ bool Server::isValidOutputPoint(uint16_t ioa, IEC60870_5_TypeID typeId) const
     return false;
 }
 
-bool Server::select(uint16_t ioa, IMasterConnection connection, IEC60870_5_TypeID typeId, int intValue, float floatValue, int qualifier)
+bool Server::select(int ioa, IMasterConnection connection, IEC60870_5_TypeID typeId, int intValue, float floatValue, int qualifier)
 {
     if (!isValidOutputPoint(ioa, typeId))
     {
@@ -960,8 +967,13 @@ bool Server::select(uint16_t ioa, IMasterConnection connection, IEC60870_5_TypeI
     return true;
 }
 
-bool Server::checkAndConsumeSelect(uint16_t ioa, IMasterConnection connection, IEC60870_5_TypeID typeId, int intValue, float floatValue, int qualifier)
+bool Server::checkAndConsumeSelect(int ioa, IMasterConnection connection, IEC60870_5_TypeID typeId, int intValue, float floatValue, int qualifier)
 {
+    if (ioa < 0 || ioa > UINT16_MAX)
+    {
+        return false;
+    }
+
     std::lock_guard<std::mutex> lock(mSelectionMutex);
     auto iter = mSelections.find(ioa);
     if (iter == mSelections.end())
@@ -1003,13 +1015,18 @@ bool Server::checkAndConsumeSelect(uint16_t ioa, IMasterConnection connection, I
     return true;
 }
 
-void Server::clearSelect(uint16_t ioa)
+void Server::clearSelect(int ioa)
 {
+    if (ioa < 0 || ioa > UINT16_MAX)
+    {
+        return;
+    }
+
     std::lock_guard<std::mutex> lock(mSelectionMutex);
     mSelections.erase(ioa);
 }
 
-bool Server::cancelSelect(uint16_t ioa, IMasterConnection connection, IEC60870_5_TypeID typeId)
+bool Server::cancelSelect(int ioa, IMasterConnection connection, IEC60870_5_TypeID typeId)
 {
     if (!isValidOutputPoint(ioa, typeId))
     {

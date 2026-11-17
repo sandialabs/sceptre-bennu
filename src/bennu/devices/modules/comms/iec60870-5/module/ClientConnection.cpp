@@ -323,7 +323,12 @@ bool ClientConnection::asduReceivedHandler(void* parameter, int address, CS101_A
             InformationObject io = CS101_ASDU_getElement(asdu, 0);
             if (io)
             {
-                uint16_t addr = InformationObject_getObjectAddress(io);
+                int addr = InformationObject_getObjectAddress(io);
+                if (addr > UINT16_MAX)
+                {
+                    InformationObject_destroy(io);
+                    return true;
+                }
                 bool isSelect = (typeId == C_DC_NA_1)
                                     ? DoubleCommand_isSelect((DoubleCommand)io)
                                     : SetpointCommandShort_isSelect((SetpointCommandShort)io);
@@ -387,7 +392,7 @@ bool ClientConnection::asduReceivedHandler(void* parameter, int address, CS101_A
             MeasuredValueShort io =
                     (MeasuredValueShort) CS101_ASDU_getElement(asdu, i);
 
-            uint16_t addr = InformationObject_getObjectAddress((InformationObject) io);
+            int addr = InformationObject_getObjectAddress((InformationObject)io);
             double value = MeasuredValueShort_getValue((MeasuredValueShort) io);
             printf("    IOA: %i value: %f\n", addr, value);
 
@@ -407,7 +412,7 @@ bool ClientConnection::asduReceivedHandler(void* parameter, int address, CS101_A
             DoublePointInformation io =
                     (DoublePointInformation) CS101_ASDU_getElement(asdu, i);
 
-            uint16_t addr = InformationObject_getObjectAddress((InformationObject) io);
+            int addr = InformationObject_getObjectAddress((InformationObject)io);
             DoublePointValue dp_value = DoublePointInformation_getValue((DoublePointInformation) io);
 
             bool status = 0;

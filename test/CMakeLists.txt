@@ -23,6 +23,7 @@ add_test(NAME modbus_bad_frames COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/modb
 add_test(NAME dnp3_accept_retry COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/dnp3_accept_retry.py)
 add_test(NAME dnp3_ao_variations COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/dnp3_ao_variations.py)
 add_test(NAME iec104_multi_client COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/iec104_multi_client.py)
+add_test(NAME iec104_ioa_alias COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/iec104_ioa_alias.py)
 add_test(NAME shutdown_clean COMMAND python3 ${CMAKE_CURRENT_SOURCE_DIR}/shutdown_clean.py)
 
 # OutputModule unit test runs against an injected sender; Client.cpp only satisfies start()

@@ -53,8 +53,13 @@ public:
         mAnalogAddressToTagMapping[rd.mRegisterAddress] = tag;
     }
 
-    void updateBinary(const std::uint16_t address, const bool status)
+    void updateBinary(const int address, const bool status)
     {
+        // The IOA is 24 bits on the wire; do not alias IOA 65536+N to N.
+        if (address < 0 || address > UINT16_MAX)
+        {
+            return;
+        }
         auto iter = mBinaryAddressToTagMapping.find(address);
         if (iter != mBinaryAddressToTagMapping.end())
         {
@@ -62,8 +67,13 @@ public:
         }
     }
 
-    void updateAnalog(const std::uint16_t address, const double value)
+    void updateAnalog(const int address, const double value)
     {
+        // The IOA is 24 bits on the wire; do not alias IOA 65536+N to N.
+        if (address < 0 || address > UINT16_MAX)
+        {
+            return;
+        }
         auto iter = mAnalogAddressToTagMapping.find(address);
         if (iter != mAnalogAddressToTagMapping.end())
         {
