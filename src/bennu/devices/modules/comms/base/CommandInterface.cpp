@@ -115,7 +115,15 @@ zmq::message_t CommandInterface::messageHandler(const zmq::message_t& req)
             }
             else
             {
-                result = mClient.lock()->writeAnalogTag(tag, std::stod(val));
+                try
+                {
+                        result = mClient.lock()->writeAnalogTag(tag, std::stod(val));
+                }
+                catch (const std::exception&)
+                {
+                        result.status = STATUS_FAIL;
+                        result.message = const_cast<char*>("value is not a number");
+                }
             }
 
             if (result.status)

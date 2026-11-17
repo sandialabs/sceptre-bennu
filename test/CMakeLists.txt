@@ -40,6 +40,8 @@ target_link_libraries(test_unit_config_conformance bennu-parsers bennu-utility $
 # these tests read data/configs from the source tree
 target_compile_definitions(test_unit_config_conformance PRIVATE BENNU_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
 target_compile_definitions(test_unit_helics_federate PRIVATE BENNU_SOURCE_DIR="${CMAKE_SOURCE_DIR}")
+target_include_directories(test_unit_commandinterface PRIVATE ${bennu_INCLUDES})
+target_link_libraries(test_unit_commandinterface -Wl,--no-as-needed bennu-comms bennu-field-device-base bennu-distributed bennu-utility ${Boost_LIBRARIES})
 target_link_libraries(test_unit_datastore ${Boost_LIBRARIES})
 target_link_libraries(test_unit_utility bennu-loaders bennu-utility ${Boost_LIBRARIES})
 target_link_libraries(test_unit_loader bennu-loaders bennu-utility dl ${Boost_LIBRARIES})
