@@ -4,6 +4,7 @@
 #include <mutex> // std::scoped_lock
 #include <shared_mutex>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <variant>
 
@@ -48,7 +49,8 @@ public:
         auto iter = mData.find(point);
         if (iter != mData.end())
         {
-            iter->second = value;
+            // keep the type the point was created with so getData<T> never throws
+            std::visit([&value](auto& held) { held = static_cast<std::decay_t<decltype(held)>>(value); }, iter->second);
 
             auto i = mTimestamps.find(point);
             if (i != mTimestamps.end())
