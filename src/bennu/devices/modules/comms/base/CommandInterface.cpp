@@ -20,7 +20,12 @@ CommandInterface::CommandInterface(const distributed::Endpoint& endpoint, std::s
 
 zmq::message_t CommandInterface::messageHandler(const zmq::message_t& req)
 {
-    std::string request(req.data<char>());
+    // senders may or may not include a trailing NUL, so read exactly req.size() bytes
+    std::string request(req.data<char>(), req.size());
+    while (!request.empty() && request.back() == '\0')
+    {
+        request.pop_back();
+    }
     std::string opDelim{"="}, op, tag;
     std::string reply;
     try {

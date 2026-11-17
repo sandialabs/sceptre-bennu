@@ -30,7 +30,12 @@ void Provider::run()
 // "WRITE=<tag name>:<value>[,<tag name>:<value>...]"
 zmq::message_t Provider::messageHandler(const zmq::message_t& request)
 {
-    std::string req(request.data<char>());
+    // senders may or may not include a trailing NUL, so read exactly request.size() bytes
+    std::string req(request.data<char>(), request.size());
+    while (!req.empty() && req.back() == '\0')
+    {
+        req.pop_back();
+    }
     std::string opDelim{"="}, op, payload;
     std::string reply;
     try

@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <cstdlib>
+#include <cstring>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -216,6 +217,20 @@ TEST_CASE("Provider messageHandler: error responses")
     auto singlePart = split("hello_world", "");
     REQUIRE(singlePart.size() == 1);
     CHECK(singlePart[0] == "hello_world");
+}
+
+TEST_CASE("Provider messageHandler: request is read by size, not up to a NUL terminator")
+{
+    MockProvider mock;
+
+    // wrap a buffer that continues past the message with unrelated bytes and no NUL after it
+    static char buf[64];
+    std::memset(buf, 'x', sizeof(buf));
+    const char cmd[] = "READ=tag1";
+    std::memcpy(buf, cmd, sizeof(cmd) - 1);
+    zmq::message_t req(buf, sizeof(cmd) - 1, nullptr);
+    mock.messageHandler(req);
+    CHECK(mock.lastReadTag == "tag1");
 }
 
 TEST_CASE("Server & Client In-Process REQ/REP over inproc://")

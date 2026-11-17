@@ -69,3 +69,18 @@ TEST_CASE("CommandInterface: WRITE with a non-numeric value returns ERR instead 
     CHECK(reply(ci, zmq::message_t(req.c_str(), req.size() + 1)).rfind("ACK=", 0) == 0);
     CHECK(client->lastAnalog == 12.5);
 }
+
+TEST_CASE("CommandInterface: request is read by size, not up to a NUL terminator")
+{
+    auto client = std::make_shared<MockClient>();
+    TestInterface ci(bennu::distributed::Endpoint{"inproc://unit-cmdiface-nonul"}, client);
+
+    // wrap a buffer that continues past the message with unrelated bytes and no NUL after it
+    static char buf[64];
+    std::memset(buf, 'x', sizeof(buf));
+    const char cmd[] = "READ=load-breaker-toggle";
+    std::memcpy(buf, cmd, sizeof(cmd) - 1);
+    zmq::message_t req(buf, sizeof(cmd) - 1, nullptr);
+
+    CHECK(reply(ci, req) == "ACK=load-breaker-toggle:true");
+}
