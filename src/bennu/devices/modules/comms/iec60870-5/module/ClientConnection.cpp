@@ -401,8 +401,9 @@ bool ClientConnection::asduReceivedHandler(void* parameter, int address, CS101_A
             MeasuredValueShort_destroy(io);
         }
     }
-    // Binary values
-    else if (CS101_ASDU_getTypeID(asdu) == M_DP_NA_1) {
+    // Binary values (double points: M_DP_NA_1 from interrogation, M_DP_TB_1 from the reverse poll)
+    else if (typeId == M_DP_NA_1 || typeId == M_DP_TB_1)
+    {
         printf("  double point information:\n");
 
         int i;
@@ -433,7 +434,29 @@ bool ClientConnection::asduReceivedHandler(void* parameter, int address, CS101_A
 
             self->updateBinary(addr, status);
 
-            DoublePointInformation_destroy(io);
+            InformationObject_destroy((InformationObject)io);
+        }
+    }
+    // Binary values (single points: M_SP_NA_1 from the reverse poll and interrogation, M_SP_TB_1)
+    else if (typeId == M_SP_NA_1 || typeId == M_SP_TB_1)
+    {
+        printf("  single point information:\n");
+
+        int i;
+
+        for (i = 0; i < CS101_ASDU_getNumberOfElements(asdu); i++)
+        {
+
+            SinglePointInformation io =
+                (SinglePointInformation)CS101_ASDU_getElement(asdu, i);
+
+            int addr = InformationObject_getObjectAddress((InformationObject)io);
+            bool status = SinglePointInformation_getValue(io);
+            printf("    IOA: %i value: %i\n", addr, status);
+
+            self->updateBinary(addr, status);
+
+            InformationObject_destroy((InformationObject)io);
         }
     }
 
