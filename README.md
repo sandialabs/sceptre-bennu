@@ -52,7 +52,7 @@ docker run -it sceptre-bennu:testing bennu-field-deviced --help
         libboost-thread-dev \
         libfreetype6-dev \
         libssl-dev \
-        libzmq5-dev
+        libzmq3-dev
     ```
 
 - Build and install bennu

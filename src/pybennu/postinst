@@ -2,13 +2,17 @@
 
 set -ex
 
+# PEP 668 (Ubuntu 24.04+) refuses system-wide pip installs; pip < 23.0.1 ignores the unknown variable.
+export PIP_BREAK_SYSTEM_PACKAGES=1
+
 printf "\n--- RUNNING PYBENNU AFTER INSTALL SCRIPT ---\n\n"
 if [[ ! -f /usr/lib/x86_64-linux-gnu/libzmq.a ]]; then
     mv /root/libzmq.a /usr/lib/x86_64-linux-gnu/
 fi
-if [[ ! -f /usr/lib/x86_64-linux-gnu/libzmq.so.5.1.5 ]]; then
-    mv /root/libzmq.so.5.1.5 /usr/lib/x86_64-linux-gnu/
-fi
+# the soname version depends on the libzmq release bundled by the package build (5.1.5 for 4.3.4, 5.2.5 for 4.3.5)
+for f in /root/libzmq.so.5.*; do
+    [[ -f "$f" && ! -f /usr/lib/x86_64-linux-gnu/$(basename "$f") ]] && mv "$f" /usr/lib/x86_64-linux-gnu/
+done
 # mv /root/libzmq* /usr/lib/x86_64-linux-gnu
 
 
@@ -41,7 +45,7 @@ printf "\n\tINSTALLING ZMQ WITH DRAFT SUPPORT...\n\n"
 #     Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
 #
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-ZMQ_VERSION=4.3.4
+ZMQ_VERSION=4.3.5  # >= 4.3.5 is required for gcc 15
 PREFIX=${PREFIX:-/usr/local}
 CPU_COUNT=${CPU_COUNT:-$(python3 -c "import os; print(os.cpu_count())")}
 
@@ -74,8 +78,11 @@ END
 
 
 # NOTE: this depends on the ZMQ libraries built with draft support
+# Same pinned pyhelics commit as pyproject.toml (keep in sync): the PyPI 3.6.1 sdist hard-codes C++17, which HELICS rejects on gcc >= 13.
+# CMAKE_POLICY_VERSION_MINIMUM is scoped to this command: only the libzmq subproject bundled in the HELICS sdist
+# declares cmake_minimum_required < 3.5, which CMake 4 (Ubuntu 26.04) rejects. Drop it when HELICS is upgraded.
 printf "\n\tINSTALLING HELICS/PYHELICS...\n\n"
-$PIPINSTALL --no-cache-dir --force-reinstall --no-binary helics 'helics==3.6.1'
+CMAKE_POLICY_VERSION_MINIMUM=3.5 $PIPINSTALL --no-cache-dir --force-reinstall 'helics @ git+https://github.com/GMLC-TDC/pyhelics.git@40c24150639f35991965067776db4ee920f8a4d0'
 
 # $WGETCMD -O pyhelics.tgz https://github.com/GMLC-TDC/pyhelics/releases/download/v2.7.1/helics-2.7.1.tar.gz
 # rm -rf /tmp/pyhelics
@@ -93,7 +100,7 @@ $PIPINSTALL --no-cache-dir --force-reinstall --no-binary helics 'helics==3.6.1'
 #
 printf "\n\tINSTALLING PYBENNU PIP DEPENDENCIES...\n\n"
 # dss-python (OpenDSS engine) ships no aarch64 wheels, so skip opendssdirect there; only the OpenDSS power solver needs it
-OPENDSS='opendssdirect.py~=0.6.1'
+OPENDSS='opendssdirect.py~=0.9.4'
 case "$(uname -m)" in aarch64|arm64) OPENDSS=""; echo "NOTE: skipping opendssdirect.py (no wheels for $(uname -m)); the OpenDSS power solver is unavailable" ;; esac
 $PIPINSTALL --ignore-installed 'elasticsearch<9.0.0' $OPENDSS 'py-expression-eval==0.3.14' 'PYPOWER==5.1.19' 'scipy>=1.15.0' 'labjack-ljm~=1.23.0' 'pymodbus>=3.8.0,<=3.9.2' 'pydantic>2.0.0,<3.0.0' 'pydantic-settings'
 

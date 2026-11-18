@@ -1,5 +1,6 @@
 #ifndef SHUNTING_YARD_H_
 #define SHUNTING_YARD_H_
+#include <cstdint>
 #include <iostream>
 
 #include <map>

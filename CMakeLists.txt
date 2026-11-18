@@ -49,7 +49,13 @@ include(PreventInSourceBuilds)
 include(UseCcache)
 include(UseGoldLinker)
 include(CpackConfig)
-find_package(Boost REQUIRED filesystem system date_time serialization program_options)
+# Boost >= 1.70 ships BoostConfig.cmake; CMake >= 3.30 removed its FindBoost module (CMP0167).
+if (POLICY CMP0167)
+  cmake_policy(SET CMP0167 NEW)
+endif ()
+# Boost.System is header-only since 1.69 and Boost >= 1.89 no longer ships a boost_system config/library,
+# so it is not requested as a component.
+find_package(Boost REQUIRED filesystem date_time serialization program_options)
 
 include(FetchContent)
 
@@ -60,10 +66,14 @@ set(BUILD_STATIC ON CACHE BOOL "Build static library" FORCE)
 set(BUILD_TESTS OFF CACHE BOOL "Build tests" FORCE)
 set(WITH_DOCS OFF CACHE BOOL "Build documentation" FORCE)
 
+# libzmq 4.3.5 is required for gcc 15 (4.3.4 fails an allocator_traits static_assert). Its CMakeLists declares
+# cmake_minimum_required < 3.5, which CMake 4 rejects, so allow it; the variable is ignored by older CMake.
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
+
 FetchContent_Declare(
     libzmq
     GIT_REPOSITORY https://github.com/zeromq/libzmq.git
-    GIT_TAG        v4.3.4
+    GIT_TAG        v4.3.5
 )
 FetchContent_GetProperties(libzmq)
 if(NOT libzmq_POPULATED)

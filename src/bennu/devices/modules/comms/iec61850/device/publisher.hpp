@@ -29,7 +29,7 @@ namespace ccss_devices {
       using std::uint16_t;
       using std::uint32_t;
 
-      using boost::asio::io_service;
+      using boost::asio::io_context;
 
       using namespace ccss_protocols::iec61850;
       using namespace ccss_protocols::iec61850::goose;
@@ -152,21 +152,21 @@ namespace ccss_devices {
         map<string, gocb> publications;
 
       private:
-        // Boost::Asio io_service (used for scheduling)
-        io_service io_;
+          // Boost::Asio io_context (used for scheduling)
+          io_context io_;
 
-        // Ethernet communication variables
-        int raw_socket_;
-        int iface_index_;
-        string iface_name_;
-        vector<uint8_t> iface_addr_;
+          // Ethernet communication variables
+          int raw_socket_;
+          int iface_index_;
+          string iface_name_;
+          vector<uint8_t> iface_addr_;
 
-        // GOOSE session objects
-        goose::session_opts goose_sopts_;
-        goose::session*     goose_session_;
+          // GOOSE session objects
+          goose::session_opts goose_sopts_;
+          goose::session* goose_session_;
 
-        // Mapping of datasets to their running contexts
-        map<string, boost::thread*> schedule_;
+          // Mapping of datasets to their running contexts
+          map<string, boost::thread*> schedule_;
       };
 
     } // namespace goose

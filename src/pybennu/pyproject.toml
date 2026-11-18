@@ -24,7 +24,7 @@ dependencies = [
     'networkx>=1.11',
     'numpy>=1.11.2',
     # dss-python (OpenDSS engine) ships no aarch64 wheels; only the OpenDSS power solver needs it
-    'opendssdirect.py~=0.6.1;platform_machine!="aarch64" and platform_machine!="arm64"',
+    'opendssdirect.py~=0.9.4;platform_machine!="aarch64" and platform_machine!="arm64"',
     'py-expression-eval==0.3.14',
     'PYPOWER==5.1.19',
     'pyserial>=3.4',
@@ -47,7 +47,10 @@ dependencies = [
     # force install the below from source so they are built with the
     # local libzmq libraries with draft support
     'pyzmq @ git+https://github.com/zeromq/pyzmq.git@v27.2.0',
-    'helics @ git+https://github.com/GMLC-TDC/pyhelics.git@v3.6.1',
+    # NOTE: pinned to the first commit after v3.6.1 that builds with C++20: v3.6.1 hard-codes
+    # CMAKE_CXX_STANDARD 17, which HELICS rejects on gcc >= 13 (Ubuntu 24.04+). Still builds HELICS 3.6.1.
+    # Switch back to a tag once pyhelics > v3.6.1 is released.
+    'helics @ git+https://github.com/GMLC-TDC/pyhelics.git@40c24150639f35991965067776db4ee920f8a4d0',
 ]
 
 [project.urls]

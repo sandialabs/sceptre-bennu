@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.12)
 
 # automagically detect if we should cross-compile
 if(DEFINED ENV{TOOLCHAIN})

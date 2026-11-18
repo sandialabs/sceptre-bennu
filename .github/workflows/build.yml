@@ -19,8 +19,8 @@ permissions:
 
 jobs:
   build-bennu:
-    # Builds debs for the ubuntu:22.04 images, so it stays on 22.04. On 24.04,
-    # GCC 13 fails on libzmq 4.3.4 and on the vendored HELICS gmlc utilities.
+    # Builds debs for the ubuntu:22.04 images, so it stays on 22.04 (the debs
+    # target those images). 26.04 is covered by the verify-ubuntu-2604 job.
     runs-on: ubuntu-22.04
     steps:
       - name: checkout the repo
@@ -31,7 +31,7 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install --no-install-recommends -y build-essential cmake g++ gcc libasio-dev libboost-date-time-dev libboost-filesystem-dev libboost-program-options-dev libboost-python-dev libboost-system-dev libboost-thread-dev libfreetype6-dev libssl-dev libzmq5-dev
+          sudo apt-get install --no-install-recommends -y build-essential cmake g++ gcc libasio-dev libboost-date-time-dev libboost-filesystem-dev libboost-program-options-dev libboost-python-dev libboost-system-dev libboost-thread-dev libfreetype6-dev libssl-dev libzmq3-dev
       - name: configure bennu
         run: |
           mkdir build
@@ -81,9 +81,29 @@ jobs:
           if-no-files-found: error
           path: bennu.deb
 
+  verify-ubuntu-2604:
+    # GitHub has no ubuntu-26.04 runner image yet, so exercise 26.04 (gcc 15, Boost 1.90, CMake 4, PEP 668) in a container:
+    # the docker/test harness (build, ctest) and the top-level Dockerfile (pip path).
+    runs-on: ubuntu-24.04
+    steps:
+      - name: checkout the repo
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.ref }}
+          persist-credentials: false
+      - name: harness build and tests (ctest includes the end-to-end probe tests)
+        run: BASE_IMAGE=ubuntu:26.04 docker/test/run.sh build ctest pytest
+      - name: pinned versions agree across files
+        run: |
+          sha() { grep -o 'pyhelics.git@[0-9a-f]\{40\}' "$1"; }
+          [ "$(sha src/pybennu/postinst)" = "$(sha src/pybennu/pyproject.toml)" ] && [ -n "$(sha src/pybennu/pyproject.toml)" ]
+          [ "$(grep -o '^ZMQ_VERSION=[0-9.]*' src/pybennu/postinst | cut -d= -f2)" = "$(grep -o '^ENV ZMQ_VERSION [0-9.]*' Dockerfile | cut -d' ' -f3)" ]
+      - name: build the bennu image on 26.04
+        run: docker build --build-arg REGISTRY_IMAGE=ubuntu:26.04 .
+
   build-pybennu-dependencies:
-    # Builds debs for the ubuntu:22.04 images, so it stays on 22.04. On 24.04,
-    # GCC 13 fails on libzmq 4.3.4 and on the vendored HELICS gmlc utilities.
+    # Builds debs for the ubuntu:22.04 images, so it stays on 22.04 (the debs
+    # target those images). 26.04 is covered by the verify-ubuntu-2604 job.
     runs-on: ubuntu-22.04
     steps:
       - name: checkout the repo

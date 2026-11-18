@@ -41,13 +41,12 @@ public:
         mSocket.reset(new boost::asio::ip::tcp::socket(mService));
 
         boost::asio::ip::tcp::resolver resolver(mService);
-        boost::asio::ip::tcp::resolver::query query(boost::asio::ip::tcp::v4(), mAddress, mPort);
 
         // resolve the endpoint we're trying to talk to
-        boost::asio::ip::tcp::resolver::iterator iterator = resolver.resolve(query);
+        boost::asio::ip::tcp::resolver::results_type endpoints = resolver.resolve(boost::asio::ip::tcp::v4(), mAddress, mPort, boost::asio::ip::resolver_base::address_configured);
 
         boost::system::error_code error;
-        boost::asio::connect(*mSocket, iterator, error);
+        boost::asio::connect(*mSocket, endpoints, error);
 
         if (!error && mSocket->is_open())
         {
@@ -136,7 +135,7 @@ public:
 private:
     std::string mAddress;
     std::string mPort;
-    boost::asio::io_service mService;
+    boost::asio::io_context mService;
     std::shared_ptr<boost::asio::ip::tcp::socket> mSocket;
 
 };
