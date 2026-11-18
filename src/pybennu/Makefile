@@ -9,7 +9,7 @@ DIST_DIR = $(CURDIR)/dist
 PACKAGE_MAINTAINER = Sandia National Laboratories <emulytics@sandia.gov>
 NPROCS := $(shell nproc)
 DEB_ARCH := $(shell dpkg --print-architecture)
-ZMQ_VERSION ?= 4.3.4
+ZMQ_VERSION ?= 4.3.5
 ZMQ_PREFIX ?= /usr/local
 HELICS_VERSION ?= 3.6.1
 

@@ -27,7 +27,7 @@ namespace modbus {
 class TcpChannel : public Channel
 {
 public:
-    TcpChannel(boost::asio::io_service& io_service);
+    TcpChannel(boost::asio::io_context& io_context);
 
     ~TcpChannel();
 
@@ -39,7 +39,7 @@ public:
 
     void transmit(std::uint8_t* buffer, size_t size);
 
-    void reset(boost::asio::io_service& io_service);
+    void reset(boost::asio::io_context& io_context);
 
     boost::asio::ip::tcp::socket getHandle();
 

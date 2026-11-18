@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Docker verification harness for bennu. See README.md.
-# host:  run.sh [-s SRC_DIR] [-v CACHE_VOLUME] <build|smoke|ctest|pytest|lint|throughput|all>
+# host:  [BASE_IMAGE=ubuntu:26.04] [PLATFORM=linux/amd64] run.sh [-s SRC_DIR] [-v CACHE_VOLUME] <build|smoke|ctest|pytest|lint|throughput|all>
 set -eo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -10,10 +10,15 @@ if [ "$1" != "--inside" ]; then
     shift $((OPTIND-1))
     [ -n "$1" ] || { sed -n 2,3p "$0"; exit 2; }
     SRC="$(cd "$SRC" && pwd)"
-    docker image inspect bennu-verify:22.04-lint >/dev/null 2>&1 || docker build -t bennu-verify:22.04-lint "$HERE"
-    exec docker run --rm -v "$SRC:/src:ro" -v "$HERE:/harness:ro" -v "$VOL:/cache" -v bennu-ccache:/ccache \
-        -e BASE -e THROUGHPUT_SECS -e THROUGHPUT_TAGS -e THROUGHPUT_CYCLE_MS -e THROUGHPUT_MAX_CYCLE_S -e BENNU_LOG_LEVEL \
-        bennu-verify:22.04-lint bash /harness/run.sh --inside "$@"
+    # BASE_IMAGE picks the Ubuntu release (default 22.04); PLATFORM (e.g. linux/amd64) forces an emulated arch.
+    BASE_IMAGE=${BASE_IMAGE:-ubuntu:22.04}; IMG=bennu-verify:${BASE_IMAGE#*:}-lint
+    [ -z "$PLATFORM" ] || { IMG=$IMG-${PLATFORM#*/}; PLAT=(--platform "$PLATFORM"); }
+    case ${BASE_IMAGE#*:} in 22.04) CV=15;; 24.04) CV=18;; *) CV=21;; esac   # clang-format/tidy packaged per release
+    docker image inspect "$IMG" >/dev/null 2>&1 \
+        || docker build "${PLAT[@]}" --build-arg BASE_IMAGE="$BASE_IMAGE" --build-arg CLANG_VERSION="${CLANG_VERSION:-$CV}" --build-arg BSDTAR_SHIM="$([ "${BASE_IMAGE#*:}" = 22.04 ] || echo 1)" -t "$IMG" "$HERE"
+    exec docker run --rm "${PLAT[@]}" -v "$SRC:/src:ro" -v "$HERE:/harness:ro" -v "$VOL:/cache" -v bennu-ccache:/ccache \
+        -e CLANG_VERSION="${CLANG_VERSION:-$CV}" -e BASE -e THROUGHPUT_SECS -e THROUGHPUT_TAGS -e THROUGHPUT_CYCLE_MS -e THROUGHPUT_MAX_CYCLE_S -e BENNU_LOG_LEVEL \
+        "$IMG" bash /harness/run.sh --inside "$@"
 fi
 
 # ---- inside the container ----
@@ -48,7 +53,7 @@ lint() {  # python/codespell on the synced copy; cpp-check needs git so it runs 
     # git clang-format writes a temp index into the git dir, and /src is read-only: use a copy of .git
     rm -rf /tmp/srcgit && cp -a /src/.git /tmp/srcgit
     git config --global --add safe.directory /src
-    GIT_DIR=/tmp/srcgit GIT_WORK_TREE=/src make -C /src cpp-check CLANG_FORMAT=clang-format-15 GIT_CLANG_FORMAT=git-clang-format-15 ${BASE:+BASE=$BASE} || rc=1
+    GIT_DIR=/tmp/srcgit GIT_WORK_TREE=/src make -C /src cpp-check CLANG_FORMAT=clang-format-"$CLANG_VERSION" GIT_CLANG_FORMAT=git-clang-format-"$CLANG_VERSION" ${BASE:+BASE=$BASE} || rc=1
     return $rc
 }
 throughput() {  # ~N output-mapped tags change every cycle; count WRITEs arriving at a mock provider

@@ -14,8 +14,8 @@ namespace bennu {
 namespace comms {
 namespace modbus {
 
-
-TcpChannel::TcpChannel(boost::asio::io_service& io_service) : mSocket(io_service)
+TcpChannel::TcpChannel(boost::asio::io_context& io_context) :
+    mSocket(io_context)
 {
 }
 
@@ -108,9 +108,9 @@ void TcpChannel::transmit(std::uint8_t* buffer, size_t size)
     }
 }
 
-void TcpChannel::reset(boost::asio::io_service& io_service)
+void TcpChannel::reset(boost::asio::io_context& io_context)
 {
-    mSocket = boost::asio::ip::tcp::socket(io_service);
+    mSocket = boost::asio::ip::tcp::socket(io_context);
 }
 
 boost::asio::ip::tcp::socket TcpChannel::getHandle()

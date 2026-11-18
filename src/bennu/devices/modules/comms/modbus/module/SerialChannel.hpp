@@ -10,7 +10,7 @@ namespace modbus {
 class SerialChannel : public Channel
 {
 public:
-    SerialChannel(boost::asio::io_service& io_service, std::string endpoint, unsigned int baudRate = 9600, unsigned int dataBits = 8, unsigned int stopBits = 1, char parity = 'n', char flowControl = 'h');
+    SerialChannel(boost::asio::io_context& io_context, std::string endpoint, unsigned int baudRate = 9600, unsigned int dataBits = 8, unsigned int stopBits = 1, char parity = 'n', char flowControl = 'h');
 
     ~SerialChannel() = default;
 

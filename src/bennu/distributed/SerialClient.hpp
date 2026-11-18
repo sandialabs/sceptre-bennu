@@ -1,6 +1,7 @@
 #ifndef BENNU_UTILITY_SERIALCLIENT_HPP
 #define BENNU_UTILITY_SERIALCLIENT_HPP
 
+#include <chrono>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -83,11 +84,11 @@ public:
     {
         if (connect())
         {
-            mService.reset();
+            mService.restart();
             boost::asio::async_read(*mSerialPort, boost::asio::buffer(buffer, 6), boost::bind(&SerialClient::receiveHandler, this, buffer, boost::asio::placeholders::error, boost::asio::placeholders::bytes_transferred));
 
             // Setup deadline time
-            mTimer.expires_from_now(boost::posix_time::milliseconds(mTimeout));
+            mTimer.expires_after(std::chrono::milliseconds(mTimeout));
             mTimer.async_wait(boost::bind(&SerialClient::timeoutHandler, this, boost::asio::placeholders::error));
 
             // Block until read completes or timer expires
@@ -154,8 +155,8 @@ private:
     boost::asio::serial_port_base::parity mParity;
     boost::asio::serial_port_base::flow_control mFlowControl;
     std::string mDevice;
-    boost::asio::io_service mService;
-    boost::asio::deadline_timer mTimer;
+    boost::asio::io_context mService;
+    boost::asio::steady_timer mTimer;
     size_t mTimeout;                        // in milliseconds
     std::vector<uint8_t> receiveBuffer;
     static const unsigned int dataSize = 1024;

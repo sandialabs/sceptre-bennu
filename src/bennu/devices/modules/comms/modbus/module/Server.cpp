@@ -85,7 +85,7 @@ void Server::accept(const std::string& endpoint)
         {
             if (!mAcceptor || !mAcceptor->is_open())
             {
-                mAcceptor.reset(new boost::asio::ip::tcp::acceptor(mIOService, boost::asio::ip::tcp::endpoint(boost::asio::ip::address::from_string(mAddress), mPort)));
+                mAcceptor.reset(new boost::asio::ip::tcp::acceptor(mIOService, boost::asio::ip::tcp::endpoint(boost::asio::ip::make_address(mAddress), mPort)));
             }
         }
         catch (boost::system::system_error& error)

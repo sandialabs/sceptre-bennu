@@ -8,6 +8,9 @@ The macOS host cannot build the C++ parts, so everything runs in a container.
 Modes: `build`, `ctest` (includes the end-to-end probe and `--help` integration tests; `smoke` is an alias), `pytest` (src/pybennu/tests, skipped if absent),
 `lint` (python/codespell `make check` plus `cpp-check`; set `BASE=<ref>` to change the diff base; not part of `all` until the tree is clean), `throughput`, `all`.
 
+- `BASE_IMAGE=ubuntu:26.04` selects another release (image tag `bennu-verify:26.04-lint`); `PLATFORM=linux/amd64` forces
+  an emulated arch on an arm64 host (tag gets a `-amd64` suffix). Use a separate `-v` volume per release/arch.
+  The top-level Dockerfile takes the same choice as `--build-arg REGISTRY_IMAGE=ubuntu:26.04`.
 - The image (`bennu-verify:22.04-lint`) is built on first use from `docker/test/Dockerfile`.
 - Source is mounted read-only and rsynced into the volume, so the host tree is never touched. The volume
   (default `bennu-verify-cache`) holds the copy and the build dir; ccache lives in the shared `bennu-ccache` volume, so new volumes build warm.

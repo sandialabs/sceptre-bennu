@@ -14,7 +14,8 @@ namespace bennu {
 namespace comms {
 namespace modbus {
 
-SerialChannel::SerialChannel(boost::asio::io_service& io_service, std::string endpoint, unsigned int baudRate, unsigned int dataBits, unsigned int stopBits, char parity, char flowControl) : mBaudRate(baudRate), mDataBits(dataBits)
+SerialChannel::SerialChannel(boost::asio::io_context& io_context, std::string endpoint, unsigned int baudRate, unsigned int dataBits, unsigned int stopBits, char parity, char flowControl) :
+    mBaudRate(baudRate), mDataBits(dataBits)
 {
     std::size_t findResult = endpoint.find("tcp://");
     if (findResult == std::string::npos)
@@ -22,7 +23,7 @@ SerialChannel::SerialChannel(boost::asio::io_service& io_service, std::string en
         mDevice = endpoint;
     }
 
-    mSerialPort = std::make_shared<boost::asio::serial_port>(io_service);
+    mSerialPort = std::make_shared<boost::asio::serial_port>(io_context);
     setStopBits(stopBits);
     setParity(parity);
     setFlowControl(flowControl);

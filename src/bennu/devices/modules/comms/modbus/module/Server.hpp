@@ -69,7 +69,7 @@ protected:
     void run(std::string endpoint);
 
 private:
-    boost::asio::io_service mIOService;
+    boost::asio::io_context mIOService;
     std::shared_ptr<Channel> mChannel;
     std::shared_ptr<boost::asio::ip::tcp::acceptor> mAcceptor;
     std::atomic<bool> mStopping{false};

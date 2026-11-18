@@ -2,6 +2,7 @@
    @brief Implementation of the API defined in publisher.hpp
 */
 /* stl includes */
+#include <chrono>
 #include <functional>
 #include <string>
 
@@ -30,7 +31,7 @@ namespace ccss_devices {
       using std::placeholders::_2;
       using std::placeholders::_3;
 
-      using boost::asio::deadline_timer;
+      using boost::asio::steady_timer;
 
       using ccss_protocols::iec61850::goose::application::GOOSE_ETHER_TYPE;
 
@@ -402,21 +403,21 @@ namespace ccss_devices {
 
       void publisher::publish_( gocb* goCBlock, uint32_t time_interval, time_unit_t::type time_unit ) {
 
-        deadline_timer timer(io_);
+        steady_timer timer(io_);
 
         while (1) {
           switch (time_unit) {
           case time_unit_t::SECONDS:
             // set timer wait time
-            timer.expires_from_now(boost::posix_time::seconds(time_interval));
+            timer.expires_after(std::chrono::seconds(time_interval));
             break;
           case time_unit_t::MINUTES:
             // set timer wait time
-            timer.expires_from_now(boost::posix_time::minutes(time_interval));
+            timer.expires_after(std::chrono::minutes(time_interval));
             break;
           case time_unit_t::HOURS:
             // set timer wait time
-            timer.expires_from_now(boost::posix_time::hours(time_interval));
+            timer.expires_after(std::chrono::hours(time_interval));
             break;
           default:
             /* handle error here */
@@ -435,21 +436,21 @@ namespace ccss_devices {
 
       void publisher::publish_( gocb* goCBlock, uint16_t appid, uint32_t time_interval,
                                 time_unit_t::type time_unit ) {
-        deadline_timer timer(io_);
+        steady_timer timer(io_);
 
         while (1) {
           switch (time_unit) {
           case time_unit_t::SECONDS:
             // set timer wait time
-            timer.expires_from_now(boost::posix_time::seconds(time_interval));
+            timer.expires_after(std::chrono::seconds(time_interval));
             break;
           case time_unit_t::MINUTES:
             // set timer wait time
-            timer.expires_from_now(boost::posix_time::minutes(time_interval));
+            timer.expires_after(std::chrono::minutes(time_interval));
             break;
           case time_unit_t::HOURS:
             // set timer wait time
-            timer.expires_from_now(boost::posix_time::hours(time_interval));
+            timer.expires_after(std::chrono::hours(time_interval));
             break;
           default:
             /* handle error here */
