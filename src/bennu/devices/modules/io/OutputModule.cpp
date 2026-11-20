@@ -93,12 +93,12 @@ void OutputModule::scanOutputs()
 
     for (size_t i = 0; i < bins.size(); ++i)
     {
-        mDataManager->setDataByTag<bool>(binTags[i], bins[i].second);
+        mDataManager->ackDataByTag<bool>(binTags[i], bins[i].second);
         mDataManager->deleteBinaryTag(binTags[i], bins[i].second);
     }
     for (size_t i = 0; i < anals.size(); ++i)
     {
-        mDataManager->setDataByTag<double>(analTags[i], anals[i].second);
+        mDataManager->ackDataByTag<double>(analTags[i], anals[i].second);
         mDataManager->deleteAnalogTag(analTags[i], anals[i].second);
     }
 }

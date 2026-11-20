@@ -4,6 +4,7 @@
 #include <chrono>
 #include <deque>
 #include <memory>
+#include <thread>
 
 #include "bennu/devices/modules/io/OutputModule.hpp"
 
@@ -229,4 +230,46 @@ TEST_CASE("perf: 800 changed tags go out in one request")
     REQUIRE(f.sent.size() == 1); // one REQ per cycle, never one per tag
     CHECK(std::count(f.sent[0].begin(), f.sent[0].end(), ',') == 799);
     CHECK(f.dm->snapshotUpdatedAnalogTags().empty());
+}
+
+// A stream datagram published before the provider applied an ACKed write must not revert the point
+// (field-device flap: new, old, new).
+TEST_CASE("ACKed write is held against stale stream values until confirmed")
+{
+    Fixture f;
+    f.add<bool>("b");
+    f.add<double>("a");
+    f.dm->addUpdatedBinaryTag("t_b", true);
+    f.dm->addUpdatedAnalogTag("t_a", 5.0);
+    f.om.scanOutputs();
+    CHECK(f.dm->getDataByTag<bool>("t_b") == true);
+
+    f.dm->setDataByPoint<bool>("b", false); // stale datagram
+    f.dm->setDataByPoint<double>("a", 1.0);
+    CHECK(f.dm->getDataByTag<bool>("t_b") == true);
+    CHECK(f.dm->getDataByTag<double>("t_a") == 5.0);
+
+    f.dm->setDataByPoint<bool>("b", true); // stream confirms: hold released
+    f.dm->setDataByPoint<double>("a", 5.0);
+    f.dm->setDataByPoint<bool>("b", false); // later genuine change wins
+    f.dm->setDataByPoint<double>("a", 7.0);
+    CHECK(f.dm->getDataByTag<bool>("t_b") == false);
+    CHECK(f.dm->getDataByTag<double>("t_a") == 7.0);
+}
+
+TEST_CASE("ACK hold expires and a newer ACK replaces it")
+{
+    Fixture f;
+    f.add<bool>("b");
+    f.dm->setAckHoldTime(std::chrono::milliseconds(50));
+    f.dm->addUpdatedBinaryTag("t_b", true);
+    f.om.scanOutputs();
+    f.dm->addUpdatedBinaryTag("t_b", false);
+    f.om.scanOutputs();
+    f.dm->setDataByPoint<bool>("b", true); // stale vs the newer ACK
+    CHECK(f.dm->getDataByTag<bool>("t_b") == false);
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    f.dm->setDataByPoint<bool>("b", true); // never confirmed: stream wins
+    CHECK(f.dm->getDataByTag<bool>("t_b") == true);
 }
