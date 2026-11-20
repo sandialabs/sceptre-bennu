@@ -52,9 +52,9 @@ CommandStatus ServerCommandHandler::Operate(const opendnp3::ControlRelayOutputBl
     return mStatus;
 }
 
-CommandStatus ServerCommandHandler::Select(const opendnp3::AnalogOutputFloat32& arCommand, std::uint16_t aIndex)
+CommandStatus ServerCommandHandler::selectAnalog(std::uint16_t index)
 {
-    if (!pRtu.lock()->getAnalogPoint(aIndex))
+    if (!pRtu.lock()->getAnalogPoint(index))
     {
         // This is our best guess at what status to return when the address
         // being selected doesn't exist locally.
@@ -64,9 +64,9 @@ CommandStatus ServerCommandHandler::Select(const opendnp3::AnalogOutputFloat32& 
     return CommandStatus::SUCCESS;
 }
 
-CommandStatus ServerCommandHandler::Operate(const opendnp3::AnalogOutputFloat32& arCommand, std::uint16_t aIndex, opendnp3::IUpdateHandler& handler, opendnp3::OperateType opType)
+CommandStatus ServerCommandHandler::operateAnalog(std::uint16_t index, float value, opendnp3::OperateType opType)
 {
-    auto point = pRtu.lock()->getAnalogPoint(aIndex);
+    auto point = pRtu.lock()->getAnalogPoint(index);
 
     if (!point)
     {
@@ -80,11 +80,20 @@ CommandStatus ServerCommandHandler::Operate(const opendnp3::AnalogOutputFloat32&
         return CommandStatus::NO_SELECT;
     }
 
-
     // write analog to data manager
-    pRtu.lock()->writeAnalog(aIndex, arCommand.value);
+    pRtu.lock()->writeAnalog(index, value);
 
     return mStatus;
+}
+
+CommandStatus ServerCommandHandler::Select(const opendnp3::AnalogOutputFloat32& arCommand, std::uint16_t aIndex)
+{
+    return selectAnalog(aIndex);
+}
+
+CommandStatus ServerCommandHandler::Operate(const opendnp3::AnalogOutputFloat32& arCommand, std::uint16_t aIndex, opendnp3::IUpdateHandler& handler, opendnp3::OperateType opType)
+{
+    return operateAnalog(aIndex, arCommand.value, opType);
 }
 
 } // namespace dnp3
