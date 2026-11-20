@@ -84,7 +84,8 @@ private:
     std::map<std::uint16_t, std::string> mHoldingRegisters;
     std::map<std::uint16_t, std::string> mInputRegisters;
     const double c16bitScale = 65535.0;
-    std::map<std::uint16_t, ScaledValue> mScaledValues;
+    std::map<std::uint16_t, ScaledValue> mHoldingScale;
+    std::map<std::uint16_t, ScaledValue> mInputScale;
     std::vector<std::shared_ptr<Channel>> mConnections;
     Server(const Server&);
     Server& operator =(const Server&);

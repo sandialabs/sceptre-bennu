@@ -1017,9 +1017,17 @@ template<>
 void application::Request_Handler<WRITE_MULTI_COIL>::operator()(
     std::vector<uint8_t> const& request, std::vector<uint8_t>& response, callback_map_t const& cm)
 {
+    // The PDU must hold the byte count field (offset 5) before it can be read.
+    if (request.size() < 6)
+    {
+        response.push_back(static_cast<uint8_t>(request[MB_FUNC_CODE_OFFSET] + 0x80));
+        response.push_back(MB_ILLEGAL_DATA_VALUE);
+        return;
+    }
+
     //Is the request for a legal quantity of registers?
     uint16_t quantity = ntohs(*reinterpret_cast<uint16_t const*>( &request[MB_QTY_PDU_OFFSET] ));
-    if (quantity < MB_MIN_READ_QTY_COILS || quantity > MB_MAX_READ_QTY_COILS)
+    if (quantity < MB_MIN_READ_QTY_COILS || quantity > MB_MAX_MULT_WRITE_QTY_COILS)
     {
         //First byte of an error response is the request function code plus 0x80.
         response.push_back(static_cast<uint8_t>(request[MB_FUNC_CODE_OFFSET] + 0x80));
@@ -1047,14 +1055,10 @@ void application::Request_Handler<WRITE_MULTI_COIL>::operator()(
     uint8_t number_bytes_request = request[5];
 
     // Calculate how many bytes of coil data should be in the request.
-    uint8_t number_bytes_calculated = static_cast<uint8_t>(quantity / 8);
-    if (quantity % 8 != 0)
-    {
-        number_bytes_calculated++;
-    }
+    uint16_t number_bytes_calculated = (quantity + 7) / 8;
 
-    // Does the claimed and calculated number of coil data bytes align
-    if (number_bytes_request != number_bytes_calculated)
+    // Does the claimed and calculated number of coil data bytes align, and are they all present?
+    if (number_bytes_request != number_bytes_calculated || request.size() < 6u + number_bytes_request)
     {
         //First byte of an error response is the request function code plus 0x80.
         response.push_back(static_cast<uint8_t>(request[MB_FUNC_CODE_OFFSET] + 0x80));
@@ -1116,9 +1120,17 @@ template<>
 void application::Request_Handler<WRITE_MULTI_REG>::operator()(
     std::vector<uint8_t> const& request, std::vector<uint8_t>& response, callback_map_t const& cm)
 {
+    // The PDU must hold the byte count field (offset 5) before it can be read.
+    if (request.size() < 6)
+    {
+        response.push_back(static_cast<uint8_t>(request[MB_FUNC_CODE_OFFSET] + 0x80));
+        response.push_back(MB_ILLEGAL_DATA_VALUE);
+        return;
+    }
+
     //Is the request for a legal quantity of registers?
     uint16_t quantity = ntohs(*reinterpret_cast<uint16_t const*>( &request[MB_QTY_PDU_OFFSET] ));
-    if (quantity < MB_MIN_READ_QTY_COILS || quantity > MB_MAX_READ_QTY_COILS)
+    if (quantity < MB_MIN_READ_QTY_COILS || quantity > MB_MAX_MULT_WRITE_QTY_HOLDING_REGS)
     {
         //First byte of an error response is the request function code plus 0x80.
         response.push_back(static_cast<uint8_t>(request[MB_FUNC_CODE_OFFSET] + 0x80));
@@ -1146,10 +1158,10 @@ void application::Request_Handler<WRITE_MULTI_REG>::operator()(
     uint8_t number_bytes_request = request[5];
 
     //Calculate how many bytes of holding register data should be in the request.
-    uint8_t number_bytes_calculated = static_cast<uint8_t>(quantity * sizeof(uint16_t));
+    uint16_t number_bytes_calculated = quantity * sizeof(uint16_t);
 
-    //Does claimed and calculated number of holding register data bytes align
-    if (number_bytes_request != number_bytes_calculated)
+    // Does claimed and calculated number of holding register data bytes align, and are they all present?
+    if (number_bytes_request != number_bytes_calculated || request.size() < 6u + number_bytes_request)
     {
         // First byte of an error response is the request function code plus 0x80.
         response.push_back(static_cast<uint8_t>(request[MB_FUNC_CODE_OFFSET] + 0x80));
