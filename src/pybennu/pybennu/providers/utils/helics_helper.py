@@ -1,6 +1,7 @@
 """HELICS helper class"""
 
 import json
+import re
 import signal
 import sys
 from distutils.util import strtobool
@@ -8,6 +9,27 @@ from distutils.util import strtobool
 import helics as h
 from loguru import logger
 from py_expression_eval import Parser
+
+
+def evaluate_logic(parser, exp, tags, lookup):
+    """Evaluate a subscription logic expression.
+
+    py_expression_eval rejects '-' in variable names, but bennu tags use it
+    (e.g. load-1_bus-1.active). Swap each such tag for a safe identifier before
+    parsing, and look the original name up when assigning variables.
+    """
+    names = {}
+    for tag in sorted((t for t in tags if "-" in t), key=len, reverse=True):
+        pattern = rf"(?<![\w.-]){re.escape(tag)}(?![\w.-])"
+        exp = re.sub(
+            pattern, lambda _, tag=tag: names.setdefault(tag, f"ztag{len(names)}"), exp
+        )
+    originals = {v: k for k, v in names.items()}
+    expr = parser.parse(exp)
+    return expr.evaluate(
+        {var: lookup(originals.get(var, var)) for var in expr.variables()}
+    )
+
 
 logger.info(f"Initializing helics version: {h.helicsGetVersion()}")
 
@@ -139,13 +161,7 @@ class HelicsFederate:
 
             # Process logic
             for tag, exp in self.logic.items():
-                expr = self.parser.parse(exp)
-                # Assign variables
-                vars = {}
-                for var in expr.variables():
-                    vars[var] = self.tag(var)
-                # Evaluate expression
-                value = expr.evaluate(vars)
+                value = evaluate_logic(self.parser, exp, self.tags, self.tag)
                 value = str(value).lower()
                 if value != self.tag(tag):
                     logger.debug(f"\tLOGIC: {tag.strip()}={exp} ----> {value}")

@@ -41,12 +41,7 @@ zmq::message_t CommandInterface::messageHandler(const zmq::message_t& req)
         }
         else
         {
-            reply += "ACK=";
-            for (auto iter = tags.begin(); iter != tags.end(); ++iter)
-            {
-                reply += *iter;
-                reply += ",";
-            }
+            reply += "ACK=" + bennu::distributed::join(tags, ",");
         }
     }
     else if (op == "READ" || op == "read")

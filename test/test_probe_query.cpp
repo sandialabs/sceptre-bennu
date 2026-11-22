@@ -13,4 +13,6 @@ TEST_CASE("testing probe -- QUERY")
     stopProcesses("bennu-field-device");
     std::string res("I: ACK\n\tbrkr\n");
     CHECK(exec("grep -e ACK -e brkr probe.out") == res);
+    // a trailing comma in the reply would print as a blank tag line
+    CHECK(exec("grep -c -E '^[[:space:]]*$' probe.out") == "0\n");
 }

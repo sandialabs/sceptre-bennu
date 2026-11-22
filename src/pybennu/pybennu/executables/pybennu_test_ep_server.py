@@ -69,10 +69,7 @@ class ElectricPowerService(Provider):
     def query(self):
         if self.__debug:
             logger.debug("ElectricPowerService::query ---- received query request")
-        result = "ACK="
-        for k in self.mPS:
-            result += k + ","
-        return result
+        return "ACK=" + ",".join(self.mPS)
 
     # Must return "ACK=<value>" or "ERR=<error message>
     def read(self, tag):

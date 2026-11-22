@@ -265,13 +265,13 @@ class PyPower(Provider):
 
         if self.debug:
             logger.debug("Processing query")
-        tags = ""
+        tags = []
         with self.__lock:
             for dev_type in self.elements:
                 for dev_name, fields in self.elements[dev_type].items():
                     for field, _value in fields.items():
-                        tags += dev_name + "." + field + ","
-        return f"ACK={tags}"
+                        tags.append(dev_name + "." + field)
+        return f"ACK={','.join(tags)}"
 
     def read(self, tag):
         """Implements the read command interface for receiving the PyPower

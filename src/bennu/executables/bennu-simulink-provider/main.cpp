@@ -11,6 +11,7 @@
 #include <mutex>
 #include <shared_mutex>
 #include <sstream>
+#include <vector>
 
 #include <boost/date_time.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -197,7 +198,7 @@ public:
         }
         std::scoped_lock<std::shared_mutex> lock(mLock);
         sem_wait(mPublishSemaphore);
-        std::string result = "ACK=";
+        std::vector<std::string> tags;
         char* shmPtr = mPublishPointsShmAddress;
         for (int i = 0; i < mNumPublishPoints; i++)
         {
@@ -207,11 +208,11 @@ public:
             {
                 tag = dto.tag;
             }
-            result += tag + ",";
+            tags.push_back(tag);
             shmPtr += MAX_MSG_LEN;
         }
         sem_post(mPublishSemaphore);
-        return result;
+        return "ACK=" + bennu::distributed::join(tags, ",");
     }
 
     // Must return "ACK=<value>" or "ERR=<error message>"
