@@ -233,6 +233,11 @@ from pybennu.distributed.provider import Provider
 from pybennu.providers.power import PowerSolverError
 
 
+def _fmt(value):
+    """Booleans go out as true/false, which is what field devices parse."""
+    return str(value).lower() if isinstance(value, bool) else value
+
+
 class OpenDSS(Provider):
     """OpenDSS-based implementation of an electric power distribution system"""
 
@@ -340,7 +345,7 @@ class OpenDSS(Provider):
 
             value = getattr(self.elements[device], field)
 
-            return f"ACK={value}"
+            return f"ACK={_fmt(value)}"
         except AttributeError:
             return f"ERR=Unknown field {field} for device {device}"
         except Exception as err:
@@ -1239,7 +1244,7 @@ class OpenDSS(Provider):
 
             for field in device.__dataclass_fields__:
                 value = getattr(device, field)
-                msg.append(f"{name}.{field}:{value}")
+                msg.append(f"{name}.{field}:{_fmt(value)}")
 
         logger.debug("Done packing message.")
 

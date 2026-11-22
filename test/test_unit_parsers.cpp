@@ -323,3 +323,22 @@ TEST_CASE("nlohmann/json: parsing, value retrieval, and exception handling")
     CHECK_THROWS_AS(json::parse("{ incomplete_json "), json::parse_error);
     CHECK_THROWS_AS(json::parse("invalid text"), json::parse_error);
 }
+
+TEST_CASE("Parser dispatcher: comment before the root element is not the root")
+{
+    Parser* p = Parser::the();
+    const std::string xml = "/tmp/test_unit_parser_comment.xml";
+    ScopedFileCleanup cleanup(xml);
+    {
+        std::ofstream out(xml);
+        out << "<?xml version=\"1.0\"?>\n<!-- leading comment -->\n"
+            << "<system>\n  <comment-module><rate>7</rate></comment-module>\n</system>\n";
+    }
+    int rate = 0;
+    p->registerTreeDataHandler("comment-module", [&](const std::string&, const boost::property_tree::ptree& tree) -> bool {
+        rate = tree.get<int>("rate");
+        return true;
+    });
+    CHECK(p->load(xml));
+    CHECK(rate == 7);
+}

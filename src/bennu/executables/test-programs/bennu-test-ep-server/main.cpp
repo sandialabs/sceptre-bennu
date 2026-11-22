@@ -2,6 +2,7 @@
 #include <mutex>
 #include <shared_mutex>
 #include <unordered_map>
+#include <vector>
 
 #include <boost/program_options.hpp>
 
@@ -69,12 +70,12 @@ public:
     std::string query()
     {
         if (mDebug) { std::cout << "ElectricPowerService::query ---- received query request" << std::endl; }
-        std::string result = "ACK=";
+        std::vector<std::string> tags;
         for (const auto& kv : mPS)
         {
-            result += kv.first + ",";
+            tags.push_back(kv.first);
         }
-        return result;
+        return "ACK=" + bennu::distributed::join(tags, ",");
     }
 
     // Must return "ACK=<value>" or "ERR=<error message>"

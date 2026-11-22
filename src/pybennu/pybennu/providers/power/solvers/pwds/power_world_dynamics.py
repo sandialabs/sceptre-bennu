@@ -292,11 +292,7 @@ class PowerWorldDynamics(Provider):
         if self.__debug:
             logger.debug("PowerWorldDynamics::query ---- received query request")
 
-        result = "ACK="
-        for t in self.tags:
-            result += t + ","
-
-        return result
+        return "ACK=" + ",".join(self.tags)
 
     # Must return 'ACK=<value>' or 'ERR=<error message>'
     def read(self, tag):

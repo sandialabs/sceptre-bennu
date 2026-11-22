@@ -13,6 +13,7 @@ using bennu::distributed::chunkMessage;
 using bennu::distributed::Client;
 using bennu::distributed::publishBodyLimit;
 using bennu::distributed::publishLinkMtu;
+using bennu::distributed::join;
 using bennu::distributed::split;
 
 static std::string tags(int n, bool trailingComma)
@@ -85,6 +86,14 @@ TEST_CASE("split is const-correct and correct")
     CHECK(split("abc", ",") == std::vector<std::string>{"abc"});
     CHECK(split("a=b=c", "=") == std::vector<std::string>{"a", "b", "c"});
     CHECK(split("a::b", "::") == std::vector<std::string>{"a", "b"});
+}
+
+TEST_CASE("join has no trailing delimiter")
+{
+    CHECK(join(std::vector<std::string>{}, ",") == "");
+    CHECK(join(std::vector<std::string>{"a"}, ",") == "a");
+    CHECK(join(std::set<std::string>{"b", "a"}, ",") == "a,b");
+    CHECK(join(std::vector<std::string>{"", "a"}, ",") == ",a");
 }
 
 TEST_CASE("buildWritePayload format")

@@ -82,7 +82,7 @@ class GenericPython(Provider):
 
         if self.debug:
             logger.debug("Processing query")
-        tags = ""
+        tags = []
         with self.__lock:
             # Iterate through both 'inputs_to_fd' and 'outputs_from_fd'
             for io in self.elements:
@@ -91,8 +91,8 @@ class GenericPython(Provider):
                     # Iterate through each tag
                     for tag in self.elements[io][tag_type]:
                         # Add tag to list of tags
-                        tags += f"{tag},"
-        return f"ACK={tags}"
+                        tags.append(tag)
+        return f"ACK={','.join(tags)}"
 
     def read(self, tag: str) -> str:
         """Implements the read command interface for receiving the Py

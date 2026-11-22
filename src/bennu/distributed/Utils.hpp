@@ -90,6 +90,26 @@ inline std::vector<std::string> split(const std::string& phrase, const std::stri
 }
 
 /*
+ * Join the strings of a container with delimiter; no trailing delimiter.
+ */
+template <typename Container>
+inline std::string join(const Container& items, const std::string& delimiter)
+{
+    std::string out;
+    bool first = true;
+    for (const auto& item : items)
+    {
+        if (!first)
+        {
+            out += delimiter;
+        }
+        first = false;
+        out += item;
+    }
+    return out;
+}
+
+/*
  * Split a comma-delimited message into chunks of "part," pieces, each
  * shorter than mtu where possible. Empty parts are skipped; a single part
  * longer than mtu is returned alone.

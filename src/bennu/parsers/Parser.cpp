@@ -62,7 +62,16 @@ bool Parser::load( const std::string& filename )
         return false;
     }
 
-    const boost::property_tree::ptree& tree = parserTree.front().second;
+    // The root is the first non-comment child: boost's read_xml keeps a comment before
+    // <root> as a leading "<xmlcomment>" child, which must not be mistaken for the root.
+    auto root = std::find_if( parserTree.begin(), parserTree.end(),
+        []( const boost::property_tree::ptree::value_type& v ) { return v.first != "<xmlcomment>"; } );
+    if ( root == parserTree.end() )
+    {
+        std::cerr << "ERROR: \"" << fullFilename << "\" has no root element!" << std::endl;
+        return false;
+    }
+    const boost::property_tree::ptree& tree = root->second;
     parseAndLoadLibraries( tree);
     //Now that libraries are loaded, parse the data.
     BOOST_FOREACH( const boost::property_tree::ptree::value_type& v, tree )
