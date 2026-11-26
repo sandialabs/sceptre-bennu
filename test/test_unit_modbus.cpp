@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <memory>
 #include <thread>
+#include <utility>
 #include <vector>
 
 #include "bennu/devices/field-device/DataManager.hpp"
@@ -312,6 +313,33 @@ TEST_CASE("Modbus Application Layer: Error code and exception handling")
         REQUIRE(lastResponse.size() >= 9);
         CHECK(lastResponse[7] == 0x80);
         CHECK(lastResponse[8] == error_code_t::SLAVE_DEVICE_FAILURE);
+    }
+
+    // 5. A function the server does not serve gets exception 01 (ILLEGAL FUNCTION), whatever its body
+    //    (Modbus Application Protocol 1.1b3, section 7): FC08 and FC23 with full bodies, FC43 MEI with a
+    //    3-byte body, FC00 and FC07 with none
+    const std::vector<std::pair<uint8_t, std::vector<uint8_t>>> unserved = {
+        {0x08, {0x00, 0x00, 0x12, 0x34}},
+        {0x17, {0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x02, 0x00, 0x00}},
+        {0x2B, {0x0E, 0x01, 0x00}},
+        {0x00, {}},
+        {0x07, {}},
+    };
+    uint16_t tid = 20;
+    for (const auto& c : unserved)
+    {
+        const uint8_t fc = c.first;
+        const std::vector<uint8_t>& body = c.second;
+        CAPTURE(static_cast<int>(fc));
+        lastResponse.clear();
+        auto adu = makeAdu(tid, 1, fc, body);
+        app.handle_data_receive(adu.data(), adu.size());
+
+        const std::vector<uint8_t> expected = {static_cast<uint8_t>(tid >> 8), static_cast<uint8_t>(tid & 0xFF),
+                                               0x00, 0x00, 0x00, 0x03, 0x01,
+                                               static_cast<uint8_t>(fc | 0x80), error_code_t::ILLEGAL_FUNCTION};
+        CHECK(lastResponse == expected);
+        ++tid;
     }
 }
 

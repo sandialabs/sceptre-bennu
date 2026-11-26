@@ -5,6 +5,8 @@ Starts bennu-field-device with the example modbus server config and sends
   1. a request cut short mid-body (client half-closes): must get no response, only EOF
   2. MBAP length fields larger than the 1024 B receive buffer (and one of 0): connection must
      be closed without the server dying
+  3. functions the server does not serve (FC08, FC07 with no body, FC43 MEI 0e 01 00): exception 01,
+     ILLEGAL FUNCTION, whatever the body (Modbus Application Protocol 1.1b3, section 7)
 After each case the server must still answer a valid holding-register read.
 """
 import os, socket, struct, subprocess, sys, tempfile, time
@@ -93,6 +95,20 @@ with tempfile.TemporaryDirectory() as d:
                 sys.exit(f"FAIL: connection with MBAP length {length} left open")
             check(f"MBAP length {length}")
             print(f"MBAP length {length}: connection closed, server alive")
+
+        # 3. unserved functions: fc | 0x80, exception 01, on a connection that stays usable
+        with socket.create_connection(("127.0.0.1", PORT), timeout=5) as s:
+            for tid, fc, body in ((30, 0x08, b"\x00\x00\x12\x34"), (31, 0x07, b""), (32, 0x2B, b"\x0e\x01\x00")):
+                s.sendall(struct.pack(">HHHBB", tid, 0, 2 + len(body), 1, fc) + body)
+                got = s.recv(256)
+                want = struct.pack(">HHHBBB", tid, 0, 3, 1, fc | 0x80, 1)
+                if got != want:
+                    sys.exit(f"FAIL: FC{fc:02X} answered {got.hex()}, want {want.hex()}")
+                print(f"FC{fc:02X}: {got.hex()}")
+            s.sendall(REQ)
+            if len(s.recv(256)) == 0:
+                sys.exit("FAIL: no response to a valid request after the unserved functions")
+        check("unserved functions")
     finally:
         dev.kill()
         dev.wait()
