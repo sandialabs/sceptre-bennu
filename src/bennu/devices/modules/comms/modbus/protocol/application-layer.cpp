@@ -761,6 +761,24 @@ void application::layer::handle_data_receive(uint8_t* rx_data, size_t size)
     response.assign(sizeof(mbap_header_t), 0x00);
     mbap_header_t response_hdr = mbap_header::parse(rx_data);
 
+    // A function code this server does not serve gets exception 01 (ILLEGAL FUNCTION), whatever the length of the
+    // request body: the function code is checked first (Modbus Application Protocol 1.1b3, section 7).
+    if (size > sizeof(mbap_header_t) && size <= MB_MAX_ADU_LENGTH &&
+        request_handler_map_.find(static_cast<function_code_t::type>(rx_data[sizeof(mbap_header_t)])) == request_handler_map_.end())
+    {
+        // Set length to the 3 bytes (unit ID byte, error code byte, and exception code byte)
+        response_hdr.length = 3;
+        mbap_header::serialize(response_hdr, response);
+
+        // First byte of an error response is the request function code with its high bit set.
+        response.push_back(static_cast<uint8_t>(rx_data[sizeof(mbap_header_t)] | 0x80));
+        response.push_back(MB_ILLEGAL_FUNCTION);
+
+        data_send_signal(&response[0], response.size());
+
+        return;
+    }
+
     //Send an error response if the received message does not meet ModbusADU length constraints.
     if ( size < MB_MIN_REQUEST_ADU_LENGTH || size > MB_MAX_ADU_LENGTH )
     {
